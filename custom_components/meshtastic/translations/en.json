@@ -2,18 +2,54 @@
   "config": {
     "step": {
       "user": {
-        "description": "Configure your gateway node",
+        "menu_options": {
+          "manual_tcp": "TCP/IP",
+          "manual_bluetooth": "Bluetooth",
+          "manual_serial": "Serial"
+        }
+      },
+      "manual_tcp": {
+        "description": "Connect via TCP/IP",
         "data": {
-          "host": "Host",
-          "port": "Port"
+          "tcp_host": "Host",
+          "tcp_port": "Port"
+        },
+        "data_description": {
+          "tcp_host": "IP Address or Hostname"
+        }
+      },
+      "discovery_zeroconf_confirm": {
+        "description": "Connect via TCP/IP",
+        "data": {
+          "tcp_host": "Host",
+          "tcp_port": "Port"
+        }
+      },
+      "manual_bluetooth": {
+        "description": "Connect Device via Bluetooth.\n**IMPORTANT**: PIN is not supported, please remove it first.\n\nPlease be patient, initial setup takes a while when device has a large node db",
+        "data": {
+          "bluetooth_address": "Bluetooth Address"
+        },
+        "data_description": {
+          "bluetooth_address": "Device address in form of 00:11:22:33:FF:EE"
+        }
+      },
+       "discovery_bluetooth_confirm": {
+        "description": "Connect Device via Bluetooth.\n**IMPORTANT**: PIN is not supported, please remove it first.\n\nPlease be patient, initial setup takes a while when device has a large node db",
+        "data": {
+          "bluetooth_address": "Bluetooth Address"
+        }
+      },
+      "manual_serial": {
+        "description": "Connect via Serial",
+        "data": {
+          "serial_port": "Serial Port"
+        },
+        "data_description": {
+          "serial_port": "Path to serial port, e.g. /dev/ttyUSB0"
         }
       },
       "reconfigure": {
-        "description": "Reconfigure your gateway node",
-        "data": {
-          "host": "Host",
-          "port": "Port"
-        }
       },
       "node": {
         "description": "Configure which nodes should be imported",
@@ -24,8 +60,14 @@
       }
     },
     "error": {
-      "connection": "Unable to connect to the device.",
-      "unknown": "Unknown error occurred."
+      "cannot_connect": "Unable to connect to the device.",
+      "unknown": "Unknown error occurred.",
+      "not_meshtastic_device": "Not a Meshtastic device",
+      "invalid_node": "Invalid node",
+      "invalid_connection_type": "Invalid connection type"
+    },
+    "abort": {
+      "already_configured": "Meshtastic device is already configured"
     }
   },
   "options": {

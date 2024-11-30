@@ -12,8 +12,9 @@ from homeassistant.const import (
     CONF_TYPE,
     Platform,
 )
-from homeassistant.core import HomeAssistant
+from homeassistant.core import CALLBACK_TYPE, HomeAssistant
 from homeassistant.helpers import device_registry as dr
+from homeassistant.helpers.trigger import TriggerActionType, TriggerInfo
 from homeassistant.helpers.typing import ConfigType
 
 from custom_components.meshtastic import DOMAIN
@@ -30,23 +31,20 @@ TRIGGER_SCHEMA = DEVICE_TRIGGER_BASE_SCHEMA.extend(
 )
 
 
-async def async_validate_trigger_config(
-    hass: HomeAssistant, config: ConfigType
-) -> ConfigType:
+async def async_validate_trigger_config(hass: HomeAssistant, config: ConfigType) -> ConfigType:
     config = TRIGGER_SCHEMA(config)
 
     device_registry = dr.async_get(hass)
     device = device_registry.async_get(config[CONF_DEVICE_ID])
 
     if not device:
-        raise InvalidDeviceAutomationConfig(
-            f"Trigger invalid, device with ID {config[CONF_DEVICE_ID]} not found"
-        )
+        msg = f"Trigger invalid, device with ID {config[CONF_DEVICE_ID]} not found"
+        raise InvalidDeviceAutomationConfig(msg)
 
     return config
 
 
-async def async_get_triggers(hass, device_id):
+async def async_get_triggers(hass: HomeAssistant, device_id: str) -> list:
     device_registry = dr.async_get(hass)
     device = device_registry.async_get(device_id)
 
@@ -77,7 +75,9 @@ async def async_get_triggers(hass, device_id):
     return triggers
 
 
-async def async_attach_trigger(hass, config, action, trigger_info):
+async def async_attach_trigger(
+    hass: HomeAssistant, config: ConfigType, action: TriggerActionType, trigger_info: TriggerInfo
+) -> CALLBACK_TYPE:
     event_config = event_trigger.TRIGGER_SCHEMA(
         {
             event_trigger.CONF_PLATFORM: Platform.EVENT,
@@ -88,6 +88,4 @@ async def async_attach_trigger(hass, config, action, trigger_info):
             },
         }
     )
-    return await event_trigger.async_attach_trigger(
-        hass, event_config, action, trigger_info, platform_type=CONF_DEVICE
-    )
+    return await event_trigger.async_attach_trigger(hass, event_config, action, trigger_info, platform_type=CONF_DEVICE)

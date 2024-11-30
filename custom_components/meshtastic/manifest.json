@@ -1,12 +1,22 @@
 {
   "domain": "meshtastic",
   "name": "Meshtastic",
+  "after_dependencies": [
+        "bluetooth","bluetooth_adapters", "zeroconf"
+  ],
+  "bluetooth": [
+    {
+      "service_uuid": "6ba1b218-15a8-461f-9fa8-5dcae273eafd",
+      "connectable": true
+    }
+  ],
   "codeowners": ["@broglep"],
   "config_flow": true,
   "documentation": "https://github.com/broglep/homeassistant-meshtastic",
   "integration_type": "hub",
   "iot_class": "local_polling",
   "issue_tracker": "https://github.com/broglep/homeassitant-meshtastic/issues",
-  "requirements": ["meshtastic==2.5.4"],
-  "version": "0.0.1"
+  "requirements": ["meshtastic==2.5.5", "pyserial-asyncio==0.6"],
+  "version": "0.1.0",
+  "zeroconf": ["_meshtastic._tcp.local.", "_http._tcp.local."]
 }

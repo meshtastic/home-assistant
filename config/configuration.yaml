@@ -2,6 +2,8 @@
 #default_config:
 history:
 logbook:
+zeroconf:
+network:
 
 # https://www.home-assistant.io/integrations/homeassistant/
 homeassistant:
@@ -12,5 +14,8 @@ logger:
   default: info
   logs:
     custom_components.meshtastic: debug
+    homeassistant.components.bluetooth: debug
+    homeassistant.components.zeroconf: debug
+    homeassistant.components.network: debug
 
 automation: !include automations.yaml

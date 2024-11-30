@@ -8,15 +8,14 @@ https://github.com/broglep/homeassistant-meshtastic
 from __future__ import annotations
 
 import base64
-import dataclasses
 import datetime
 from collections import defaultdict
-from collections.abc import Awaitable, Callable, MutableMapping
 from copy import deepcopy
-from enum import StrEnum
+from typing import TYPE_CHECKING, Any, cast
 
 import voluptuous as vol
 from homeassistant import config_entries
+from homeassistant.config_entries import ConfigEntryState
 from homeassistant.const import (
     CONF_DEVICE_ID,
     CONF_HOST,
@@ -31,12 +30,10 @@ from homeassistant.core import (
     ServiceResponse,
     SupportsResponse,
 )
-from homeassistant.exceptions import ServiceValidationError
+from homeassistant.exceptions import ConfigEntryNotReady, ServiceValidationError
 from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers import entity_registry as er
-from homeassistant.helpers.device_registry import DeviceInfo
-from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.entity_component import EntityComponent
 from homeassistant.helpers.typing import UNDEFINED, ConfigType
 from homeassistant.loader import async_get_loaded_integration
@@ -50,12 +47,29 @@ from .api import (
     EVENT_MESHTASTIC_API_TEXT_MESSAGE,
     MeshtasticApiClient,
 )
-from .const import CONF_OPTION_FILTER_NODES, DOMAIN, LOGGER, SERVICE_SEND_TEXT
+from .const import (
+    CONF_CONNECTION_TCP_HOST,
+    CONF_CONNECTION_TCP_PORT,
+    CONF_CONNECTION_TYPE,
+    CONF_OPTION_FILTER_NODES,
+    CURRENT_CONFIG_VERSION_MAJOR,
+    CURRENT_CONFIG_VERSION_MINOR,
+    DOMAIN,
+    LOGGER,
+    SERVICE_SEND_TEXT,
+    ConnectionType,
+)
 from .coordinator import MeshtasticDataUpdateCoordinator
 from .data import MeshtasticConfigEntry, MeshtasticData
 from .device_trigger import TRIGGER_MESSAGE_RECEIVED, TRIGGER_MESSAGE_SENT
-from .entity import MeshtasticEntity
+from .entity import GatewayChannelEntity, GatewayEntity, MeshtasticCoordinatorEntity
 from .helpers import fetch_meshtastic_hardware_names
+
+if TYPE_CHECKING:
+    from collections.abc import Awaitable, Callable, Mapping, MutableMapping
+
+    from homeassistant.helpers.device_registry import DeviceRegistry
+    from homeassistant.helpers.entity import Entity
 
 PLATFORMS: list[Platform] = [
     Platform.SENSOR,
@@ -67,7 +81,7 @@ PLATFORM_SCHEMA = cv.PLATFORM_SCHEMA
 PLATFORM_SCHEMA_BASE = cv.PLATFORM_SCHEMA_BASE
 SCAN_INTERVAL = datetime.timedelta(hours=1)
 
-DATA_COMPONENT: HassKey[EntityComponent[MeshtasticEntity]] = HassKey(DOMAIN)
+DATA_COMPONENT: HassKey[EntityComponent[MeshtasticCoordinatorEntity]] = HassKey(DOMAIN)
 
 SERVICE_SEND_TEXT_SCHEMA = vol.Schema(
     {
@@ -79,14 +93,12 @@ SERVICE_SEND_TEXT_SCHEMA = vol.Schema(
 )
 
 _SEND_TEXT_CANT_HANDLE_RESPONSE = object()
-_service_send_text_handlers: dict[
-    str, Callable[[ServiceCall], Awaitable[ServiceResponse]]
-] = {}
-_remove_listeners = defaultdict(list)
+_service_send_text_handlers: dict[str, Callable[[ServiceCall], Awaitable[ServiceResponse]]] = {}
+_remove_listeners: MutableMapping[str, list[Callable[[], None]]] = defaultdict(list)
 
 
 async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
-    component = hass.data[DATA_COMPONENT] = EntityComponent[MeshtasticEntity](
+    component = hass.data[DATA_COMPONENT] = EntityComponent[MeshtasticCoordinatorEntity](
         LOGGER, DOMAIN, hass, SCAN_INTERVAL
     )
 
@@ -98,6 +110,9 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
             res = await _handle_send_text_handler(call)
             if res != _SEND_TEXT_CANT_HANDLE_RESPONSE:
                 return res
+
+        msg = "No gateway could handle the request"
+        raise ServiceValidationError(msg)
 
     hass.services.async_register(
         DOMAIN,
@@ -118,157 +133,15 @@ async def async_setup_entry(
     if coordinator.config_entry is None:
         coordinator.config_entry = entry
 
-    client = MeshtasticApiClient(
-        hostname=f"{entry.data[CONF_HOST]}:{entry.data[CONF_PORT]}",
-        hass=hass,
-        config_entry_id=entry.entry_id,
-    )
+    client = MeshtasticApiClient(entry.data, hass=hass, config_entry_id=entry.entry_id)
 
-    await client.connect()
+    try:
+        await client.connect()
+    except Exception as e:
+        raise ConfigEntryNotReady from e
+    await _setup_meshtastic_devices(hass, entry, client)
+    await _setup_meshtastic_entities(hass, entry, client)
     gateway_node = await client.async_get_own_node()
-    gateway_node_id = gateway_node["num"]
-    nodes = await client.async_get_all_nodes()
-    device_registry = dr.async_get(hass)
-
-    filter_nodes = entry.options.get(CONF_OPTION_FILTER_NODES, [])
-    filter_node_nums = [el["id"] for el in filter_nodes]
-
-    device_hardware_names = await fetch_meshtastic_hardware_names(hass)
-
-    for node_id, node in nodes.items():
-        if node_id in filter_node_nums:
-            mac_address = (
-                base64.b64decode(node["user"]["macaddr"]).hex(":")
-                if "macaddr" in node["user"]
-                else None
-            )
-
-            connections = set()
-            if mac_address:
-                connections.add((dr.CONNECTION_NETWORK_MAC, mac_address))
-            hops_away = node.get("hopsAway", 99)
-            snr = node.get("snr", 0)
-
-            existing_device = device_registry.async_get_device(
-                identifiers={(DOMAIN, node_id)}
-            )
-            if existing_device is not None and existing_device.config_entries != {
-                entry.entry_id
-            }:
-                # get other meshtastic connections
-                meshtastic_connections = [
-                    tuple(v.split("/"))
-                    for k, v in existing_device.connections
-                    if k == DOMAIN and not v.startswith(f"{gateway_node_id}/")
-                ]
-                if node_id == gateway_node_id:
-                    # add ourselves with highest prio so we don't get another via device
-                    meshtastic_connections.append((gateway_node_id, node_id, -1, 999))
-                else:
-                    meshtastic_connections.append(
-                        (gateway_node_id, node_id, hops_away, snr)
-                    )
-                try:
-                    sorted_connections = sorted(
-                        meshtastic_connections, key=lambda x: (int(x[2]), -float(x[3]))
-                    )
-                    closest_gateway = int(sorted_connections[0][0])
-                    via_device = (DOMAIN, closest_gateway)
-                except Exception:
-                    LOGGER.warning("Failed to find closest gateway", exc_info=True)
-            else:
-                via_device = (
-                    (DOMAIN, gateway_node["num"])
-                    if gateway_node["num"] != node_id
-                    else None
-                )
-
-                # existing_device.config_entries.s = {entry.entry_id}
-
-            # remove via_device when it is set to ourself
-            if (via_device is not None and via_device[1] == node_id) or (
-                gateway_node_id == node_id
-            ):
-                via_device = None
-
-            if existing_device:
-                connections.update(existing_device.connections)
-
-            # remove our own entry
-            connections = set(
-                (k, v)
-                for k, v in connections
-                if k != DOMAIN
-                or (k == DOMAIN and not v.startswith(f"{gateway_node_id}/"))
-            )
-            # add our own entry with updated data
-            if gateway_node_id != node_id:
-                connections.add(
-                    (DOMAIN, f"{gateway_node_id}/{node_id}/{hops_away}/{snr}")
-                )
-
-            d = device_registry.async_get_or_create(
-                config_entry_id=entry.entry_id,
-                identifiers={(DOMAIN, node_id)},
-                name=node["user"]["longName"],
-                model=device_hardware_names.get(node["user"]["hwModel"], None),
-                model_id=node["user"]["hwModel"],
-                serial_number=node["user"]["id"],
-                via_device=via_device,
-                sw_version=client._interface.metadata.firmware_version
-                if gateway_node["num"] == node_id and client._interface.metadata
-                else None,
-            )
-
-            device_registry.async_update_device(
-                d.id,
-                new_connections=connections,
-                via_device_id=None if via_device is None else UNDEFINED,
-            )
-
-        else:
-            device = device_registry.async_get_device(identifiers={(DOMAIN, node_id)})
-            # only clean up devices if they are exclusively from us
-            if device:
-                if device.config_entries == {entry.entry_id}:
-                    device_registry.async_remove_device(device.id)
-                else:
-                    device_registry.async_update_device(
-                        device.id, remove_config_entry_id=entry.entry_id
-                    )
-
-    local_config = await client.async_get_node_local_config()
-    module_config = await client.async_get_node_module_config()
-
-    gateway_node_entity = GatewayEntity(
-        config_entry_id=entry.entry_id,
-        node=gateway_node["num"],
-        long_name=gateway_node["user"]["longName"],
-        short_name=gateway_node["user"]["shortName"],
-        local_config=local_config,
-        module_config=module_config,
-    )
-
-    await _add_entities_for_entry(hass, [gateway_node_entity], entry)
-
-    channels = await client.async_get_channels()
-    channel_entities = [
-        GatewayChannelEntity(
-            config_entry_id=entry.entry_id,
-            gateway_node=gateway_node["num"],
-            gateway_entity=gateway_node_entity,
-            index=channel["index"],
-            name=channel["settings"]["name"],
-            primary=channel["role"] == "PRIMARY",
-            secondary=channel["role"] == "SECONDARY",
-            settings=channel["settings"],
-        )
-        for channel in channels
-        if channel["role"] != "DISABLED"
-    ]
-
-    await _add_entities_for_entry(hass, channel_entities, entry)
-
     entry.runtime_data = MeshtasticData(
         client=client,
         integration=async_get_loaded_integration(hass, entry.domain),
@@ -276,19 +149,32 @@ async def async_setup_entry(
         gateway_node=gateway_node,
     )
 
-    await coordinator.async_config_entry_first_refresh()
+    if entry.state == ConfigEntryState.SETUP_IN_PROGRESS:
+        await coordinator.async_config_entry_first_refresh()
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     entry.async_on_unload(entry.add_update_listener(async_reload_entry))
 
-    async def handle_send_text(call: ServiceCall) -> ServiceResponse:
+    await _setup_service_send_text_handler(hass, entry, client)
+    await _setup_client_api_text_message_listener(hass, entry)
 
-        def _convert_device_id_to_node_id(device_id):
+    return True
+
+
+async def _setup_service_send_text_handler(
+    hass: HomeAssistant, entry: MeshtasticConfigEntry, client: MeshtasticApiClient
+) -> None:
+    device_registry = dr.async_get(hass)
+    gateway_node = await client.async_get_own_node()
+
+    async def handle_send_text(call: ServiceCall) -> ServiceResponse | object:  # noqa: PLR0912
+        def _convert_device_id_to_node_id(device_id: str) -> int:
             device = device_registry.async_get(device_id)
             if device is None:
-                raise ServiceValidationError(f"No device found with id {from_id}")
+                msg = f"No device found with id {from_id}"
+                raise ServiceValidationError(msg)
 
-            return next((i[1] for i in device.identifiers if i[0] == DOMAIN), None)
+            return next((int(i[1]) for i in device.identifiers if i[0] == DOMAIN), None)
 
         if "from" in call.data:
             from_id = call.data["from"]
@@ -310,28 +196,29 @@ async def async_setup_entry(
                 elif to.isnumeric():
                     to = int(to)
                 elif to.isalnum():
-                    to = _convert_device_id_to_node_id(to)
+                    to = int(_convert_device_id_to_node_id(to))
             else:
                 to = BROADCAST_ADDR
 
-            await client.send_text(
-                text=call.data["text"], destination_id=to, want_ack=call.data["ack"]
-            )
+            await client.send_text(text=call.data["text"], destination_id=to, want_ack=call.data["ack"])
 
             if not call.return_response:
                 return None
-            return {"to": to}
+            return {"to": to}  # noqa: TRY300
         except Exception as e:
-            LOGGER.exception("Error sending text")
-            raise ServiceValidationError("Failed to send text") from e
+            LOGGER.warning("Error sending text", exc_info=True)
+            msg = "Failed to send text"
+            raise ServiceValidationError(msg) from e
 
     _service_send_text_handlers[entry.entry_id] = handle_send_text
 
+
+async def _setup_client_api_text_message_listener(hass: HomeAssistant, entry: MeshtasticConfigEntry) -> None:
+    device_registry = dr.async_get(hass)
+
     async def _on_text_message(event: Event) -> None:
         event_data = deepcopy(event.data)
-        config_entry_id = event_data.pop(
-            ATTR_EVENT_MESHTASTIC_API_CONFIG_ENTRY_ID, None
-        )
+        config_entry_id = event_data.pop(ATTR_EVENT_MESHTASTIC_API_CONFIG_ENTRY_ID, None)
         if config_entry_id != entry.entry_id:
             return
 
@@ -340,11 +227,9 @@ async def async_setup_entry(
             return
 
         from_node_id = data["from"]
-        from_device = device_registry.async_get_device(
-            identifiers={(DOMAIN, from_node_id)}
-        )
+        from_device = device_registry.async_get_device(identifiers={(DOMAIN, str(from_node_id))})
         to_node_id = data["to"]
-        to_device = device_registry.async_get_device(identifiers={(DOMAIN, to_node_id)})
+        to_device = device_registry.async_get_device(identifiers={(DOMAIN, str(to_node_id))})
 
         if from_device:
             hass.bus.async_fire(
@@ -366,26 +251,162 @@ async def async_setup_entry(
                 },
             )
 
-    _remove_listeners[entry.entry_id].append(
-        hass.bus.async_listen(EVENT_MESHTASTIC_API_TEXT_MESSAGE, _on_text_message)
+    _remove_listeners[entry.entry_id].append(hass.bus.async_listen(EVENT_MESHTASTIC_API_TEXT_MESSAGE, _on_text_message))
+
+
+async def _setup_meshtastic_devices(
+    hass: HomeAssistant, entry: MeshtasticConfigEntry, client: MeshtasticApiClient
+) -> None:
+    gateway_node = await client.async_get_own_node()
+    nodes = await client.async_get_all_nodes()
+    device_registry = dr.async_get(hass)
+    filter_nodes = entry.options.get(CONF_OPTION_FILTER_NODES, [])
+    filter_node_nums = [el["id"] for el in filter_nodes]
+    device_hardware_names = await fetch_meshtastic_hardware_names(hass)
+    for node_id, node in nodes.items():
+        if node_id in filter_node_nums:
+            await _setup_meshtastic_device(
+                client, device_hardware_names, device_registry, entry, gateway_node, node, node_id
+            )
+
+        else:
+            await _remove_meshtastic_device(device_registry, entry, node_id)
+    return gateway_node
+
+
+async def _remove_meshtastic_device(
+    device_registry: DeviceRegistry, entry: MeshtasticConfigEntry, node_id: int
+) -> None:
+    device = device_registry.async_get_device(identifiers={(DOMAIN, str(node_id))})
+    # only clean up devices if they are exclusively from us
+    if device:
+        if device.config_entries == {entry.entry_id}:
+            device_registry.async_remove_device(device.id)
+        else:
+            device_registry.async_update_device(device.id, remove_config_entry_id=entry.entry_id)
+
+
+async def _setup_meshtastic_device(  # noqa: PLR0913
+    client: MeshtasticApiClient,
+    device_hardware_names: Mapping[str, str],
+    device_registry: DeviceRegistry,
+    entry: MeshtasticConfigEntry,
+    gateway_node: Mapping[str, Any],
+    node: Mapping[str, Any],
+    node_id: int,
+) -> None:
+    gateway_node_id = cast(int, gateway_node["num"])
+    mac_address = base64.b64decode(node["user"]["macaddr"]).hex(":") if "macaddr" in node["user"] else None
+    connections = set()
+    if mac_address:
+        connections.add((dr.CONNECTION_NETWORK_MAC, mac_address))
+    hops_away = node.get("hopsAway", 99)
+    snr = node.get("snr", 0)
+    existing_device = device_registry.async_get_device(identifiers={(DOMAIN, str(node_id))})
+    via_device = None
+    if existing_device is not None and existing_device.config_entries != {entry.entry_id}:
+        # get other meshtastic connections
+
+        connection_parts = [
+            tuple(v.split("/"))
+            for k, v in existing_device.connections
+            if k == DOMAIN and not v.startswith(f"{gateway_node_id}/")
+        ]
+        meshtastic_connections = [
+            (int(source), int(target), int(hops), float(snr)) for source, target, hops, snr in connection_parts
+        ]
+        if node_id == gateway_node_id:
+            # add ourselves with highest prio so we don't get another via device
+            meshtastic_connections.append((gateway_node_id, node_id, -1, 999))
+        else:
+            meshtastic_connections.append((gateway_node_id, node_id, hops_away, snr))
+        try:
+            sorted_connections = sorted(meshtastic_connections, key=lambda x: (x[2], -x[3]))
+            closest_gateway = sorted_connections[0][0]
+            via_device = (DOMAIN, str(closest_gateway))
+        except Exception:  # noqa: BLE001
+            LOGGER.warning("Failed to find closest gateway", exc_info=True)
+    else:
+        via_device = (DOMAIN, str(gateway_node_id)) if gateway_node_id != node_id else None
+
+    # remove via_device when it is set to ourself
+    if (via_device is not None and int(via_device[1]) == node_id) or (gateway_node_id == node_id):
+        via_device = None
+
+    if existing_device:
+        connections.update(existing_device.connections)
+
+    # remove our own entry
+    connections = {
+        (k, v) for k, v in connections if k != DOMAIN or (k == DOMAIN and not v.startswith(f"{gateway_node_id}/"))
+    }
+
+    # add our own entry with updated data
+    if gateway_node_id != node_id:
+        connections.add((DOMAIN, f"{gateway_node_id}/{node_id}/{hops_away}/{snr}"))
+
+    d = device_registry.async_get_or_create(
+        config_entry_id=entry.entry_id,
+        identifiers={(DOMAIN, str(node_id))},
+        name=node["user"]["longName"],
+        model=device_hardware_names.get(node["user"]["hwModel"], None),
+        model_id=node["user"]["hwModel"],
+        serial_number=node["user"]["id"],
+        via_device=via_device,
+        sw_version=client.metadata.get("firmwareVersion")
+        if gateway_node["num"] == node_id and client.metadata
+        else None,
+    )
+    device_registry.async_update_device(
+        d.id,
+        new_connections=connections,
+        via_device_id=None if via_device is None else UNDEFINED,
     )
 
-    return True
+
+async def _setup_meshtastic_entities(
+    hass: HomeAssistant, entry: MeshtasticConfigEntry, client: MeshtasticApiClient
+) -> None:
+    gateway_node = await client.async_get_own_node()
+    local_config = await client.async_get_node_local_config()
+    module_config = await client.async_get_node_module_config()
+
+    gateway_node_entity = GatewayEntity(
+        config_entry_id=entry.entry_id,
+        node=gateway_node["num"],
+        long_name=gateway_node["user"]["longName"],
+        short_name=gateway_node["user"]["shortName"],
+        local_config=local_config,
+        module_config=module_config,
+    )
+    await _add_entities_for_entry(hass, [gateway_node_entity], entry)
+    channels = await client.async_get_channels()
+    channel_entities = [
+        GatewayChannelEntity(
+            config_entry_id=entry.entry_id,
+            gateway_node=gateway_node["num"],
+            gateway_entity=gateway_node_entity,
+            index=channel["index"],
+            name=channel["settings"]["name"],
+            primary=channel["role"] == "PRIMARY",
+            secondary=channel["role"] == "SECONDARY",
+            settings=channel["settings"],
+        )
+        for channel in channels
+        if channel["role"] != "DISABLED"
+    ]
+    await _add_entities_for_entry(hass, channel_entities, entry)
 
 
 async def async_unload_entry(
     hass: HomeAssistant,
     entry: MeshtasticConfigEntry,
 ) -> bool:
-    for entity in [
-        e
-        for e in hass.data[DATA_COMPONENT].entities
-        if e.registry_entry.config_entry_id == entry.entry_id
-    ]:
+    for entity in [e for e in hass.data[DATA_COMPONENT].entities if e.registry_entry.config_entry_id == entry.entry_id]:
         await hass.data[DATA_COMPONENT].async_remove_entity(entity.entity_id)
 
     if entry.runtime_data and entry.runtime_data.client:
-        entry.runtime_data.client.close()
+        await entry.runtime_data.client.disconnect()
 
     del _service_send_text_handlers[entry.entry_id]
 
@@ -405,9 +426,39 @@ async def async_reload_entry(
     await async_setup_entry(hass, entry)
 
 
-async def _add_entities_for_entry(
-    hass: HomeAssistant, entities: list[Entity], entry: MeshtasticConfigEntry
-):
+async def async_migrate_entry(hass: HomeAssistant, config_entry: MeshtasticConfigEntry) -> bool:
+    LOGGER.debug("Migrating configuration from version %s.%s", config_entry.version, config_entry.minor_version)
+
+    if config_entry.version > CURRENT_CONFIG_VERSION_MAJOR:
+        # This means the user has downgraded from a future version
+        return False
+
+    if config_entry.version == 1:
+        new_data = {**config_entry.data}
+        if config_entry.minor_version < 2:  # noqa: PLR2004
+            new_data.update(
+                {
+                    CONF_CONNECTION_TYPE: ConnectionType.TCP.value,
+                    CONF_CONNECTION_TCP_HOST: new_data.pop(CONF_HOST),
+                    CONF_CONNECTION_TCP_PORT: new_data.pop(CONF_PORT),
+                }
+            )
+
+        hass.config_entries.async_update_entry(
+            config_entry,
+            data=new_data,
+            minor_version=CURRENT_CONFIG_VERSION_MINOR,
+            version=CURRENT_CONFIG_VERSION_MAJOR,
+        )
+
+    LOGGER.debug(
+        "Migration to configuration version %s.%s successful", config_entry.version, config_entry.minor_version
+    )
+
+    return True
+
+
+async def _add_entities_for_entry(hass: HomeAssistant, entities: list[Entity], entry: MeshtasticConfigEntry) -> None:
     entity_registry = er.async_get(hass)
     device_registry = dr.async_get(hass)
 
@@ -416,145 +467,10 @@ async def _add_entities_for_entry(
     for e in entities:
         device_id = UNDEFINED
         if e.device_info:
-            device = device_registry.async_get_device(
-                identifiers=e.device_info["identifiers"]
-            )
+            device = device_registry.async_get_device(identifiers=e.device_info["identifiers"])
             if device:
                 device_id = device.id
         try:
-            entity_registry.async_update_entity(
-                e.entity_id, config_entry_id=entry.entry_id, device_id=device_id
-            )
-        except:
+            entity_registry.async_update_entity(e.entity_id, config_entry_id=entry.entry_id, device_id=device_id)
+        except:  # noqa: E722
             LOGGER.warning("Failed to update entity %s", e, exc_info=True)
-
-
-class MeshtasticDeviceClass(StrEnum):
-    GATEWAY = "gateway"
-    CHANNEL = "channel"
-
-
-class MeshtasticEntity(Entity):
-    _attr_device_class: MeshtasticDeviceClass
-
-    def __init__(
-        self,
-        config_entry_id: str,
-        node: int,
-        meshtastic_class: MeshtasticDeviceClass,
-        meshtastic_id: str = None,
-    ) -> None:
-        self._attr_meshtastic_class = meshtastic_class
-        self._attr_unique_id = f"{config_entry_id}_{meshtastic_class}_{node}"
-        if meshtastic_id is not None:
-            self._attr_unique_id += f"_{meshtastic_id}"
-        self._attr_device_info = DeviceInfo(identifiers={(DOMAIN, node)})
-        self._attr_device_class = meshtastic_class
-
-    @property
-    def suggested_object_id(self) -> str | None:
-        suggested_id = super().suggested_object_id
-        if suggested_id:
-            return f"{self._attr_device_class} {suggested_id}"
-        return f"{self._attr_device_class}"
-
-
-MESHTASTIC_CLASS_SCHEMA = vol.All(vol.Lower, vol.Coerce(MeshtasticDeviceClass))
-
-
-class GatewayEntity(MeshtasticEntity):
-    _attr_icon = "mdi:radio-handheld"
-
-    def __init__(
-        self,
-        config_entry_id: int,
-        node: int,
-        long_name: str,
-        short_name: str,
-        local_config: dict,
-        module_config: dict,
-    ) -> None:
-        super().__init__(config_entry_id, node, MeshtasticDeviceClass.GATEWAY, None)
-        self._local_config = local_config
-        self._module_config = module_config
-        self._short_name = short_name
-
-        self._attr_name = "Node"
-        self._attr_has_entity_name = True
-
-        def flatten(dictionary, parent_key="", separator="_"):
-            items = []
-            for key, value in dictionary.items():
-                new_key = parent_key + separator + key if parent_key else key
-                if isinstance(value, MutableMapping):
-                    items.extend(flatten(value, new_key, separator=separator).items())
-                else:
-                    items.append((new_key, value))
-            return dict(items)
-
-        attributes = {"config": local_config, "module": module_config}
-
-        self._attr_extra_state_attributes = flatten(attributes)
-        if self._attr_available:
-            self._attr_state = "Connected"
-        else:
-            self._attr_state = "Disconnected"
-
-    @property
-    def suggested_object_id(self) -> str | None:
-        return f"{self.device_class} {self._short_name}"
-
-
-class GatewayChannelEntity(MeshtasticEntity):
-    _attr_icon = "mdi:forum"
-
-    def __init__(
-        self,
-        config_entry_id: str,
-        gateway_node: int,
-        gateway_entity: GatewayEntity,
-        index: int,
-        name: str,
-        settings=dict,
-        primary: bool = False,
-        secondary: bool = False,
-    ) -> None:
-        super().__init__(
-            config_entry_id, gateway_node, MeshtasticDeviceClass.CHANNEL, index
-        )
-
-        self._index = index
-        self._attr_messages = []
-        self._settings = settings
-        self._gateway_suggested_id = gateway_entity.suggested_object_id
-
-        self._attr_unique_id = (
-            f"{config_entry_id}_{self.device_class}_{gateway_node}_{index}"
-        )
-
-        if name:
-            self._attr_has_entity_name = True
-            self._attr_name = name
-        elif primary:
-            self._attr_has_entity_name = True
-            self._attr_name = "Primary"
-        elif secondary:
-            self._attr_has_entity_name = True
-            self._attr_name = "Secondary"
-
-        self._attr_name = "Channel " + self._attr_name
-
-        self._attr_state = f"Channel #{index}"
-        self._attr_should_poll = False
-        self._attr_extra_state_attributes = {
-            "node": gateway_node,
-            "primary": primary,
-            "secondary": secondary,
-            "psk": self._settings["psk"],
-            "uplink_enabled": self._settings["uplinkEnabled"],
-            "downlink_enabled": self._settings["downlinkEnabled"],
-        }
-
-    @property
-    def suggested_object_id(self) -> str | None:
-        return f"{self._gateway_suggested_id} {self.name}"

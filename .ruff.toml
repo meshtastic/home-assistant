@@ -1,6 +1,7 @@
 # The contents of this file is based on https://github.com/home-assistant/core/blob/dev/pyproject.toml
 
 target-version = "py312"
+line-length = 120
 
 [lint]
 select = [
@@ -8,12 +9,17 @@ select = [
 ]
 
 ignore = [
-    "ANN101", # Missing type annotation for `self` in method
     "ANN401", # Dynamically typed expressions (typing.Any) are disallowed
     "D203", # no-blank-line-before-class (incompatible with formatter)
     "D212", # multi-line-summary-first-line (incompatible with formatter)
     "COM812", # incompatible with formatter
     "ISC001", # incompatible with formatter
+    "D100", # Missing docstring (currently no distributed library)
+    "D101", # Missing docstring (currently no distributed library)
+    "D102", # Missing docstring (currently no distributed library)
+    "D103", # Missing docstring (currently no distributed library)
+    "D105", # Missing docstring (currently no distributed library)
+    "D107", # Missing docstring (currently no distributed library)
 ]
 
 [lint.flake8-pytest-style]

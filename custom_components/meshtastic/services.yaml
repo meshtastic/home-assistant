@@ -22,4 +22,4 @@ send_text:
     ack:
       required: true
       selector:
-        boolean:
+        boolean: {}

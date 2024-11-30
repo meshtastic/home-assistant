@@ -19,29 +19,27 @@ from .api import (
 from .const import CONF_OPTION_FILTER_NODES, DOMAIN, LOGGER
 
 if TYPE_CHECKING:
+    from collections.abc import Mapping
+
     from homeassistant.core import Event, HomeAssistant, _DataT
 
     from .data import MeshtasticConfigEntry
 
 
-def meshtastic_api_event_callback(f):
+def meshtastic_api_event_callback(f):  # noqa: ANN001, ANN201
     @wraps(f)
-    async def wrapper(self, event: Event[_DataT]):
+    async def wrapper(self: MeshtasticDataUpdateCoordinator, event: Event[_DataT]):  # noqa: ANN202
         try:
             if self.config_entry is None:
                 return None
 
             event_data = deepcopy(event.data)
-            config_entry_id = event_data.pop(
-                ATTR_EVENT_MESHTASTIC_API_CONFIG_ENTRY_ID, None
-            )
+            config_entry_id = event_data.pop(ATTR_EVENT_MESHTASTIC_API_CONFIG_ENTRY_ID, None)
             if config_entry_id != self.config_entry.entry_id:
                 return None
 
             if not self.data:
-                self._logger.debug(
-                    "Received event but coordinator is not yet initialized"
-                )
+                self._logger.debug("Received event but coordinator is not yet initialized")
                 return None
 
             node_id = event_data.get(ATTR_EVENT_MESHTASTIC_API_NODE, None)
@@ -57,12 +55,11 @@ def meshtastic_api_event_callback(f):
             additional_event_data = {
                 k: v
                 for k, v in event_data.items()
-                if k
-                not in [ATTR_EVENT_MESHTASTIC_API_NODE, ATTR_EVENT_MESHTASTIC_API_DATA]
+                if k not in [ATTR_EVENT_MESHTASTIC_API_NODE, ATTR_EVENT_MESHTASTIC_API_DATA]
             }
 
             return await f(self, node_id, data, **additional_event_data)
-        except:
+        except:  # noqa: E722
             self._logger.warning("Failed to handle meshtastic api event", exc_info=True)
 
     return wrapper
@@ -82,16 +79,11 @@ class MeshtasticDataUpdateCoordinator(DataUpdateCoordinator):
             update_interval=timedelta(hours=1),
         )
         self._logger = LOGGER.getChild(self.__class__.__name__)
-
         self._remove_event_listeners = []
         self._remove_event_listeners.append(
-            hass.bus.async_listen(
-                EVENT_MESHTASTIC_API_NODE_UPDATED, self._api_node_updated
-            )
+            hass.bus.async_listen(EVENT_MESHTASTIC_API_NODE_UPDATED, self._api_node_updated)
         )
-        self._remove_event_listeners.append(
-            hass.bus.async_listen(EVENT_MESHTASTIC_API_TELEMETRY, self._api_telemetry)
-        )
+        self._remove_event_listeners.append(hass.bus.async_listen(EVENT_MESHTASTIC_API_TELEMETRY, self._api_telemetry))
 
     async def async_shutdown(self) -> None:
         await super().async_shutdown()
@@ -99,11 +91,11 @@ class MeshtasticDataUpdateCoordinator(DataUpdateCoordinator):
         for remove_listener in self._remove_event_listeners:
             try:
                 remove_listener()
-            except:
+            except:  # noqa: E722
                 self._logger.debug("Could not remove event listeners", exc_info=True)
 
     @meshtastic_api_event_callback
-    async def _api_node_updated(self, node_id, data, **kwargs) -> None:
+    async def _api_node_updated(self, node_id: int, data: Mapping[str, Any], **kwargs) -> None:  # noqa: ANN003, ARG002
         if self.data[node_id] != data:
             data = deepcopy(self.data)
             data[node_id] = data
@@ -112,11 +104,11 @@ class MeshtasticDataUpdateCoordinator(DataUpdateCoordinator):
     @meshtastic_api_event_callback
     async def _api_telemetry(
         self,
-        node_id,
-        data,
+        node_id: int,
+        data: Mapping[str, Any],
         *,
         telemetry_type: EventMeshtasticApiTelemetryType,
-        **kwargs,
+        **kwargs,  # noqa: ANN003, ARG002
     ) -> None:
         if telemetry_type == EventMeshtasticApiTelemetryType.DEVICE_METRICS:
             metric_type = "deviceMetrics"
@@ -133,16 +125,14 @@ class MeshtasticDataUpdateCoordinator(DataUpdateCoordinator):
         new_metrics = data
         existing_metrics = self.data[node_id].get(metric_type, None)
         if existing_metrics == new_metrics:
-            self._logger.debug(
-                "Received telemetry identical to existing metrics, ignoring event"
-            )
+            self._logger.debug("Received telemetry identical to existing metrics, ignoring event")
             return
 
         data = deepcopy(self.data)
         data[node_id][metric_type] = new_metrics
         self.async_set_updated_data(data)
 
-    async def _node_updated(self, event) -> None:
+    async def _node_updated(self, event: Event) -> None:
         if self.config_entry is None:
             return
 
@@ -171,18 +161,14 @@ class MeshtasticDataUpdateCoordinator(DataUpdateCoordinator):
             return None
 
         try:
-            node_infos = (
-                await self.config_entry.runtime_data.client.async_get_all_nodes()
-            )
+            node_infos = await self.config_entry.runtime_data.client.async_get_all_nodes()
 
             filter_nodes = self.config_entry.options.get(CONF_OPTION_FILTER_NODES, [])
             filter_node_nums = [el["id"] for el in filter_nodes]
-            nodes = {
-                node_num: node_info
+            return {
+                node_num: deepcopy(node_info)
                 for node_num, node_info in node_infos.items()
                 if node_num in filter_node_nums
             }
-
-            return nodes
         except MeshtasticApiClientError as exception:
             raise UpdateFailed(exception) from exception

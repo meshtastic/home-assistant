@@ -6,7 +6,6 @@ from typing import TYPE_CHECKING
 import homeassistant.helpers.config_validation as cv
 import voluptuous as vol
 from homeassistant import config_entries
-from homeassistant.const import CONF_HOST
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.exceptions import HomeAssistantError, IntegrationError
 from homeassistant.helpers.selector import (
@@ -15,23 +14,35 @@ from homeassistant.helpers.selector import (
     SelectSelectorConfig,
 )
 
-import meshtastic.tcp_interface
-
+from . import CURRENT_CONFIG_VERSION_MINOR
+from .aiomeshtastic import TcpConnection
 from .api import (
     MeshtasticApiClient,
 )
 from .const import (
+    CONF_CONNECTION_BLUETOOTH_ADDRESS,
+    CONF_CONNECTION_SERIAL_PORT,
+    CONF_CONNECTION_TCP_HOST,
+    CONF_CONNECTION_TCP_PORT,
+    CONF_CONNECTION_TYPE,
     CONF_OPTION_ADD_ANOTHER_NODE,
     CONF_OPTION_FILTER_NODES,
     CONF_OPTION_NODE,
-    CONF_PORT,
+    CURRENT_CONFIG_VERSION_MAJOR,
     DOMAIN,
     LOGGER,
+    ConnectionType,
 )
 
 if TYPE_CHECKING:
+    import asyncio
+    from collections.abc import Mapping
     from typing import Any
 
+    from habluetooth import BluetoothServiceInfo
+    from homeassistant.components import zeroconf
+    from homeassistant.components.zeroconf import ZeroconfServiceInfo
+    from homeassistant.config_entries import ConfigEntry, ConfigFlowResult
     from homeassistant.core import HomeAssistant
     from homeassistant.data_entry_flow import FlowResult
 
@@ -39,18 +50,30 @@ if TYPE_CHECKING:
 _LOGGER = LOGGER.getChild(__name__)
 
 
-def _step_user_data_schema_factory(
-    host="", port=meshtastic.tcp_interface.DEFAULT_TCP_PORT
-):
+def _step_user_data_connection_tcp_schema_factory(host: str = "", port: int | None = None) -> vol.Schema:
     return vol.Schema(
         {
-            vol.Required(CONF_HOST, default=host): str,
-            vol.Required(CONF_PORT, default=port): int,
+            vol.Required(CONF_CONNECTION_TCP_HOST, default=host): cv.string,
+            vol.Required(CONF_CONNECTION_TCP_PORT, default=port or TcpConnection.DEFAULT_TCP_PORT): cv.positive_int,
         }
     )
 
 
-STEP_USER_DATA_SCHEMA = _step_user_data_schema_factory()
+def _step_user_data_connection_bluetooth_schema_factory(address: str = "") -> vol.Schema:
+    return vol.Schema(
+        {
+            vol.Required(CONF_CONNECTION_BLUETOOTH_ADDRESS, default=address): cv.string,
+        }
+    )
+
+
+def _step_user_data_connection_serial_schema_factory(device: str = "") -> vol.Schema:
+    return vol.Schema(
+        {
+            vol.Required(CONF_CONNECTION_SERIAL_PORT, default=device): cv.string,
+        }
+    )
+
 
 NODE_SCHEMA = vol.Schema(
     {
@@ -61,22 +84,25 @@ NODE_SCHEMA = vol.Schema(
 
 
 def _build_add_node_schema(
-    options: dict[str, Any], nodes: dict[int, Any], node_selection_required=True
-):
+    options: dict[str, Any],
+    nodes: dict[int, Any],
+    node_selection_required: bool = True,  # noqa: FBT001, FBT002
+) -> vol.Schema:
     already_selected_node_nums = [el["id"] for el in options[CONF_OPTION_FILTER_NODES]]
     selectable_nodes = {
-        node_id: node_info
-        for node_id, node_info in nodes.items()
-        if node_id not in already_selected_node_nums
+        node_id: node_info for node_id, node_info in nodes.items() if node_id not in already_selected_node_nums
     }
     if not selectable_nodes:
         return vol.Schema({})
 
     selector_options = [
-        SelectOptionDict(value=str(node_id), label=node_info["user"]["longName"])
+        SelectOptionDict(
+            value=str(node_id),
+            label=f"{node_info["user"]["longName"]} ({node_info["user"]["id"]})",
+        )
         for node_id, node_info in sorted(
             selectable_nodes.items(),
-            key=lambda el: el[1]["isFavorite"] if "isFavorite" in el[1] else False,
+            key=lambda el: el[1].get("isFavorite", False),
             reverse=True,
         )
     ]
@@ -85,92 +111,238 @@ def _build_add_node_schema(
         {
             vol.Required(CONF_OPTION_NODE)
             if node_selection_required
-            else vol.Optional(CONF_OPTION_NODE): SelectSelector(
-                SelectSelectorConfig(options=selector_options)
-            ),
+            else vol.Optional(CONF_OPTION_NODE): SelectSelector(SelectSelectorConfig(options=selector_options)),
             vol.Optional(CONF_OPTION_ADD_ANOTHER_NODE): cv.boolean,
         }
     )
 
 
-async def validate_input_for_device(
-    hass: HomeAssistant, data: dict[str, Any]
-) -> tuple[dict[str, Any], dict[str, Any]]:
-    """Validate the user input allows us to connect."""
-    client = MeshtasticApiClient(
-        hostname=f"{data[CONF_HOST]}:{data[CONF_PORT]}", hass=hass, config_entry_id=None
-    )
-
+async def validate_input_for_connection(
+    hass: HomeAssistant, data: dict[str, Any], *, no_nodes: bool = False
+) -> tuple[Mapping[str, Any], Mapping[int, Mapping[str, Any]]]:
     try:
-        await client.connect()
-        gateway_node = await client.async_get_own_node()
-        nodes = await client.async_get_all_nodes()
-        return gateway_node, nodes
+        async with MeshtasticApiClient(
+            data,
+            hass=hass,
+            config_entry_id=None,
+            no_nodes=no_nodes,
+        ) as client:
+            gateway_node = await client.async_get_own_node()
+            nodes = await client.async_get_all_nodes()
+            return gateway_node, nodes
     except IntegrationError as e:
-        _LOGGER.error("Failed to connect to meshtastic device")
-        raise CannotConnect from e
+        _LOGGER.warning("Failed to connect to meshtastic device", exc_info=True)
+        raise CannotConnectError from e
 
 
 class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
-    """Handle a config flow for Resol."""
+    VERSION = CURRENT_CONFIG_VERSION_MAJOR
+    MINOR_VERSION = CURRENT_CONFIG_VERSION_MINOR
 
-    VERSION = 1
+    def __init__(self) -> None:
+        self._bluetooth_discovery_info: BluetoothServiceInfo | None = None
+        self._zeroconf_discovery_info: ZeroconfServiceInfo | None = None
+        self.user_input_from_step_user: dict = None
+        self.data = {}
+        self.options = {}
 
-    # Make sure user input data is passed from one step to the next using user_input_from_step_user
-    def __init__(self):
-        self.user_input_from_step_user = None
+        self._load_nodes_task: asyncio.Task | None = None
 
-    # This is step 1 for the host/port/user/pass function.
+    async def _handle_connection_user_input(
+        self, errors: dict[str, str], user_input: dict[str, Any] | None = None, *, no_full_load: bool = False
+    ) -> ConfigFlowResult | None:
+        try:
+            data = dict(self.data)
+            data.update(user_input)
+            gateway_node, nodes = await validate_input_for_connection(self.hass, data, no_nodes=no_full_load)
+        except CannotConnectError:
+            errors["base"] = "cannot_connect"
+        except:  # noqa: E722
+            _LOGGER.warning("Unexpected exception", exc_info=True)
+            errors["base"] = "unknown"
+        else:
+            # Checks that the device is actually unique, otherwise abort
+            await self.async_set_unique_id(str(gateway_node["num"]))
+            self._abort_if_unique_id_configured(updates=user_input)
+
+            self.gateway_node = gateway_node
+            self.nodes = nodes
+            self.data.update(user_input)
+            self.options = {CONF_OPTION_FILTER_NODES: []}
+
+            # Now call the second step but set user_input to None for the first time to force data entry in step 2
+            return await self.async_step_node(user_input=None, load_nodes=no_full_load)
+
+        return None
+
     async def async_step_user(
-        self, user_input: dict[str, Any] | None = None
+        self,
+        user_input: dict[str, Any] | None = None,  # noqa: ARG002
     ) -> FlowResult:
-        """Handle the initial step."""
+        return self.async_show_menu(step_id="user", menu_options=["manual_tcp", "manual_bluetooth", "manual_serial"])
+
+    async def async_step_manual_tcp(self, user_input: dict[str, Any] | None = None) -> FlowResult:
+        self.data[CONF_CONNECTION_TYPE] = ConnectionType.TCP.value
         errors: dict[str, str] = {}
         if user_input is not None:
-            try:
-                gateway_node, nodes = await validate_input_for_device(
-                    self.hass, user_input
-                )
-            except CannotConnect:
-                errors["base"] = "cannot_connect"
-            except Exception:
-                _LOGGER.exception("Unexpected exception")
-                errors["base"] = "unknown"
-            else:
-                # Checks that the device is actually unique, otherwise abort
-                await self.async_set_unique_id(str(gateway_node["num"]))
-                self._abort_if_unique_id_configured(
-                    updates={
-                        CONF_HOST: user_input[CONF_HOST],
-                        CONF_PORT: user_input[CONF_PORT],
-                    }
-                )
-
-                # Before creating the entry in the config_entry registry, go to step 2 for the options
-                # However, make sure the steps from the user input are passed on to the next step
-                self.user_input_from_step_user = user_input
-                self.gateway_node = gateway_node
-                self.nodes = nodes
-                self.data = user_input
-                self.options = {CONF_OPTION_FILTER_NODES: []}
-
-                # Now call the second step but set user_input to None for the first time to force data entry in step 2
-                return await self.async_step_node(user_input=None)
+            res = await self._handle_connection_user_input(errors, user_input)
+            if res is not None:
+                return res
 
         # Show the form for step 1 with the user/host/pass as defined in STEP_USER_DATA_SCHEMA
         return self.async_show_form(
-            step_id="user", data_schema=STEP_USER_DATA_SCHEMA, errors=errors
+            step_id="manual_tcp",
+            data_schema=_step_user_data_connection_tcp_schema_factory(
+                self.data.get(CONF_CONNECTION_TCP_HOST), self.data.get(CONF_CONNECTION_TCP_PORT)
+            ),
+            errors=errors,
         )
 
-    async def async_step_node(self, user_input: dict[str, Any] | None = None):
-        """Second step in config flow to add a repo to watch."""
+    async def async_step_manual_bluetooth(self, user_input: dict[str, Any] | None = None) -> FlowResult:
+        self.data[CONF_CONNECTION_TYPE] = ConnectionType.BLUETOOTH.value
         errors: dict[str, str] = {}
         if user_input is not None:
-            try:
-                node_id = int(user_input[CONF_OPTION_NODE])
-                if node_id not in self.nodes:
-                    raise ValueError("Unknown node")
-            except ValueError:
+            res = await self._handle_connection_user_input(errors, user_input)
+            if res is not None:
+                return res
+
+        return self.async_show_form(
+            step_id="manual_bluetooth",
+            data_schema=_step_user_data_connection_bluetooth_schema_factory(
+                self.data.get(CONF_CONNECTION_BLUETOOTH_ADDRESS)
+            ),
+            errors=errors,
+        )
+
+    async def async_step_manual_serial(self, user_input: dict[str, Any] | None = None) -> FlowResult:
+        self.data[CONF_CONNECTION_TYPE] = ConnectionType.SERIAL.value
+        errors: dict[str, str] = {}
+        if user_input is not None:
+            res = await self._handle_connection_user_input(errors, user_input)
+            if res is not None:
+                return res
+
+        return self.async_show_form(
+            step_id="manual_serial",
+            data_schema=_step_user_data_connection_serial_schema_factory(self.data.get(CONF_CONNECTION_SERIAL_PORT)),
+            errors=errors,
+        )
+
+    async def async_step_bluetooth(self, discovery_info: BluetoothServiceInfo) -> ConfigFlowResult:
+        self._bluetooth_discovery_info = discovery_info
+
+        self.data = {
+            CONF_CONNECTION_TYPE: ConnectionType.BLUETOOTH.value,
+            CONF_CONNECTION_BLUETOOTH_ADDRESS: self._bluetooth_discovery_info.address,
+        }
+
+        all_entries = self.hass.config_entries.async_entries(DOMAIN, include_disabled=True, include_ignore=True)
+        matching_entry = next(
+            (
+                c
+                for c in all_entries
+                if c.data.get(CONF_CONNECTION_TYPE) == self.data[CONF_CONNECTION_TYPE]
+                and c.data.get(CONF_CONNECTION_BLUETOOTH_ADDRESS) == self.data[CONF_CONNECTION_BLUETOOTH_ADDRESS]
+            ),
+            None,
+        )
+        if matching_entry:
+            # extract unique id from existing config entry (so that we don't need to connect to node to get node id
+            # and might be interrupting the connection)
+            await self.async_set_unique_id(matching_entry.unique_id)
+
+        self._abort_if_unique_id_configured()
+
+        return await self.async_step_discovery_bluetooth_confirm()
+
+    async def async_step_discovery_bluetooth_confirm(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        title = f"{self._bluetooth_discovery_info.name} ({self._bluetooth_discovery_info.address})"
+        errors: dict[str, str] = {}
+
+        self.context["title_placeholders"] = {
+            "name": title,
+        }
+
+        if user_input is not None:
+            res = await self._handle_connection_user_input(errors, user_input)
+            if res is not None:
+                return res
+
+        return self.async_show_form(
+            step_id="discovery_bluetooth_confirm",
+            data_schema=_step_user_data_connection_bluetooth_schema_factory(
+                self.data.get(CONF_CONNECTION_BLUETOOTH_ADDRESS)
+            ),
+            description_placeholders=self.context["title_placeholders"],
+            errors=errors,
+        )
+
+    async def async_step_zeroconf(self, discovery_info: zeroconf.ZeroconfServiceInfo) -> ConfigFlowResult:
+        self._zeroconf_discovery_info = discovery_info
+        if discovery_info.type == "_http._tcp.local." and discovery_info.name != "Meshtastic._http._tcp.local.":
+            return self.async_abort(reason="not_meshtastic_device")
+
+        if discovery_info.type == "_meshtastic._tcp.local.":
+            port = discovery_info.port or TcpConnection.DEFAULT_TCP_PORT
+        else:
+            port = TcpConnection.DEFAULT_TCP_PORT
+
+        self.data = {
+            CONF_CONNECTION_TYPE: ConnectionType.TCP.value,
+            CONF_CONNECTION_TCP_HOST: discovery_info.host,
+            CONF_CONNECTION_TCP_PORT: port,
+        }
+
+        all_entries = self.hass.config_entries.async_entries(DOMAIN, include_disabled=True, include_ignore=True)
+        matching_entry = next(
+            (
+                c
+                for c in all_entries
+                if c.data.get(CONF_CONNECTION_TYPE) == self.data[CONF_CONNECTION_TYPE]
+                and c.data.get(CONF_CONNECTION_TCP_HOST) == self.data[CONF_CONNECTION_TCP_HOST]
+            ),
+            None,
+        )
+        if matching_entry:
+            # extract unique id from existing config entry (so that we don't need to connect to node to get node id
+            # and might be interrupting the connection)
+            await self.async_set_unique_id(matching_entry.unique_id)
+
+        self._abort_if_unique_id_configured()
+
+        return await self.async_step_discovery_zeroconf_confirm()
+
+    async def async_step_discovery_zeroconf_confirm(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
+        title = self._zeroconf_discovery_info.host
+        errors: dict[str, str] = {}
+
+        self.context["title_placeholders"] = {
+            "name": title,
+        }
+
+        if user_input is not None:
+            res = await self._handle_connection_user_input(errors, user_input)
+            if res is not None:
+                return res
+
+        return self.async_show_form(
+            step_id="discovery_zeroconf_confirm",
+            data_schema=_step_user_data_connection_tcp_schema_factory(
+                host=self.data.get(CONF_CONNECTION_TCP_HOST, ""),
+                port=self.data.get(CONF_CONNECTION_TCP_PORT, None),
+            ),
+            description_placeholders=self.context["title_placeholders"],
+        )
+
+    async def async_step_node(
+        self, user_input: dict[str, Any] | None = None, *, load_nodes: bool = False
+    ) -> FlowResult:
+        errors: dict[str, str] = {}
+        if user_input is not None:
+            node_id = int(user_input[CONF_OPTION_NODE])
+            if node_id not in self.nodes:
                 errors["base"] = "invalid_node"
 
             if not errors:
@@ -182,91 +354,57 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 )
                 if user_input.get(CONF_OPTION_ADD_ANOTHER_NODE, False):
                     return await self.async_step_node()
+
                 return self.async_create_entry(
-                    title=self.gateway_node["user"]["longName"],
-                    data=self.data,
-                    options=self.options,
+                    title=self.gateway_node["user"]["longName"], data=self.data, options=self.options
                 )
+        elif load_nodes:
+            _, self.nodes = await validate_input_for_connection(self.hass, self.data, no_nodes=False)
 
         schema = _build_add_node_schema(self.options, self.nodes)
         return self.async_show_form(step_id="node", data_schema=schema, errors=errors)
 
     @staticmethod
     @callback
-    def async_get_options_flow(config_entry):
-        """Get the options flow for this handler."""
+    def async_get_options_flow(config_entry: ConfigEntry) -> OptionsFlowHandler:
         return OptionsFlowHandler(config_entry)
 
-    async def async_step_reconfigure(self, user_input: dict[str, Any] | None = None):
-        """Add reconfigure step to allow to reconfigure a config entry."""
-        errors: dict[str, str] = {}
-        if user_input is not None:
-            try:
-                # Validate the user input whilst setting up integration or adding new devices.
-                gateway_node, nodes = await validate_input_for_device(
-                    self.hass, user_input
-                )
-            except CannotConnect:
-                errors["base"] = "cannot_connect"
-            except Exception:
-                _LOGGER.exception("Unexpected exception")
-                errors["base"] = "unknown"
-            else:
-                await self.async_set_unique_id(str(gateway_node["num"]))
-
-                self.gateway_node = gateway_node
-                self.nodes = nodes
-                self.data = user_input
-                self.options = {CONF_OPTION_FILTER_NODES: []}
-
-            if not errors:
-                return await self.async_step_node(user_input=None)
-                # return self.hass.config_entries.async_update_entry(self._get_reconfigure_entry(), data=self.data)
-                # return self.async_create_entry(title=self.gateway_node['user']['longName'], data=self.data, options=self.options)
-        else:
-            data_schema = STEP_USER_DATA_SCHEMA
-            config_entry = self.hass.config_entries.async_get_entry(
-                self.context.get("entry_id", None)
-            )
-            if config_entry:
-                data_schema = _step_user_data_schema_factory(
-                    config_entry.data.get(CONF_HOST, ""),
-                    config_entry.data.get(
-                        CONF_PORT, meshtastic.tcp_interface.DEFAULT_TCP_PORT
-                    ),
-                )
-
-            return self.async_show_form(
-                step_id="reconfigure", data_schema=data_schema, errors=errors
-            )
+    async def async_step_reconfigure(self, user_input: dict[str, Any] | None = None) -> FlowResult:  # noqa: ARG002
+        config_entry = self.hass.config_entries.async_get_entry(self.context.get("entry_id"))
+        self.data.update(config_entry.data)
+        connection_type = config_entry.data[CONF_CONNECTION_TYPE]
+        if connection_type == ConnectionType.TCP.value:
+            return await self.async_step_manual_tcp()
+        if connection_type == ConnectionType.BLUETOOTH.value:
+            return await self.async_step_manual_bluetooth()
+        if connection_type == ConnectionType.SERIAL.value:
+            return await self.async_step_manual_serial()
+        return self.async_abort(reason="invalid_connection_type")
 
 
-class CannotConnect(HomeAssistantError):
-    """Error to indicate we cannot connect."""
+class CannotConnectError(HomeAssistantError):
+    pass
 
 
 class OptionsFlowHandler(config_entries.OptionsFlow):
-    """Handles options flow for the component."""
-
     def __init__(self, config_entry: config_entries.ConfigEntry) -> None:
         self.config_entry = config_entry
         self.options = {}
         self.nodes = None
 
-    async def async_step_init(
-        self, user_input: dict[str, Any] = None
-    ) -> dict[str, Any]:
-        """Manage the options for the custom component."""
+    async def async_step_init(self, user_input: dict[str, Any] | None = None) -> dict[str, Any]:
         errors: dict[str, str] = {}
+
+        if self.config_entry.runtime_data and self.config_entry.runtime_data.client:
+            self.nodes = await self.config_entry.runtime_data.client.async_get_all_nodes()
+
         if self.nodes is None:
             try:
-                _, self.nodes = await validate_input_for_device(
-                    self.hass, self.config_entry.data
-                )
-            except CannotConnect:
+                _, self.nodes = await validate_input_for_connection(self.hass, self.config_entry.data)
+            except CannotConnectError:
                 errors["base"] = "cannot_connect"
-            except Exception:
-                _LOGGER.exception("Unexpected exception")
+            except:  # noqa: E722
+                _LOGGER.warning("Unexpected exception", exc_info=True)
                 errors["base"] = "unknown"
 
         if errors:
@@ -289,49 +427,39 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                 if str(node_id) not in user_input[CONF_OPTION_FILTER_NODES]
             ]
             for node_id in removed_node_ids:
-                updated_filter_node_option = [
-                    e for e in updated_filter_node_option if e["id"] != node_id
-                ]
+                updated_filter_node_option = [e for e in updated_filter_node_option if e["id"] != node_id]
 
             if user_input.get(CONF_OPTION_NODE):
                 # Add the new node
                 updated_filter_node_option.append(
                     {
                         "id": int(user_input[CONF_OPTION_NODE]),
-                        "name": self.nodes[int(user_input[CONF_OPTION_NODE])]["user"][
-                            "longName"
-                        ],
+                        "name": self.nodes[int(user_input[CONF_OPTION_NODE])]["user"]["longName"],
                     }
                 )
 
             if user_input.get(CONF_OPTION_ADD_ANOTHER_NODE, False):
                 self.options[CONF_OPTION_FILTER_NODES] = updated_filter_node_option
                 return await self.async_step_init()
-            else:
-                return self.async_create_entry(
-                    title="",
-                    data={CONF_OPTION_FILTER_NODES: updated_filter_node_option},
-                )
+            return self.async_create_entry(
+                title="",
+                data={CONF_OPTION_FILTER_NODES: updated_filter_node_option},
+            )
 
-        else:
-            selected_nodes = {
-                str(node_id): all_nodes.get(str(node_id), f"Unknown (id: {node_id})")
-                for node_id in already_selected_node_ids
+        selected_nodes = {
+            str(node_id): all_nodes.get(str(node_id), f"Unknown (id: {node_id})")
+            for node_id in already_selected_node_ids
+        }
+        options_schema = vol.Schema(
+            {
+                vol.Required(CONF_OPTION_FILTER_NODES, default=list(selected_nodes.keys())): cv.multi_select(
+                    selected_nodes
+                ),
+                **_build_add_node_schema(
+                    self.options if CONF_OPTION_FILTER_NODES in self.options else self.config_entry.options,
+                    self.nodes,
+                    node_selection_required=False,
+                ).schema,
             }
-            options_schema = vol.Schema(
-                {
-                    vol.Required(
-                        CONF_OPTION_FILTER_NODES, default=list(selected_nodes.keys())
-                    ): cv.multi_select(selected_nodes),
-                    **_build_add_node_schema(
-                        self.options
-                        if CONF_OPTION_FILTER_NODES in self.options
-                        else self.config_entry.options,
-                        self.nodes,
-                        node_selection_required=False,
-                    ).schema,
-                }
-            )
-            return self.async_show_form(
-                step_id="init", data_schema=options_schema, errors=errors
-            )
+        )
+        return self.async_show_form(step_id="init", data_schema=options_schema, errors=errors)
