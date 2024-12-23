@@ -3,6 +3,6 @@ homeassistant==2024.11.0
 pip>=21.3.1
 ruff==0.8.3
 
-meshtastic~=2.5.5
+meshtastic~=2.5.7
 bleak~=0.22.3
 pyserial-asyncio~=0.6
