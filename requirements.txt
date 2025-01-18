@@ -1,7 +1,7 @@
 colorlog==6.9.0
 homeassistant==2024.11.0
 pip>=21.3.1
-ruff==0.9.1
+ruff==0.9.2
 
 meshtastic~=2.5.10
 bleak~=0.22.3
