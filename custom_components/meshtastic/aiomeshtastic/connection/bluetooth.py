@@ -82,7 +82,14 @@ class BluetoothConnection(ClientApiConnection):
         self._ble_log = self._ble_meshtastic_service.get_characteristic(BluetoothConnection.BTM_CHARACTERISTIC_LOG_UUID)
 
     async def _disconnect(self) -> None:
-        await self._bleak_client.disconnect()
+        try:
+            await self._bleak_client.unpair()
+        except:
+            self._logger.debug("Unpairing failed", exc_info=True)
+        try:
+            await self._bleak_client.disconnect()
+        except:
+            self._logger.debug("Disconnecting failed", exc_info=True)
 
     @property
     def is_connected(self) -> bool:
