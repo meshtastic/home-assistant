@@ -112,14 +112,25 @@ class BluetoothConnection(ClientApiConnection):
                 self._logger.debug("Duplicate packet notification: %s", num)
 
         try:
-            await self._bleak_client.start_notify(self._ble_from_num, notification_handler)
+            try:
+                await asyncio.wait_for(self._bleak_client.stop_notify(self._ble_from_num), timeout=10)
+            except:
+                self._logger.debug("Stop notify failed", exc_info=True)
+
+            try:
+                await asyncio.wait_for(self._bleak_client.start_notify(self._ble_from_num, notification_handler), timeout=10)
+            except:
+                self._logger.debug("Start notify failed", exc_info=True)
+
             while True:
                 packet = await self._bleak_client.read_gatt_char(self._ble_from_radio)
                 if not isinstance(packet, bytes):
                     packet = bytes(packet)
                 if packet == b"":
                     # no more packets available, waiting for notification
+                    self._logger.debug("_packet_stream: No more packets available, waiting for notification")
                     await packet_num_queue.get()
+                    self._logger.debug("_packet_stream: Continue reading")
                     continue
 
                 from_radio = mesh_pb2.FromRadio()
