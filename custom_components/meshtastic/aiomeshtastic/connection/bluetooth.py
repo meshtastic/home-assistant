@@ -83,10 +83,6 @@ class BluetoothConnection(ClientApiConnection):
 
     async def _disconnect(self) -> None:
         try:
-            await self._bleak_client.unpair()
-        except:
-            self._logger.debug("Unpairing failed", exc_info=True)
-        try:
             await self._bleak_client.disconnect()
         except:
             self._logger.debug("Disconnecting failed", exc_info=True)
@@ -97,7 +93,9 @@ class BluetoothConnection(ClientApiConnection):
 
     async def _packet_stream(self) -> AsyncGenerator[mesh_pb2.FromRadio, Any]:
         if not self.is_connected:
+            self._logger.debug("_packet_stream: Not connected")
             return
+        self._logger.debug("_packet_stream: start")
         packet_num_queue = asyncio.Queue()
 
         def notification_handler(_: BleakGATTCharacteristic, data: bytearray) -> None:
@@ -123,6 +121,7 @@ class BluetoothConnection(ClientApiConnection):
                 self._logger.debug("Start notify failed", exc_info=True)
 
             while True:
+                self._logger.debug("_packet_stream: Reading from bluetooth radio")
                 packet = await self._bleak_client.read_gatt_char(self._ble_from_radio)
                 if not isinstance(packet, bytes):
                     packet = bytes(packet)
@@ -141,6 +140,7 @@ class BluetoothConnection(ClientApiConnection):
                 except message.DecodeError:
                     self._logger.warning("Error while parsing FromRadio bytes %s", packet, exc_info=True)
         except bleak.BleakError as e:
+            self._logger.debug("_packet_stream: bleak error", exc_info=True)
             raise BluetoothConnectionError from e
         finally:
             with suppress(bleak.BleakError):
