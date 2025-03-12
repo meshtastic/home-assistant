@@ -162,7 +162,8 @@ async def async_register_gateway(hass: HomeAssistant, entry: MeshtasticConfigEnt
 
 
 async def async_unregister_gateway(hass: HomeAssistant, entry: MeshtasticConfigEntry) -> None:
-    del _service_handlers[entry.entry_id]
+    if entry.entry_id in _service_handlers:
+        del _service_handlers[entry.entry_id]
 
     if not _service_handlers:
         await async_remove_services(hass)
