@@ -102,6 +102,20 @@ async def async_setup_meshtastic_web(hass: HomeAssistant) -> bool:
         return True
 
 
+async def async_unload_meshtastic_web(hass: HomeAssistant) -> bool:
+    if not hass.data[DOMAIN].config.get("meshtastic_web_loaded", False):
+        return True
+
+    try:
+        await frontend.async_unregister_frontend(hass)
+        hass.data[DOMAIN].config["meshtastic_web_loaded"] = False
+    except:  # noqa: E722
+        LOGGER.warning("Failed to unload frontend", exc_info=True)
+        return False
+    else:
+        return True
+
+
 async def async_setup_entry(
     hass: HomeAssistant,
     entry: MeshtasticConfigEntry,
@@ -332,6 +346,17 @@ async def async_unload_entry(
 
         for remove_listener in _remove_listeners.pop(entry.entry_id, []):
             remove_listener()
+
+        active_entries = hass.config_entries.async_entries(DOMAIN, include_ignore=False, include_disabled=False)
+        any_web_client_enabled = any(
+            e.options.get(CONF_OPTION_WEB_CLIENT, {}).get(
+                CONF_OPTION_WEB_CLIENT_ENABLE, CONF_OPTION_WEB_CLIENT_ENABLE_DEFAULT
+            )
+            for e in active_entries
+        )
+
+        if not any_web_client_enabled:
+            await async_unload_meshtastic_web(hass)
 
     return unload_ok
 

@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 
 from homeassistant.components.frontend import (
     async_register_built_in_panel,
+    async_remove_panel,
 )
 from homeassistant.components.http import StaticPathConfig
 
@@ -41,4 +42,12 @@ async def async_register_frontend(hass: HomeAssistant) -> None:
                 }
             },
             require_admin=True,
+        )
+
+
+async def async_unregister_frontend(hass: HomeAssistant) -> None:
+    if DOMAIN in hass.data.get("frontend_panels", {}):
+        async_remove_panel(
+            hass,
+            frontend_url_path=DOMAIN,
         )
