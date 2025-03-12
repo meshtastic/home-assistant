@@ -4,6 +4,7 @@
 [![License][license-shield]](LICENSE)
 
 [![hacs](https://img.shields.io/badge/HACS-Custom-orange.svg?style=for-the-badge)](https://hacs.xyz/docs/faq/custom_repositories)
+[![HA Analytics](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fanalytics.home-assistant.io%2Fcustom_integrations.json&query=%24.meshtastic.total&style=for-the-badge&label=Active%20Installations&color=red)](https://buymeacoffee.com/broglep)
 
 
 _Home Assistant Integration for [Meshtastic](https://www.meshtastic.org)._
