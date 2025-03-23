@@ -3,7 +3,7 @@ import contextlib
 import datetime
 from collections import defaultdict
 from pathlib import Path
-from typing import cast
+from typing import TYPE_CHECKING, cast
 from urllib.parse import urlencode
 
 import homeassistant.helpers.entity_registry as er
@@ -24,7 +24,9 @@ from ..const import (  # noqa: TID252
     LOGGER,
     URL_BASE,
 )
-from ..data import MeshtasticConfigEntry  # noqa: TID252
+
+if TYPE_CHECKING:
+    from ..data import MeshtasticConfigEntry  # noqa: TID252
 
 _LOGGER = LOGGER.getChild(__name__)
 
@@ -76,7 +78,7 @@ class MeshtasticWebApiContext:
         config_entry = self._get_config_entry(request)
         if config_entry is None:
             return None
-        entry = cast(MeshtasticConfigEntry, config_entry)
+        entry = cast("MeshtasticConfigEntry", config_entry)
 
         if entry.state != ConfigEntryState.LOADED:
             return None

@@ -203,7 +203,7 @@ async def _setup_meshtastic_device(  # noqa: PLR0913
     node: Mapping[str, Any],
     node_id: int,
 ) -> None:
-    gateway_node_id = cast(int, gateway_node["num"])
+    gateway_node_id = cast("int", gateway_node["num"])
     mac_address = base64.b64decode(node["user"]["macaddr"]).hex(":") if "macaddr" in node["user"] else None
     connections = set()
     if mac_address:

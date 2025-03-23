@@ -217,10 +217,10 @@ class MeshtasticNodeNotify(NotifyEntity):
         await self.hass.services.async_call(DOMAIN, SERVICE_SEND_TEXT, service_data, blocking=True)
 
     def update_from(self, entity: MeshtasticNodeNotify) -> None:
-        if entity._node_id != self._node_id:  # noqa: SLF001
+        if entity._node_id != self._node_id:
             return
 
-        self._attr_name = entity._attr_name  # noqa: SLF001
+        self._attr_name = entity._attr_name
 
     @property
     def suggested_object_id(self) -> str | None:
@@ -301,7 +301,7 @@ class MeshtasticChannelNotify(NotifyEntity):
         return MappingProxyType(self._attr_extra_state_attributes.get("gateways", {}))
 
     def update_from(self, entity: MeshtasticChannelNotify) -> None:
-        if entity._global_channel_id != self._global_channel_id:  # noqa: SLF001
+        if entity._global_channel_id != self._global_channel_id:
             return
 
         for gateway_node_id, channel_index in entity.gateways.items():

@@ -1,4 +1,4 @@
-from typing import cast
+from typing import TYPE_CHECKING, cast
 
 import homeassistant.helpers.config_validation as cv
 import voluptuous as vol
@@ -9,7 +9,6 @@ from homeassistant.helpers.selector import (
     SelectSelector,
     SelectSelectorConfig,
 )
-from homeassistant.helpers.template import Template
 from homeassistant.helpers.typing import ConfigType, TemplateVarsType, VolDictType
 
 from .aiomeshtastic.interface import TelemetryType
@@ -23,6 +22,9 @@ from .const import (
     SERVICE_REQUEST_TELEMETRY,
     SERVICE_SEND_DIRECT_MESSAGE,
 )
+
+if TYPE_CHECKING:
+    from homeassistant.helpers.template import Template
 
 ACTION_TYPE_SEND_MESSAGE = "send_message"
 ACTION_TYPE_REQUEST_TELEMETRY = "request_telemetry"
@@ -92,7 +94,7 @@ async def async_call_action_from_config(
             msg = f"Missing {ACTION_SEND_MESSAGE_ATTR_MESSAGE} for action"
             raise ValueError(msg)
 
-        message = cast(Template, config[ACTION_SEND_MESSAGE_ATTR_MESSAGE])
+        message = cast("Template", config[ACTION_SEND_MESSAGE_ATTR_MESSAGE])
         rendered_message = message.async_render(variables=variables)
 
         service_data = {
