@@ -82,13 +82,16 @@ class BluetoothConnection(ClientApiConnection):
         self._ble_log = self._ble_meshtastic_service.get_characteristic(BluetoothConnection.BTM_CHARACTERISTIC_LOG_UUID)
 
     async def _disconnect(self) -> None:
-        await self._bleak_client.disconnect()
+        try:
+            await self._bleak_client.disconnect()
+        except:  # noqa: E722
+            self._logger.debug("Disconnecting failed", exc_info=True)
 
     @property
     def is_connected(self) -> bool:
         return self._bleak_client.is_connected
 
-    async def _packet_stream(self) -> AsyncGenerator[mesh_pb2.FromRadio, Any]:
+    async def _packet_stream(self) -> AsyncGenerator[mesh_pb2.FromRadio, Any]:  # noqa: PLR0915
         if not self.is_connected:
             return
         packet_num_queue = asyncio.Queue()
@@ -105,15 +108,56 @@ class BluetoothConnection(ClientApiConnection):
                 self._logger.debug("Duplicate packet notification: %s", num)
 
         try:
-            await self._bleak_client.start_notify(self._ble_from_num, notification_handler)
+
+            async def start_notify() -> None:
+                await asyncio.wait_for(
+                    self._bleak_client.start_notify(self._ble_from_num, notification_handler), timeout=30
+                )
+
+            async def stop_notify() -> None:
+                await asyncio.wait_for(self._bleak_client.stop_notify(self._ble_from_num), timeout=30)
+
+            async def restart_notify() -> None:
+                try:
+                    with suppress(Exception):
+                        await stop_notify()
+                    await start_notify()
+                except:  # noqa: E722
+                    self._logger.debug("Restart notify failed", exc_info=True)
+
+            await start_notify()
+
+            notify_timeout_count = 0
+            notify_timeout_duration = 300
+            max_notify_timeouts_before_restart = 2
             while True:
                 packet = await self._bleak_client.read_gatt_char(self._ble_from_radio)
                 if not isinstance(packet, bytes):
                     packet = bytes(packet)
                 if packet == b"":
-                    # no more packets available, waiting for notification
-                    await packet_num_queue.get()
-                    continue
+                    # no more packets available, waiting for notification.
+                    # if we do not receive bluetooth notifications for an extended period of time, this could be an
+                    # indication of issue with bluetooth stack, so we try to do an active read. This will either trigger
+                    # an error or help resume sending of data by the firmware. If this happens too often, we try to
+                    # re-start notifications.
+                    try:
+                        await asyncio.wait_for(packet_num_queue.get(), timeout=notify_timeout_duration)
+                    except TimeoutError:
+                        notify_timeout_count += 1
+                        if notify_timeout_count > max_notify_timeouts_before_restart:
+                            self._logger.debug(
+                                "No bluetooth notification for %d times after %ds timeout, restarting notifications",
+                                notify_timeout_count,
+                                max_notify_timeouts_before_restart,
+                            )
+                            notify_timeout_count = 0
+                            await restart_notify()
+                        # continue with active read
+                        continue
+                elif notify_timeout_count > 0:
+                    self._logger.debug(
+                        "Read returned packet after ble notify timeout, maybe notifications from device have stopped"
+                    )
 
                 from_radio = mesh_pb2.FromRadio()
                 try:
