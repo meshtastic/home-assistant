@@ -50,6 +50,19 @@ class StreamingClientTransport(ClientApiConnection):
     async def _on_other_data(self, data: bytes) -> None:
         pass
 
+    async def _read_packet_bytes(self) -> bytes | None:
+        header = await self._read_header()
+        if header is None:
+            return None
+
+        packet_len = (header[2] << 8) + header[3]
+        if packet_len > StreamingClientTransport.MAX_TO_FROM_RADIO_SIZE:
+            # corrupted packet
+            await self._on_other_data(header)
+            return None
+
+        return await self._read_bytes(exactly=packet_len)
+
     async def _packet_stream(self) -> AsyncIterable[mesh_pb2.FromRadio]:
         if not self._can_read():
             raise ClientApiNotConnectedError
@@ -57,17 +70,9 @@ class StreamingClientTransport(ClientApiConnection):
         try:
             async with self._read_lock:
                 while self._can_read():
-                    header = await self._read_header()
-                    if header is None:
+                    packet = await self._read_packet_bytes()
+                    if packet is None:
                         continue
-
-                    packet_len = (header[2] << 8) + header[3]
-                    if packet_len > StreamingClientTransport.MAX_TO_FROM_RADIO_SIZE:
-                        # corrupted packet
-                        await self._on_other_data(header)
-                        continue
-
-                    packet = await self._read_bytes(exactly=packet_len)
 
                     from_radio = mesh_pb2.FromRadio()
                     try:
