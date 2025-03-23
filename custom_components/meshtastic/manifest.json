@@ -24,7 +24,8 @@
   "iot_class": "local_polling",
   "issue_tracker": "https://github.com/broglep/homeassistant-meshtastic/issues",
   "requirements": [
-    "pyserial-asyncio==0.6"
+    "pyserial-asyncio==0.6",
+    "aiomqtt"
   ],
   "usb": [
     {

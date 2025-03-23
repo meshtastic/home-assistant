@@ -17,9 +17,14 @@ from typing import (
     Self,
 )
 
-import aiomqtt
+try:
+    import aiomqtt
+    from aiomqtt import MqttError
+
+    _has_aiomqtt = True
+except ImportError:
+    _has_aiomqtt = False
 import google
-from aiomqtt import MqttError
 from google.protobuf.message import Message
 
 from .connection import (
@@ -118,6 +123,7 @@ class MeshInterface:
         heartbeat_interval: datetime.timedelta | None = None,
         acknowledgement_timeout: datetime.timedelta | None = None,
         response_timeout: datetime.timedelta | None = None,
+        enable_mqtt_proxy: bool = True,
     ) -> None:
         self._logger = LOGGER.getChild(self.__class__.__name__)
         self._connection = connection
@@ -160,10 +166,16 @@ class MeshInterface:
         self._previous_reconnects = deque(maxlen=10)
 
         # MQTT client for persistent connection
-        self._mqtt_client = None
-        self._mqtt_connected = False
-        self._mqtt_connection_task = None
-        self._mqtt_config = None
+        self._mqtt_proxy_enabled = enable_mqtt_proxy
+        if self._mqtt_proxy_enabled and not _has_aiomqtt:
+            self._logger.warning("Could not enable MQTT proxy because aiomqtt is not installed")
+            self._mqtt_proxy_enabled = False
+
+        if self._mqtt_proxy_enabled:
+            self._mqtt_client: aiomqtt.Client | None = None
+            self._mqtt_connected = False
+            self._mqtt_connection_task: asyncio.Task | None = None
+            self._mqtt_config: dict[str, str] | None = None
 
     def add_packet_app_listener(
         self,
@@ -315,7 +327,8 @@ class MeshInterface:
 
         self._add_background_task(get_config(), name="get-config")
 
-        self._add_background_task(self._init_mqtt_client(), name="init-mqtt-client")
+        if self._mqtt_proxy_enabled:
+            self._add_background_task(self._init_mqtt_client(), name="init-mqtt-client")
 
     async def stop(self) -> None:
         if not self._is_running.is_set():
@@ -385,7 +398,7 @@ class MeshInterface:
             return
 
         mqtt_config = self._connected_node_module_config.mqtt
-        if not mqtt_config.enabled:
+        if not mqtt_config.enabled or not mqtt_config.proxy_to_client_enabled:
             self._logger.debug("MQTT not enabled in module config, not initializing client")
             return
 
@@ -432,21 +445,21 @@ class MeshInterface:
                 # When the context manager exits, the connection is closed
                 async with self._mqtt_client:
                     self._mqtt_connected = True
-                    self._logger.info("Connected to MQTT broker")
+                    self._logger.debug("Connected to MQTT broker")
 
                     # Wait until the interface is stopped
                     await self._is_stopped.wait()
 
                 # Interface stopped, don't reconnect
                 break
-            except MqttError:
-                self._logger.exception("MQTT connection error")
+            except MqttError as e:
+                self._logger.warning("Meshtastic MQTT proxy connection error: %s", e)
             finally:
                 self._mqtt_connected = False
                 self._logger.debug("MQTT connection closed")
 
             # Wait before attempting to reconnect
-            self._logger.info("Reconnecting MQTT in 5 seconds")
+            self._logger.debug("Reconnecting MQTT in 5 seconds")
             try:
                 await asyncio.sleep(5)
             except asyncio.CancelledError:
