@@ -293,12 +293,27 @@ class MeshtasticWebApiV1View(HomeAssistantView):
             "X-Protobuf-Schema", "https://raw.githubusercontent.com/meshtastic/protobufs/master/meshtastic/mesh.proto"
         )
 
+    def _check_webclient_enabled(self, config_entry_id: str) -> None:
+        config_entry = self._hass.config_entries.async_get_entry(config_entry_id)
+        if config_entry.state != ConfigEntryState.LOADED:
+            raise web.HTTPBadGateway(
+                body=f"Gateway is not ready (config entry state {config_entry.state.value})",
+                content_type="text/plain",
+                headers={"Cache-Control": "no-cache"},
+            )
+
+        if not config_entry.options.get(CONF_OPTION_WEB_CLIENT, {}).get(
+            CONF_OPTION_WEB_CLIENT_ENABLE, CONF_OPTION_WEB_CLIENT_ENABLE_DEFAULT
+        ):
+            raise web.HTTPForbidden(body="Web client not enabled for gateway", headers={"Cache-Control": "no-cache"})
+
 
 class MeshtasticWebApiV1ToRadioView(MeshtasticWebApiV1View):
     url = URL_BASE + "/web/{config_entry_id}/api/v1/toradio"
     name = "meshtastic:web_v1_to_radio"
 
-    async def put(self, request: HomeAssistantRequest, config_entry_id: str) -> web.Response:  # noqa: ARG002
+    async def put(self, request: HomeAssistantRequest, config_entry_id: str) -> web.Response:
+        self._check_webclient_enabled(config_entry_id)
         connection = self.get_connection(request)
         if connection is None:
             await asyncio.sleep(1)
@@ -331,6 +346,7 @@ class MeshtasticWebApiV1FromRadioView(MeshtasticWebApiV1View):
     name = "meshtastic:web_v1_from_radio"
 
     async def get(self, request: HomeAssistantRequest, config_entry_id: str) -> web.Response:
+        self._check_webclient_enabled(config_entry_id)
         config_id = request.cookies.get("config_id")
         if config_id is None:
             await asyncio.sleep(1)
