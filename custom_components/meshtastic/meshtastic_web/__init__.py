@@ -207,6 +207,7 @@ async def async_setup(hass: HomeAssistant) -> bool:
         hass.http.register_view(MeshtasticWebApiHotspot())
         hass.http.register_view(MeshtasticWebApiV1FromRadioView(hass, _api_context))
         hass.http.register_view(MeshtasticWebApiV1ToRadioView(hass, _api_context))
+        hass.http.register_view(MeshtasticWebJsonReportView(hass, _api_context))
         await hass.http.async_register_static_paths(
             [StaticPathConfig(f"{URL_BASE}/web", str(Path(__file__).parent / "static"))]
         )
@@ -233,8 +234,8 @@ class MeshtasticWebConfigEntryView(HomeAssistantView):
         request: HomeAssistantRequest,  # noqa: ARG002
         entity_id: str,
     ) -> web.Response:
-        if entity_id == "index.html":
-            return web.FileResponse(Path(__file__).parent / "static" / "index.html")
+        if not entity_id.startswith("gateway_"):
+            return web.FileResponse(Path(__file__).parent / "static" / entity_id, headers={"Cache-Control": "no-cache"})
 
         entity_registry = er.async_get(self._hass)
         entity_id = f"{DOMAIN}.{entity_id}"
@@ -376,3 +377,19 @@ class MeshtasticWebApiV1FromRadioView(MeshtasticWebApiV1View):
         response.headers.add("Cache-Control", "no-cache")
         self._add_protobuf_headers(response)
         return response
+
+
+class MeshtasticWebJsonReportView(MeshtasticWebApiV1View):
+    url = URL_BASE + "/web/{config_entry_id}/json/report"
+    name = "meshtastic:web_json_report"
+
+    async def get(self, request: HomeAssistantRequest, config_entry_id: str) -> web.Response:
+        self._check_webclient_enabled(config_entry_id)
+        config_id = request.cookies.get("config_id")
+        if config_id is None:
+            response = web.HTTPBadRequest()
+            response.headers.add("Cache-Control", "no-cache")
+            return response
+
+        # mock response device probe by frontend
+        return web.json_response(data={"status": "ok", "data": {}})
