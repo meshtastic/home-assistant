@@ -207,6 +207,9 @@ class MeshInterface:
         if not self._connected_node_ready.is_set():
             return None
 
+        if self._connected_node_info is None:
+            return None
+
         node = self._node_database.get(self._connected_node_info.my_node_num)
         if node is None:
             return node

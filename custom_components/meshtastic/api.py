@@ -135,11 +135,18 @@ class MeshtasticApiClient:
             raise MeshtasticApiClientCommunicationError from e
 
         try:
-            await asyncio.wait_for(self._interface.connected_node_ready(), timeout=30)
-        except Exception as e:
+            ready = await asyncio.wait_for(self._interface.connected_node_ready(), timeout=60)
+            exception = None
+        except Exception as e:  # noqa: BLE001
+            ready = False
+            exception = e
+
+        if not ready:
             with contextlib.suppress(Exception):
                 await self._interface.stop()
-            raise MeshtasticApiClientCommunicationError from e
+            if exception:
+                raise MeshtasticApiClientCommunicationError from exception
+            raise MeshtasticApiClientCommunicationError
 
         self._packet_processor = asyncio.create_task(self._process_meshtastic_packet())
 
@@ -161,19 +168,23 @@ class MeshtasticApiClient:
             raise MeshtasticApiClientCommunicationError from e
 
     async def async_get_channels(self) -> list[Mapping[str, Any]]:
-        await self._interface.connected_node_ready()
+        if not await self._interface.connected_node_ready():
+            return []
         return [self._message_to_dict(c) for c in self._interface.connected_node_channels()]
 
     async def async_get_node_local_config(self) -> dict:
-        await self._interface.connected_node_ready()
+        if not await self._interface.connected_node_ready():
+            return {}
         return self._message_to_dict(self._interface.connected_node_local_config())
 
     async def async_get_node_module_config(self) -> dict:
-        await self._interface.connected_node_ready()
+        if not await self._interface.connected_node_ready():
+            return {}
         return self._message_to_dict(self._interface.connected_node_module_config())
 
     async def async_get_own_node(self) -> Mapping[str, Any]:
-        await self._interface.connected_node_ready()
+        if not await self._interface.connected_node_ready():
+            return {}
         return self.get_own_node()
 
     def get_own_node(self) -> Mapping[str, Any]:
