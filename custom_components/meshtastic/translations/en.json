@@ -83,6 +83,13 @@
         "data": {
           "enable": "Enable Web Client"
         }
+      },
+      "tcp_proxy": {
+        "description": "Experimental: You can enable meshtastic tcp proxy if you like to interact with your gateway manually as well. Note that meshtastic devices only allow one single connection, so this integration will pose as a meshtastic device and the tcp client will connect to home assistant rather directly to the device. Connecting directly to the meshtastic device will interrupt the home assistant connection. Using python cli, use 'meshtastic --host homeassistant:port'",
+        "data": {
+          "enable": "Enable TCP Proxy",
+          "port": "TCP Port"
+        }
       }
     },
     "error": {
@@ -90,7 +97,9 @@
       "unknown": "Unknown error occurred.",
       "not_meshtastic_device": "Not a Meshtastic device",
       "invalid_node": "Invalid node",
-      "invalid_connection_type": "Invalid connection type"
+      "invalid_connection_type": "Invalid connection type",
+      "reconfigure_not_possible": "Reconfiguration currently not possible",
+      "port_in_use": "Port already in use"
     },
     "abort": {
       "already_configured": "Meshtastic device is already configured"
@@ -120,17 +129,28 @@
           },
           "web_client": {
             "name": "Meshtastic Web Client",
-            "description": "Experimental: You can enable meshtasic web client if you like to interact with your gateway manually as well. Note that meshtastic devices only allow one single connection, so this integration will pose as a meshtasic device and the web client will connect to home assistant rather directly to the device. Connecting directly to the meshtastic device will interrupt the home assistant connection. You can open the web client from the meshtastic sidebar.",
+            "description": "Experimental: You can enable meshtastic web client if you like to interact with your gateway manually as well. Note that meshtastic devices only allow one single connection, so this integration will pose as a meshtastic device and the web client will connect to home assistant rather directly to the device. Connecting directly to the meshtastic device will interrupt the home assistant connection. You can open the web client from the meshtastic sidebar.",
             "data": {
               "enable": "Enable Web Client"
+            }
+          },
+          "tcp_proxy": {
+            "name": "Meshtastic TCP Proxy",
+            "description": "Experimental: You can enable meshtastic tcp proxy if you like to interact with your gateway manually as well. Note that meshtastic devices only allow one single connection, so this integration will pose as a meshtastic device and the tcp client will connect to home assistant rather directly to the device. Connecting directly to the meshtastic device will interrupt the home assistant connection. Using python cli, use 'meshtastic --host homeassistant:port'",
+            "data": {
+              "enable": "Enable TCP Proxy",
+              "port": "TCP Port"
             }
           }
         }
       }
     },
     "error": {
+      "cannot_connect": "Unable to connect to the device.",
       "connection": "Unable to connect to the device.",
-      "unknown": "Unknown error occurred."
+      "unknown": "Unknown error occurred.",
+      "option_invalid": "Option configuration invalid",
+      "port_in_use": "Port already in use"
     }
   },
   "services": {
