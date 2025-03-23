@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import socket
 from copy import deepcopy
 from typing import TYPE_CHECKING
 
@@ -33,6 +34,11 @@ from .const import (
     CONF_OPTION_NOTIFY_PLATFORM_CHANNELS_DEFAULT,
     CONF_OPTION_NOTIFY_PLATFORM_NODES,
     CONF_OPTION_NOTIFY_PLATFORM_NODES_DEFAULT,
+    CONF_OPTION_TCP_PROXY,
+    CONF_OPTION_TCP_PROXY_ENABLE,
+    CONF_OPTION_TCP_PROXY_ENABLE_DEFAULT,
+    CONF_OPTION_TCP_PROXY_PORT,
+    CONF_OPTION_TCP_PROXY_PORT_DEFAULT,
     CONF_OPTION_WEB_CLIENT_ENABLE,
     CONF_OPTION_WEB_CLIENT_ENABLE_DEFAULT,
     CURRENT_CONFIG_VERSION_MAJOR,
@@ -162,6 +168,23 @@ def _build_meshtastic_web_schema(
     )
 
 
+def _build_meshtastic_tcp_schema(
+    options: dict[str, Any],
+) -> vol.Schema:
+    return vol.Schema(
+        {
+            vol.Required(
+                CONF_OPTION_TCP_PROXY_ENABLE,
+                default=options.get(CONF_OPTION_TCP_PROXY_ENABLE, CONF_OPTION_TCP_PROXY_ENABLE_DEFAULT),
+            ): cv.boolean,
+            vol.Required(
+                CONF_OPTION_TCP_PROXY_PORT,
+                default=options.get(CONF_OPTION_TCP_PROXY_PORT, CONF_OPTION_TCP_PROXY_PORT_DEFAULT),
+            ): cv.positive_int,
+        }
+    )
+
+
 async def validate_input_for_connection(
     hass: HomeAssistant, data: dict[str, Any], *, no_nodes: bool = False
 ) -> tuple[Mapping[str, Any], Mapping[int, Mapping[str, Any]]]:
@@ -178,6 +201,45 @@ async def validate_input_for_connection(
     except IntegrationError as e:
         _LOGGER.warning("Failed to connect to meshtastic device", exc_info=True)
         raise CannotConnectError from e
+
+
+async def validate_tcp_proxy_port(hass: HomeAssistant, config_entry: ConfigEntry | None, data: dict[str, Any]) -> bool:
+    if not data.get(CONF_OPTION_TCP_PROXY, {}).get(CONF_OPTION_TCP_PROXY_ENABLE, CONF_OPTION_TCP_PROXY_ENABLE_DEFAULT):
+        return True
+
+    if config_entry is None:
+        other_active_entries = hass.config_entries.async_entries(DOMAIN, include_ignore=False, include_disabled=False)
+    else:
+        other_active_entries = [
+            e
+            for e in hass.config_entries.async_entries(DOMAIN, include_ignore=False, include_disabled=False)
+            if e.entry_id != config_entry.entry_id
+        ]
+    other_tcp_proxies = [e.options.get(CONF_OPTION_TCP_PROXY, {}) for e in other_active_entries]
+
+    other_ports = {
+        c.get(CONF_OPTION_TCP_PROXY_PORT, CONF_OPTION_TCP_PROXY_PORT_DEFAULT)
+        for c in other_tcp_proxies
+        if c.get(CONF_OPTION_TCP_PROXY_ENABLE, CONF_OPTION_TCP_PROXY_ENABLE_DEFAULT)
+    }
+
+    port = data[CONF_OPTION_TCP_PROXY].get(CONF_OPTION_TCP_PROXY_PORT, CONF_OPTION_TCP_PROXY_PORT_DEFAULT)
+    if port in other_ports:
+        return False
+
+    port_changed = config_entry is None or port != config_entry.options.get(CONF_OPTION_TCP_PROXY, {}).get(
+        CONF_OPTION_TCP_PROXY_PORT, CONF_OPTION_TCP_PROXY_PORT_DEFAULT
+    )
+    if port_changed:
+        try:
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                if s.connect_ex(("localhost", port)) == 0:
+                    return False
+        except:  # noqa: E722
+            _LOGGER.debug("Failed to validate tcp proxy port", exc_info=True)
+            return False
+
+    return True
 
 
 class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
@@ -478,10 +540,23 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         errors: dict[str, str] = {}
         if user_input is not None:
             self.options[CONF_OPTION_WEB_CLIENT] = user_input
-            return await self._finish_steps()
+            return await self.async_step_tcp_proxy()
 
         schema = _build_meshtastic_web_schema(user_input or {})
         return self.async_show_form(step_id="web_client", data_schema=schema, errors=errors)
+
+    async def async_step_tcp_proxy(self, user_input: dict[str, Any] | None = None) -> FlowResult:
+        errors: dict[str, str] = {}
+        if user_input is not None:
+            if not await validate_tcp_proxy_port(self.hass, None, {CONF_OPTION_TCP_PROXY: user_input}):
+                errors[CONF_OPTION_TCP_PROXY_PORT] = "port_in_use"
+
+            if not errors:
+                self.options[CONF_OPTION_TCP_PROXY] = user_input
+                return await self._finish_steps()
+
+        schema = _build_meshtastic_tcp_schema(user_input or {})
+        return self.async_show_form(step_id="tcp_proxy", data_schema=schema, errors=errors)
 
     async def _finish_steps(self) -> ConfigFlowResult:
         return self.async_create_entry(
@@ -495,6 +570,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     async def async_step_reconfigure(self, user_input: dict[str, Any] | None = None) -> FlowResult:  # noqa: ARG002
         config_entry = self.hass.config_entries.async_get_entry(self.context.get("entry_id"))
+
         self.data.update(config_entry.data)
         connection_type = config_entry.data[CONF_CONNECTION_TYPE]
         if connection_type == ConnectionType.TCP.value:
@@ -515,10 +591,14 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
         self.options = {}
         self.nodes = None
 
-    async def async_step_init(self, user_input: dict[str, Any] | None = None) -> dict[str, Any]:
+    async def async_step_init(self, user_input: dict[str, Any] | None = None) -> dict[str, Any]:  # noqa: PLR0912
         errors: dict[str, str] = {}
 
-        if self.config_entry.runtime_data and self.config_entry.runtime_data.client:
+        if (
+            hasattr(self.config_entry, "runtime_data")
+            and self.config_entry.runtime_data
+            and self.config_entry.runtime_data.client
+        ):
             self.nodes = await self.config_entry.runtime_data.client.async_get_all_nodes()
 
         if self.nodes is None:
@@ -573,10 +653,18 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
             if CONF_OPTION_WEB_CLIENT in user_input:
                 new_data[CONF_OPTION_WEB_CLIENT] = user_input[CONF_OPTION_WEB_CLIENT]
 
-            return self.async_create_entry(
-                title="",
-                data=new_data,
-            )
+            if CONF_OPTION_TCP_PROXY in user_input:
+                if not await validate_tcp_proxy_port(self.hass, self.config_entry, user_input):
+                    errors["base"] = "option_invalid"
+                    errors["tcp_proxy"] = "port_in_use"
+                else:
+                    new_data[CONF_OPTION_TCP_PROXY] = user_input[CONF_OPTION_TCP_PROXY]
+
+            if not errors:
+                return self.async_create_entry(
+                    title="",
+                    data=new_data,
+                )
 
         selected_nodes = {
             str(node_id): all_nodes.get(str(node_id), f"Unknown (id: {node_id})")
@@ -593,6 +681,11 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
             if CONF_OPTION_WEB_CLIENT in self.options
             else self.config_entry.options.get(CONF_OPTION_WEB_CLIENT, {})
         )
+        tcp_proxy_options = (
+            self.options[CONF_OPTION_TCP_PROXY]
+            if CONF_OPTION_TCP_PROXY in self.options
+            else self.config_entry.options.get(CONF_OPTION_TCP_PROXY, {})
+        )
         options_schema = vol.Schema(
             {
                 vol.Required(CONF_OPTION_FILTER_NODES, default=list(selected_nodes.keys())): cv.multi_select(
@@ -608,6 +701,9 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                 ),
                 vol.Required(CONF_OPTION_WEB_CLIENT): data_entry_flow.section(
                     _build_meshtastic_web_schema(webclient_options), {"collapsed": True}
+                ),
+                vol.Required(CONF_OPTION_TCP_PROXY): data_entry_flow.section(
+                    _build_meshtastic_tcp_schema(tcp_proxy_options), {"collapsed": "tcp_proxy" in errors}
                 ),
             }
         )

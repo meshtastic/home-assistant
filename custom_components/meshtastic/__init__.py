@@ -40,6 +40,9 @@ from .const import (
     CONF_CONNECTION_TCP_PORT,
     CONF_CONNECTION_TYPE,
     CONF_OPTION_FILTER_NODES,
+    CONF_OPTION_TCP_PROXY,
+    CONF_OPTION_TCP_PROXY_ENABLE,
+    CONF_OPTION_TCP_PROXY_ENABLE_DEFAULT,
     CONF_OPTION_WEB_CLIENT,
     CONF_OPTION_WEB_CLIENT_ENABLE,
     CONF_OPTION_WEB_CLIENT_ENABLE_DEFAULT,
@@ -59,6 +62,7 @@ from .entity import (
 )
 from .helpers import fetch_meshtastic_hardware_names
 from .logbook import async_setup_message_logger
+from .meshtastic_tcp import async_setup_tcp_proxy, async_unload_tcp_proxy
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Mapping, MutableMapping
@@ -158,6 +162,11 @@ async def async_setup_entry(
         CONF_OPTION_WEB_CLIENT_ENABLE, CONF_OPTION_WEB_CLIENT_ENABLE_DEFAULT
     ):
         await async_setup_meshtastic_web(hass)
+
+    if entry.options.get(CONF_OPTION_TCP_PROXY, {}).get(
+        CONF_OPTION_TCP_PROXY_ENABLE, CONF_OPTION_TCP_PROXY_ENABLE_DEFAULT
+    ):
+        await async_setup_tcp_proxy(hass, entry)
 
     return True
 
@@ -357,6 +366,8 @@ async def async_unload_entry(
 
         if not any_web_client_enabled:
             await async_unload_meshtastic_web(hass)
+
+        await async_unload_tcp_proxy(hass, entry)
 
     return unload_ok
 
