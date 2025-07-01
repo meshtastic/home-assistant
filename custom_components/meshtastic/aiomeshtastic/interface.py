@@ -1054,7 +1054,7 @@ class MeshInterface:
         *,
         want_ack: bool = False,
         channel_index: int | None = None,
-        priority: Optional[MeshPacket.Priority] = None,  # noqa: UP007
+        priority: Optional[MeshPacket.Priority] = None,  # noqa: UP045
     ) -> None:
         if isinstance(destination, MeshNode):
             to_node = destination.id
