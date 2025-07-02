@@ -598,14 +598,14 @@ def _build_environment_metrics_sensors(
             add_sensor("distance", SensorDeviceClass.DISTANCE, UnitOfLength.MILLIMETERS)
 
             add_sensor("lux", SensorDeviceClass.ILLUMINANCE, LIGHT_LUX)
-            add_sensor("white_lux", SensorDeviceClass.ILLUMINANCE, LIGHT_LUX)
-            add_sensor("ir_lux", SensorDeviceClass.ILLUMINANCE, LIGHT_LUX)
-            add_sensor("uv_lux", SensorDeviceClass.ILLUMINANCE, LIGHT_LUX)
+            add_sensor("whiteLux", SensorDeviceClass.ILLUMINANCE, LIGHT_LUX)
+            add_sensor("irLux", SensorDeviceClass.ILLUMINANCE, LIGHT_LUX)
+            add_sensor("uvLux", SensorDeviceClass.ILLUMINANCE, LIGHT_LUX)
 
-            add_sensor("wind_direction", SensorDeviceClass.WIND_SPEED, DEGREE)
-            add_sensor("wind_speed", SensorDeviceClass.WIND_SPEED, UnitOfSpeed.METERS_PER_SECOND)
-            add_sensor("wind_gust", SensorDeviceClass.WIND_SPEED, UnitOfSpeed.METERS_PER_SECOND)
-            add_sensor("wind_lull", SensorDeviceClass.WIND_SPEED, UnitOfSpeed.METERS_PER_SECOND)
+            add_sensor("windDirection", SensorDeviceClass.WIND_SPEED, DEGREE)
+            add_sensor("windSpeed", SensorDeviceClass.WIND_SPEED, UnitOfSpeed.METERS_PER_SECOND)
+            add_sensor("windGust", SensorDeviceClass.WIND_SPEED, UnitOfSpeed.METERS_PER_SECOND)
+            add_sensor("windLull", SensorDeviceClass.WIND_SPEED, UnitOfSpeed.METERS_PER_SECOND)
 
             # deprecated in favor of power metrics
             add_sensor("voltage", SensorDeviceClass.VOLTAGE, UnitOfElectricPotential.VOLT)
