@@ -606,7 +606,9 @@ def _build_environment_metrics_sensors(
             add_sensor("wind_gust", SensorDeviceClass.WIND_SPEED, UnitOfSpeed.METERS_PER_SECOND)
             add_sensor("wind_lull", SensorDeviceClass.WIND_SPEED, UnitOfSpeed.METERS_PER_SECOND)
 
-            add_sensor("weight", SensorDeviceClass.WEIGHT, UnitOfMass.KILOGRAMS)
+            # deprecated in favor of power metrics
+            add_sensor("voltage", SensorDeviceClass.VOLTAGE, UnitOfElectricPotential.VOLT)
+            add_sensor("current", SensorDeviceClass.CURRENT, UnitOfElectricCurrent.AMPERE)
 
     except:  # noqa: E722
         LOGGER.warning("Failed to create environment metric entities", exc_info=True)
