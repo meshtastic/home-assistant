@@ -71,6 +71,7 @@ class EventMeshtasticApiTelemetryType(StrEnum):
     LOCAL_STATS = "local_stats"
     ENVIRONMENT_METRICS = "environment_metrics"
     POWER_METRICS = "power_metrics"
+    HOST_METRICS = "host_metrics"
 
 
 class MeshtasticApiClientError(IntegrationError):
@@ -284,6 +285,7 @@ class MeshtasticApiClient:
         local_stats = telemetry.get("localStats")
         environment_metrics = telemetry.get("environmentMetrics")
         power_metrics = telemetry.get("powerMetrics")
+        host_metrics = telemetry.get("hostMetrics")
 
         node_info = {"name": node.long_name}
         if device_metrics:
@@ -308,6 +310,12 @@ class MeshtasticApiClient:
             event_data = self._build_event_data(node.id, power_metrics)
             event_data[ATTR_EVENT_MESHTASTIC_API_NODE_INFO] = node_info
             event_data[ATTR_EVENT_MESHTASTIC_API_TELEMETRY_TYPE] = EventMeshtasticApiTelemetryType.POWER_METRICS
+            self._hass.bus.async_fire(EVENT_MESHTASTIC_API_TELEMETRY, event_data)
+
+        if host_metrics:
+            event_data = self._build_event_data(node.id, host_metrics)
+            event_data[ATTR_EVENT_MESHTASTIC_API_NODE_INFO] = node_info
+            event_data[ATTR_EVENT_MESHTASTIC_API_TELEMETRY_TYPE] = EventMeshtasticApiTelemetryType.HOST_METRICS
             self._hass.bus.async_fire(EVENT_MESHTASTIC_API_TELEMETRY, event_data)
 
     async def _on_position(self, node: MeshNode, position: dict[str, Any]) -> None:
