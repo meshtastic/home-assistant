@@ -30,6 +30,7 @@ from homeassistant.const import (
     UnitOfSpeed,
     UnitOfTemperature,
     UnitOfTime,
+    UnitOfVolumetricFlux,
 )
 
 from . import LOGGER, helpers
@@ -609,6 +610,16 @@ def _build_environment_metrics_sensors(
             # deprecated in favor of power metrics
             add_sensor("voltage", SensorDeviceClass.VOLTAGE, UnitOfElectricPotential.VOLT)
             add_sensor("current", SensorDeviceClass.CURRENT, UnitOfElectricCurrent.AMPERE)
+
+            add_sensor(
+                "rainfall1h", SensorDeviceClass.PRECIPITATION_INTENSITY, UnitOfVolumetricFlux.MILLIMETERS_PER_HOUR
+            )
+            add_sensor(
+                "rainfall24h", SensorDeviceClass.PRECIPITATION_INTENSITY, UnitOfVolumetricFlux.MILLIMETERS_PER_DAY
+            )
+
+            add_sensor("soilMoisture", SensorDeviceClass.MOISTURE, PERCENTAGE)
+            add_sensor("soilTemperature", SensorDeviceClass.TEMPERATURE, UnitOfTemperature.CELSIUS)
 
     except:  # noqa: E722
         LOGGER.warning("Failed to create environment metric entities", exc_info=True)
