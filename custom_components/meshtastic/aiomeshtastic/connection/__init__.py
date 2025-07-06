@@ -247,6 +247,7 @@ class ClientApiConnection:
         from_node: int | None = None,
         ack: bool = False,
         want_response: bool = False,
+        out_callback: Callable[[Packet], Awaitable[None]] | None = None,
         ack_callback: Callable[[Packet[mesh_pb2.Routing]], Awaitable[None]] | None = None,
         response_callback: Callable[[Packet], Awaitable[None]] | None = None,
     ) -> None | Packet:
@@ -270,10 +271,19 @@ class ClientApiConnection:
 
         if not ack and not want_response:
             await self.send_packet(to_radio)
+            if out_callback is not None:
+                try:
+                    await out_callback(Packet(to_radio))
+                except:  # noqa: E722
+                    self._logger.debug("Out callback failed", exc_info=True)
             return None
 
         return await self._send_await_response(
-            to_radio, want_response=want_response, ack_callback=ack_callback, response_callback=response_callback
+            to_radio,
+            want_response=want_response,
+            out_callback=out_callback,
+            ack_callback=ack_callback,
+            response_callback=response_callback,
         )
 
     async def _send_await_response(
@@ -281,12 +291,22 @@ class ClientApiConnection:
         to_radio: mesh_pb2.ToRadio,
         *,
         want_response: bool = False,
+        out_callback: Callable[[Packet], Awaitable[None]] | None = None,
         ack_callback: Callable[[Packet[mesh_pb2.Routing]], Awaitable[None]] | None = None,
         response_callback: Callable[[Packet], Awaitable[None]] | None = None,
     ) -> None | Packet:
         ack_packet = None
         response_packet = None
-        async for from_radio in self.listen(on_start=self.send_packet(to_radio)):
+
+        async def on_start() -> None:
+            await self.send_packet(to_radio)
+            if out_callback is not None:
+                try:
+                    await out_callback(Packet(to_radio))
+                except:  # noqa: E722
+                    self._logger.debug("Out callback failed", exc_info=True)
+
+        async for from_radio in self.listen(on_start=on_start()):
             packet = Packet(from_radio)
             if packet.data is None:
                 continue
