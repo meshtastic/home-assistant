@@ -30,7 +30,11 @@ send_text:
       required: true
       selector:
         boolean: {}
-
+    reply_id:
+      required: false
+      selector:
+        text:
+          multiline: false
 
 send_direct_message:
   fields:
@@ -49,6 +53,11 @@ send_direct_message:
       default: true
       selector:
         boolean: {}
+    reply_id:
+      required: false
+      selector:
+        text:
+          multiline: false
 
 broadcast_channel_message:
   fields:
@@ -69,7 +78,11 @@ broadcast_channel_message:
       default: true
       selector:
         boolean: {}
-
+    reply_id:
+      required: false
+      selector:
+        text:
+          multiline: false
 
 request_telemetry:
   fields:
