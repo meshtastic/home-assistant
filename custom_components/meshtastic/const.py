@@ -114,6 +114,8 @@ class MeshtasticDomainMessageLogEventData(TypedDict):
     EVENT_MESHTASTIC_MESSAGE_LOG_EVENT_DATA_ATTR_FROM_NAME: str
     EVENT_MESHTASTIC_MESSAGE_LOG_EVENT_DATA_ATTR_PKI: bool
     EVENT_MESHTASTIC_DOMAIN_EVENT_DATA_ATTR_MESSAGE: str
+    "snr": float | None
+    "rssi": int | None
 
 
 # Event used for logbook
