@@ -102,10 +102,23 @@ class MeshtasticDataUpdateCoordinator(DataUpdateCoordinator):
 
     @meshtastic_api_event_callback
     async def _api_node_updated(self, node_id: int, node_data: Mapping[str, Any], **kwargs) -> None:  # noqa: ANN003, ARG002
-        if self.data[node_id] != node_data:
+        # Check if any of the incoming data actually changes existing values
+        existing_data = self.data[node_id]
+        has_changes = False
+        
+        for key, new_value in node_data.items():
+            if key not in existing_data or existing_data[key] != new_value:
+                has_changes = True
+                self._logger.debug("Node %d: %s changed from %s to %s", node_id, key, existing_data.get(key), new_value)
+                break
+        
+        if has_changes:
             data = deepcopy(self.data)
             data[node_id].update(node_data)
+            self._logger.debug("Node %d: Updating coordinator data with changes", node_id)
             self.async_set_updated_data(data)
+        else:
+            self._logger.debug("Node %d: No changes detected, skipping update", node_id)
 
     @meshtastic_api_event_callback
     async def _api_telemetry(
@@ -173,10 +186,23 @@ class MeshtasticDataUpdateCoordinator(DataUpdateCoordinator):
             self._logger.debug("Node %d not in coordinator data", node_id)
             return
 
-        if self.data[node_id] != event_data:
+        # Check if any of the incoming data actually changes existing values
+        existing_data = self.data[node_id]
+        has_changes = False
+        
+        for key, new_value in event_data.items():
+            if key not in existing_data or existing_data[key] != new_value:
+                has_changes = True
+                self._logger.debug("Node %d: %s changed from %s to %s", node_id, key, existing_data.get(key), new_value)
+                break
+        
+        if has_changes:
             data = deepcopy(self.data)
-            data[node_id] = event_data
+            data[node_id].update(event_data)
+            self._logger.debug("Node %d: Updating coordinator data with changes", node_id)
             self.async_set_updated_data(data)
+        else:
+            self._logger.debug("Node %d: No changes detected, skipping update", node_id)
 
     async def _async_update_data(self) -> Any:
         if self.config_entry is None or self.config_entry.runtime_data is None:
