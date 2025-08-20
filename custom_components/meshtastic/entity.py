@@ -260,7 +260,7 @@ class MeshtasticNodeEntity(MeshtasticCoordinatorEntity, ABC):
             identifiers={(DOMAIN, str(self.node_id))},
         )
         self._attr_unique_id = (
-            f"{coordinator.config_entry.entry_id}_{platform}_{self.node_id}_{self.entity_description.key}"
+            f"{coordinator.config_entry.entry_id}_{platform}_{gateway_prefix}{self.node_id}_{self.entity_description.key}"
         )
         self._attr_has_entity_name = True
 
