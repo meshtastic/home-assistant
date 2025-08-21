@@ -50,7 +50,19 @@ async def setup_platform_entry(
 
     def on_coordinator_data_update() -> None:
         entities = entity_factory(get_nodes(entry), entry.runtime_data)
-        new_entities = [s for s in entities if s.entity_id not in platform.entities]
+        # Check both entity_id AND unique_id to prevent conflicts
+        existing_unique_ids = {e.unique_id for e in platform.entities.values() if hasattr(e, "unique_id") and e.unique_id}
+        new_entities = []
+        for entity in entities:
+            # Skip if entity_id already exists
+            if entity.entity_id in platform.entities:
+                continue
+            # Skip if unique_id conflicts with existing entity
+            if hasattr(entity, "_attr_unique_id") and entity._attr_unique_id in existing_unique_ids:
+                LOGGER.warning("Skipping entity %s - unique_id %s already exists", entity.entity_id, entity._attr_unique_id)
+                continue
+            new_entities.append(entity)
+        
         if new_entities:
             async_add_entities(new_entities)
 
