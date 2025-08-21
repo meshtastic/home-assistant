@@ -48,6 +48,9 @@ async def setup_platform_entry(
     async_add_entities(entity_factory(get_nodes(entry), entry.runtime_data))
     platform = entity_platform.async_get_current_platform()
 
+    # Track what we've already warned about to avoid log spam
+    _warned_unique_ids = set()
+
     def on_coordinator_data_update() -> None:
         entities = entity_factory(get_nodes(entry), entry.runtime_data)
         # Check both entity_id AND unique_id to prevent conflicts
@@ -59,7 +62,10 @@ async def setup_platform_entry(
                 continue
             # Skip if unique_id conflicts with existing entity
             if hasattr(entity, "_attr_unique_id") and entity._attr_unique_id in existing_unique_ids:
-                LOGGER.warning("Skipping entity %s - unique_id %s already exists", entity.entity_id, entity._attr_unique_id)
+                # Only warn once per unique_id to avoid log spam
+                if entity._attr_unique_id not in _warned_unique_ids:
+                    LOGGER.debug("Skipping entity %s - unique_id %s already exists", entity.entity_id, entity._attr_unique_id)
+                    _warned_unique_ids.add(entity._attr_unique_id)
                 continue
             new_entities.append(entity)
         
