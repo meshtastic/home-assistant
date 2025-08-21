@@ -398,24 +398,30 @@ async def async_reload_entry(
 async def _migrate_entity_unique_ids(hass: HomeAssistant, config_entry: MeshtasticConfigEntry) -> None:
     """Migrate entities from old unique ID pattern to new pattern.
     
-    Due to unique ID pattern changes, we need to remove existing entities
-    so they can be recreated with correct unique IDs and entity IDs.
+    Remove all existing Meshtastic entities so they can be recreated with correct patterns.
     """
     entity_registry = er.async_get(hass)
     
-    # Find all Meshtastic entities for this config entry and remove them
+    # Find ALL Meshtastic entities for this config entry and remove them
     entities_to_remove = []
     for entity_id, entry in entity_registry.entities.items():
-        if entry.config_entry_id == config_entry.entry_id and entry.platform == DOMAIN:
+        if (entry.config_entry_id == config_entry.entry_id and 
+            entry.platform == DOMAIN):
             entities_to_remove.append(entity_id)
+            LOGGER.info("Marking entity for removal during migration: %s (unique_id: %s)", entity_id, entry.unique_id)
     
     # Remove all entities - they will be recreated with correct patterns
     for entity_id in entities_to_remove:
-        entity_registry.async_remove(entity_id)
-        LOGGER.info("Removed entity %s for unique ID migration", entity_id)
+        try:
+            entity_registry.async_remove(entity_id)
+            LOGGER.info("Removed entity %s for unique ID migration", entity_id)
+        except Exception as e:
+            LOGGER.warning("Failed to remove entity %s: %s", entity_id, e)
     
     if entities_to_remove:
         LOGGER.info("Removed %d Meshtastic entities for unique ID pattern migration", len(entities_to_remove))
+    else:
+        LOGGER.info("No entities found to remove during migration")
 
 
 async def async_migrate_entry(hass: HomeAssistant, config_entry: MeshtasticConfigEntry) -> bool:
@@ -437,7 +443,7 @@ async def async_migrate_entry(hass: HomeAssistant, config_entry: MeshtasticConfi
             )
 
         # Migration for unique ID collision fix (version 1.3)
-        if config_entry.minor_version < 3:  # noqa: PLR2004
+        if config_entry.minor_version < 4:  # noqa: PLR2004
             await _migrate_entity_unique_ids(hass, config_entry)
 
         hass.config_entries.async_update_entry(
