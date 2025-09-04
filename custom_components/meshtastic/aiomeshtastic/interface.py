@@ -1,6 +1,7 @@
 # SPDX-FileCopyrightText: 2024-2025 Pascal Brogle @broglep
 # SPDX-FileCopyrightText: 2025 Hendrik @novag
 # SPDX-FileCopyrightText: 2025 Ovidiu D. Nițan @ov1d1u
+# SPDX-FileCopyrightText: 2025 Zdeněk Biberle @zdenek-biberle
 #
 # SPDX-License-Identifier: MIT
 
@@ -1060,7 +1061,8 @@ class MeshInterface:
         want_ack: bool = False,
         channel_index: int | None = None,
         priority: MeshPacket.Priority | None = None,
-        reply_id: int | None = None,
+        reply_id: int = 0,
+        emoji: int = 0,
         on_message_sent: Callable[[Packet], Awaitable[None]] | None = None,
     ) -> None:
         if isinstance(destination, MeshNode):
@@ -1109,6 +1111,7 @@ class MeshInterface:
             want_response=False,
             ack=want_ack,
             reply_id=reply_id,
+            emoji=emoji,
             out_callback=out_callback,
         )
 
