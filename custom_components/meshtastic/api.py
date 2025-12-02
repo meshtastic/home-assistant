@@ -317,6 +317,9 @@ class MeshtasticApiClient:
                 "to": {"node": to_node, "channel": to_channel},
                 "gateway": self.get_own_node()["num"],
                 "message": packet.app_payload,
+                "rx_snr": packet.rx_snr,
+                "rx_rssi": packet.rx_rssi,
+                "hop_count": packet.hop_count,
             },
         )
 
