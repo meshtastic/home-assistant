@@ -1061,6 +1061,7 @@ class MeshInterface:
         channel_index: int | None = None,
         priority: MeshPacket.Priority | None = None,
         reply_id: int | None = None,
+        is_reaction: bool = False,
         on_message_sent: Callable[[Packet], Awaitable[None]] | None = None,
     ) -> None:
         if isinstance(destination, MeshNode):
@@ -1092,6 +1093,10 @@ class MeshInterface:
                 msg = f"Channel #{channel_index} is disabled"
                 raise ValueError(msg)
 
+        if is_reaction and reply_id is None:
+            msg = "reply_id is required when sending a reaction"
+            raise ValueError(msg)
+
         if on_message_sent is not None:
 
             async def out_callback(packet: Packet) -> None:
@@ -1109,6 +1114,7 @@ class MeshInterface:
             want_response=False,
             ack=want_ack,
             reply_id=reply_id,
+            emoji=is_reaction,
             out_callback=out_callback,
         )
 
