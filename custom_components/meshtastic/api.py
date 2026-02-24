@@ -239,7 +239,7 @@ class MeshtasticApiClient:
         event_data["message_id"] = message_id
         self._hass.bus.async_fire(EVENT_MESHTASTIC_API_TEXT_MESSAGE_OUT, event_data)
 
-    async def send_text(
+    async def send_text(  # noqa: PLR0913
         self,
         text: str,
         destination_id: int | str = MeshInterface.BROADCAST_ADDR,
