@@ -595,7 +595,7 @@ def _build_environment_metrics_sensors(
             add_sensor("temperature", SensorDeviceClass.TEMPERATURE, UnitOfTemperature.CELSIUS)
             add_sensor("relativeHumidity", SensorDeviceClass.HUMIDITY, PERCENTAGE)
             add_sensor("barometricPressure", SensorDeviceClass.ATMOSPHERIC_PRESSURE, UnitOfPressure.HPA)
-            add_sensor("gasResistance", None, UnitOfPressure.HPA)
+            add_sensor("gasResistance", None, "Ω")
             add_sensor("iaq", SensorDeviceClass.AQI, None)
 
             add_sensor("distance", SensorDeviceClass.DISTANCE, UnitOfLength.MILLIMETERS)
@@ -603,7 +603,7 @@ def _build_environment_metrics_sensors(
             add_sensor("lux", SensorDeviceClass.ILLUMINANCE, LIGHT_LUX)
             add_sensor("white_lux", SensorDeviceClass.ILLUMINANCE, LIGHT_LUX)
             add_sensor("ir_lux", SensorDeviceClass.ILLUMINANCE, LIGHT_LUX)
-            add_sensor("uv_lux", SensorDeviceClass.ILLUMINANCE, LIGHT_LUX)
+            add_sensor("uvLux", SensorDeviceClass.ILLUMINANCE, LIGHT_LUX)
 
             add_sensor("wind_direction", SensorDeviceClass.WIND_SPEED, DEGREE)
             add_sensor("wind_speed", SensorDeviceClass.WIND_SPEED, UnitOfSpeed.METERS_PER_SECOND)
