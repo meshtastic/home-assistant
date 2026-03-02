@@ -34,6 +34,8 @@ from .const import (
     EVENT_MESHTASTIC_MESSAGE_LOG_EVENT_DATA_ATTR_FROM_NAME,
     EVENT_MESHTASTIC_MESSAGE_LOG_EVENT_DATA_ATTR_MESSAGE,
     EVENT_MESHTASTIC_MESSAGE_LOG_EVENT_DATA_ATTR_PKI,
+    EVENT_MESHTASTIC_MESSAGE_LOG_EVENT_DATA_ATTR_RSSI,
+    EVENT_MESHTASTIC_MESSAGE_LOG_EVENT_DATA_ATTR_SNR,    
     MeshtasticDomainEventData,
     MeshtasticDomainEventType,
     MeshtasticDomainMessageLogEventData,
@@ -99,6 +101,8 @@ async def async_setup_message_logger(hass: HomeAssistant, entry: MeshtasticConfi
         to_channel_entity_id: str,
         to_dm_entity_id: str,
         message: str,
+        snr: float,
+        rssi: int,
     ) -> None:
         if (node_info := entry.runtime_data.client.get_node_info(int(from_node_id))) is not None:
             from_name = f"{node_info.long_name} ({node_info.user_id})"
@@ -110,6 +114,8 @@ async def async_setup_message_logger(hass: HomeAssistant, entry: MeshtasticConfi
             EVENT_MESHTASTIC_MESSAGE_LOG_EVENT_DATA_ATTR_FROM_NAME: from_name,
             EVENT_MESHTASTIC_MESSAGE_LOG_EVENT_DATA_ATTR_PKI: bool(to_dm_entity_id),
             EVENT_MESHTASTIC_MESSAGE_LOG_EVENT_DATA_ATTR_MESSAGE: message,
+            EVENT_MESHTASTIC_MESSAGE_LOG_EVENT_DATA_ATTR_SNR: snr,
+            EVENT_MESHTASTIC_MESSAGE_LOG_EVENT_DATA_ATTR_RSSI: rssi,
         }
         hass.bus.async_fire(event_type=EVENT_MESHTASTIC_DOMAIN_MESSAGE_LOG, event_data=message_log_event_data)
 
@@ -135,6 +141,8 @@ async def async_setup_message_logger(hass: HomeAssistant, entry: MeshtasticConfi
             config_entry_id, gateway_node_id, to, to_device
         )
         message = data["message"]
+        snr = data["snr"]
+        rssi = data["rssi"]
 
         if produce_domain_event:
             if from_device:
@@ -172,6 +180,8 @@ async def async_setup_message_logger(hass: HomeAssistant, entry: MeshtasticConfi
                 to_channel_entity_id,
                 to_dm_entity_id,
                 message,
+                snr,
+                rssi,
             )
 
     def extract_device_and_entity_from_channel(

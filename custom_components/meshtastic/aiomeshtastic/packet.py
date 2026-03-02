@@ -32,6 +32,10 @@ class Packet[T]:
         return self.mesh_packet.rx_snr if self.mesh_packet is not None else None
 
     @property
+    def rx_rssi(self) -> int | None:
+        return self.mesh_packet.rx_rssi if self.mesh_packet is not None else None
+
+    @property
     def to_id(self) -> int | None:
         return self.mesh_packet.to if self.mesh_packet is not None else None
 
