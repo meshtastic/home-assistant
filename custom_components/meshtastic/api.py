@@ -239,7 +239,7 @@ class MeshtasticApiClient:
         event_data["message_id"] = message_id
         self._hass.bus.async_fire(EVENT_MESHTASTIC_API_TEXT_MESSAGE_OUT, event_data)
 
-    async def send_text(
+    async def send_text(  # noqa: PLR0913
         self,
         text: str,
         destination_id: int | str = MeshInterface.BROADCAST_ADDR,
@@ -247,6 +247,7 @@ class MeshtasticApiClient:
         want_ack: bool = False,
         channel_index: int | None = None,
         reply_id: int | None = None,
+        is_reaction: bool = False,
     ) -> bool:
         async def _on_message_sent(packet: Packet) -> None:
             # publish event so that outgoing messages are recorded to logbook
@@ -262,6 +263,7 @@ class MeshtasticApiClient:
                     want_ack=want_ack,
                     channel_index=channel_index,
                     reply_id=reply_id,
+                    is_reaction=is_reaction,
                     on_message_sent=_on_message_sent,
                 ),
                 timeout=30,
@@ -317,6 +319,11 @@ class MeshtasticApiClient:
                 "to": {"node": to_node, "channel": to_channel},
                 "gateway": self.get_own_node()["num"],
                 "message": packet.app_payload,
+                "hop_start": packet.mesh_packet.hop_start,
+                "hop_limit": packet.mesh_packet.hop_limit,
+                "rx_snr": packet.mesh_packet.rx_snr,
+                "rx_rssi": packet.mesh_packet.rx_rssi,
+                "via_mqtt": packet.mesh_packet.via_mqtt,
             },
         )
 

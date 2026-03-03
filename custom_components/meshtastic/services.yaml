@@ -39,6 +39,11 @@ send_text:
       selector:
         text:
           multiline: false
+    is_reaction:
+      required: false
+      default: false
+      selector:
+        boolean: {}
 
 send_direct_message:
   fields:
@@ -62,6 +67,11 @@ send_direct_message:
       selector:
         text:
           multiline: false
+    is_reaction:
+      required: false
+      default: false
+      selector:
+        boolean: {}
 
 broadcast_channel_message:
   fields:
@@ -87,6 +97,11 @@ broadcast_channel_message:
       selector:
         text:
           multiline: false
+    is_reaction:
+      required: false
+      default: false
+      selector:
+        boolean: {}
 
 request_telemetry:
   fields:
