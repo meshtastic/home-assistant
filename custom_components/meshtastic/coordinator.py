@@ -124,6 +124,8 @@ class MeshtasticDataUpdateCoordinator(DataUpdateCoordinator):
             metric_type = "powerMetrics"
         elif telemetry_type == EventMeshtasticApiTelemetryType.ENVIRONMENT_METRICS:
             metric_type = "environmentMetrics"
+        elif telemetry_type == EventMeshtasticApiTelemetryType.AIR_QUALITY_METRICS:
+            metric_type = "airQualityMetrics"
         else:
             self._logger.warning("Unsupported telemetry type %s", telemetry_type)
             return
