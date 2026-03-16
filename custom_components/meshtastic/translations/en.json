@@ -179,7 +179,11 @@
         },
         "reply_id": {
           "name": "Reply ID",
-          "description": "A message ID to reply to."
+          "description": "If set and non-zero, this message is intended to be a reply to a previously sent message with the defined ID. Using a constant value for this field is not very useful, you probably want to use a template such as '{{ trigger.event.data.message_id }}'."
+        },
+        "emoji": {
+          "name": "Emoji",
+          "description": "If true, then what is in the payload should be treated as an emoji, like giving a message a heart or poop emoji."
         }
       }
     },
@@ -201,7 +205,11 @@
         },
         "reply_id": {
           "name": "Reply ID",
-          "description": "A message ID to reply to."
+          "description": "If set and non-zero, this message is intended to be a reply to a previously sent message with the defined ID. Using a constant value for this field is not very useful, you probably want to use a template such as '{{ trigger.event.data.message_id }}'."
+        },
+        "emoji": {
+          "name": "Emoji",
+          "description": "If true, then what is in the payload should be treated as an emoji, like giving a message a heart or poop emoji."
         }
       }
     },
@@ -223,7 +231,11 @@
         },
         "reply_id": {
           "name": "Reply ID",
-          "description": "A message ID to reply to."
+          "description": "If set and non-zero, this message is intended to be a reply to a previously sent message with the defined ID. Using a constant value for this field is not very useful, you probably want to use a template such as '{{ trigger.event.data.message_id }}'."
+        },
+        "emoji": {
+          "name": "Emoji",
+          "description": "If true, then what is in the payload should be treated as an emoji, like giving a message a heart or poop emoji."
         }
       }
     },

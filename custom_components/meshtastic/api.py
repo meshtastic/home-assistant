@@ -1,5 +1,6 @@
 # SPDX-FileCopyrightText: 2024-2025 Pascal Brogle @broglep
 # SPDX-FileCopyrightText: 2025 Ovidiu D. Nițan @ov1d1u
+# SPDX-FileCopyrightText: 2025 Zdeněk Biberle @zdenek-biberle
 #
 # SPDX-License-Identifier: MIT
 
@@ -211,12 +212,15 @@ class MeshtasticApiClient:
 
         return transformed
 
-    async def _publish_event_text_message_out(
+    async def _publish_event_text_message_out(  # noqa: PLR0913
         self,
         text: str,
         message_id: int,
         destination_id: int | str = MeshInterface.BROADCAST_ADDR,
         channel_index: int | None = None,
+        *,
+        reply_id: int,
+        emoji: int,
     ) -> None:
         if destination_id == MeshInterface.BROADCAST_NUM or channel_index is not None:
             to_channel = channel_index
@@ -233,25 +237,33 @@ class MeshtasticApiClient:
                 "to": {"node": to_node, "channel": to_channel},
                 "gateway": gateway_id,
                 "message": text,
+                "reply_id": reply_id,
+                "emoji": emoji,
             },
         )
 
         event_data["message_id"] = message_id
         self._hass.bus.async_fire(EVENT_MESHTASTIC_API_TEXT_MESSAGE_OUT, event_data)
 
-    async def send_text(
+    async def send_text(  # noqa: PLR0913
         self,
         text: str,
         destination_id: int | str = MeshInterface.BROADCAST_ADDR,
         *,
         want_ack: bool = False,
         channel_index: int | None = None,
-        reply_id: int | None = None,
+        reply_id: int = 0,
+        emoji: int = 0,
     ) -> bool:
         async def _on_message_sent(packet: Packet) -> None:
             # publish event so that outgoing messages are recorded to logbook
             await self._publish_event_text_message_out(
-                text, packet.mesh_packet.id, destination_id=destination_id, channel_index=channel_index
+                text,
+                packet.mesh_packet.id,
+                destination_id=destination_id,
+                channel_index=channel_index,
+                reply_id=reply_id,
+                emoji=emoji,
             )
 
         try:
@@ -262,6 +274,7 @@ class MeshtasticApiClient:
                     want_ack=want_ack,
                     channel_index=channel_index,
                     reply_id=reply_id,
+                    emoji=emoji,
                     on_message_sent=_on_message_sent,
                 ),
                 timeout=30,
@@ -310,17 +323,34 @@ class MeshtasticApiClient:
             to_channel = None
             to_node = packet.to_id
 
+        data = packet.data
+        if data is None:
+            self._logger.debug("No decoded data in text message packet, ignoring")
+            return
+
+        payload = packet.app_payload
+        if payload is None:
+            self._logger.debug("No payload in text message packet, ignoring")
+            return
+
+        mesh_packet = packet.mesh_packet
+        if mesh_packet is None:
+            self._logger.debug("No mesh packet in text message packet, ignoring")
+            return
+
         event_data = self._build_event_data(
             node.id,
             {
                 "from": packet.from_id,
                 "to": {"node": to_node, "channel": to_channel},
                 "gateway": self.get_own_node()["num"],
-                "message": packet.app_payload,
+                "message": payload,
+                "reply_id": data.reply_id,
+                "emoji": data.emoji,
             },
         )
 
-        event_data["message_id"] = packet.mesh_packet.id
+        event_data["message_id"] = mesh_packet.id
         self._hass.bus.async_fire(EVENT_MESHTASTIC_API_TEXT_MESSAGE, event_data)
 
     async def _on_telemetry(self, node: MeshNode, telemetry: dict[str, Any]) -> None:
