@@ -9,7 +9,7 @@ from asyncio import StreamReader, StreamReaderProtocol, StreamWriter
 from typing import cast
 
 import serial
-import serial_asyncio
+import serial_asyncio_fast as serial_asyncio
 
 from custom_components.meshtastic.aiomeshtastic.connection import (
     ClientApiConnectionError,

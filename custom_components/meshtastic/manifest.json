@@ -24,7 +24,7 @@
   "iot_class": "local_polling",
   "issue_tracker": "https://github.com/meshtastic/home-assistant/issues",
   "requirements": [
-    "pyserial-asyncio==0.6",
+    "pyserial-asyncio-fast==0.16",
     "aiomqtt"
   ],
   "usb": [
