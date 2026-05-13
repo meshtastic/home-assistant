@@ -25,7 +25,7 @@
   "issue_tracker": "https://github.com/meshtastic/home-assistant/issues",
   "requirements": [
     "pyserial-asyncio==0.6",
-    "aiomqtt"
+    "paho-mqtt>=2.1.0"
   ],
   "usb": [
     {
