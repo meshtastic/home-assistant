@@ -29,6 +29,8 @@ Supported Features:
  * Various other service actions (e.g. request metrics, trace route)
  * Bundled meshtastic web client for manual interaction with gateway
  * MQTT client proxy support (forwards messages from radio to MQTT broker)
+ * MQTT downlink forwarding (subscribes to MQTT topics and forwards to radio)
+ * LoRa-to-MQTT uplink relay (re-encrypts received LoRa packets and publishes to MQTT)
 
 For more details, see check the [documentation](#documentation).
 
@@ -304,6 +306,48 @@ Inside the Meshtastic Web Client:
 
 4. Press "New Connection" - the correct hostname is already populated
 5. Press "Connect"
+
+## MQTT Proxy
+
+The integration includes MQTT client proxy support for bridging LoRa mesh traffic over the internet via an MQTT broker.
+This allows devices connected to different gateways (potentially hundreds of miles apart) to communicate as if they were
+on the same local mesh.
+
+### How It Works
+
+When the Meshtastic device has MQTT enabled with `proxy_to_client_enabled`, the integration manages the MQTT connection
+on behalf of the device. Three levels of functionality are available:
+
+1. **Uplink (always on):** Messages the device *originates* are published to the MQTT broker by the firmware via
+   `mqttClientProxyMessage`. This is the existing behavior and requires no additional configuration.
+
+2. **MQTT Downlink Forwarding (opt-in):** The integration subscribes to MQTT downlink topics for channels with
+   `downlink_enabled` and forwards incoming messages to the radio. This allows other MQTT gateways on the internet to
+   send messages into your local LoRa mesh.
+
+3. **LoRa-to-MQTT Uplink Relay (opt-in):** The firmware in proxy mode only publishes packets the device *originates*,
+   not packets *received* from other LoRa nodes. When this option is enabled, the integration re-encrypts received LoRa
+   packets using the channel PSK and publishes them to MQTT, making your gateway a true bidirectional bridge.
+
+### Configuration
+
+Enable these features in the integration options under the **MQTT Proxy** section:
+
+- **Enable MQTT Downlink Forwarding** — subscribes to MQTT topics and forwards to radio
+- **Enable LoRa-to-MQTT Uplink Relay** — re-encrypts and publishes received LoRa packets to MQTT
+
+Both options default to **disabled** to preserve existing behavior.
+
+### Important Notes
+
+- **Default channels are excluded:** High-traffic public channels (LongFast, LongSlow, MediumFast, MediumSlow,
+  ShortFast, ShortSlow) are automatically excluded from downlink subscription and uplink relay to prevent serial link
+  saturation (~320 msgs/sec on `mqtt.meshtastic.org` for LongFast alone).
+- **Self-loop prevention:** Messages published by your own gateway are filtered from the downlink to prevent echo loops.
+- **Channel PSK required:** The LoRa-to-MQTT relay re-encrypts packets using the channel's PSK. Channels without a PSK
+  (no encryption) are skipped.
+- **Device configuration:** The device must have `mqtt.enabled`, `mqtt.proxy_to_client_enabled`, and per-channel
+  `uplink_enabled`/`downlink_enabled` set in its firmware configuration.
 
 ## Contributions are welcome!
 

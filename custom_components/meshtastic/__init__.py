@@ -44,6 +44,11 @@ from .const import (
     CONF_CONNECTION_TCP_PORT,
     CONF_CONNECTION_TYPE,
     CONF_OPTION_FILTER_NODES,
+    CONF_OPTION_MQTT_PROXY,
+    CONF_OPTION_MQTT_PROXY_DOWNLINK,
+    CONF_OPTION_MQTT_PROXY_DOWNLINK_DEFAULT,
+    CONF_OPTION_MQTT_PROXY_UPLINK_RELAY,
+    CONF_OPTION_MQTT_PROXY_UPLINK_RELAY_DEFAULT,
     CONF_OPTION_TCP_PROXY,
     CONF_OPTION_TCP_PROXY_ENABLE,
     CONF_OPTION_TCP_PROXY_ENABLE_DEFAULT,
@@ -132,7 +137,17 @@ async def async_setup_entry(
     if coordinator.config_entry is None:
         coordinator.config_entry = entry
 
-    client = MeshtasticApiClient(entry.data, hass=hass, config_entry_id=entry.entry_id)
+    client = MeshtasticApiClient(
+        entry.data,
+        hass=hass,
+        config_entry_id=entry.entry_id,
+        enable_mqtt_downlink=entry.options.get(CONF_OPTION_MQTT_PROXY, {}).get(
+            CONF_OPTION_MQTT_PROXY_DOWNLINK, CONF_OPTION_MQTT_PROXY_DOWNLINK_DEFAULT
+        ),
+        enable_mqtt_uplink_relay=entry.options.get(CONF_OPTION_MQTT_PROXY, {}).get(
+            CONF_OPTION_MQTT_PROXY_UPLINK_RELAY, CONF_OPTION_MQTT_PROXY_UPLINK_RELAY_DEFAULT
+        ),
+    )
 
     try:
         await client.connect()

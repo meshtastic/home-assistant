@@ -32,6 +32,11 @@ from .const import (
     CONF_CONNECTION_TYPE,
     CONF_OPTION_ADD_ANOTHER_NODE,
     CONF_OPTION_FILTER_NODES,
+    CONF_OPTION_MQTT_PROXY,
+    CONF_OPTION_MQTT_PROXY_DOWNLINK,
+    CONF_OPTION_MQTT_PROXY_DOWNLINK_DEFAULT,
+    CONF_OPTION_MQTT_PROXY_UPLINK_RELAY,
+    CONF_OPTION_MQTT_PROXY_UPLINK_RELAY_DEFAULT,
     CONF_OPTION_NODE,
     CONF_OPTION_NOTIFY_PLATFORM,
     CONF_OPTION_NOTIFY_PLATFORM_CHANNELS,
@@ -185,6 +190,23 @@ def _build_meshtastic_tcp_schema(
                 CONF_OPTION_TCP_PROXY_PORT,
                 default=options.get(CONF_OPTION_TCP_PROXY_PORT, CONF_OPTION_TCP_PROXY_PORT_DEFAULT),
             ): cv.positive_int,
+        }
+    )
+
+
+def _build_meshtastic_mqtt_proxy_schema(
+    options: dict[str, Any],
+) -> vol.Schema:
+    return vol.Schema(
+        {
+            vol.Required(
+                CONF_OPTION_MQTT_PROXY_DOWNLINK,
+                default=options.get(CONF_OPTION_MQTT_PROXY_DOWNLINK, CONF_OPTION_MQTT_PROXY_DOWNLINK_DEFAULT),
+            ): cv.boolean,
+            vol.Required(
+                CONF_OPTION_MQTT_PROXY_UPLINK_RELAY,
+                default=options.get(CONF_OPTION_MQTT_PROXY_UPLINK_RELAY, CONF_OPTION_MQTT_PROXY_UPLINK_RELAY_DEFAULT),
+            ): cv.boolean,
         }
     )
 
@@ -557,10 +579,19 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
             if not errors:
                 self.options[CONF_OPTION_TCP_PROXY] = user_input
-                return await self._finish_steps()
+                return await self.async_step_mqtt_proxy()
 
         schema = _build_meshtastic_tcp_schema(user_input or {})
         return self.async_show_form(step_id="tcp_proxy", data_schema=schema, errors=errors)
+
+    async def async_step_mqtt_proxy(self, user_input: dict[str, Any] | None = None) -> FlowResult:
+        errors: dict[str, str] = {}
+        if user_input is not None:
+            self.options[CONF_OPTION_MQTT_PROXY] = user_input
+            return await self._finish_steps()
+
+        schema = _build_meshtastic_mqtt_proxy_schema(user_input or {})
+        return self.async_show_form(step_id="mqtt_proxy", data_schema=schema, errors=errors)
 
     async def _finish_steps(self) -> ConfigFlowResult:
         return self.async_create_entry(
@@ -664,6 +695,9 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                 else:
                     new_data[CONF_OPTION_TCP_PROXY] = user_input[CONF_OPTION_TCP_PROXY]
 
+            if CONF_OPTION_MQTT_PROXY in user_input:
+                new_data[CONF_OPTION_MQTT_PROXY] = user_input[CONF_OPTION_MQTT_PROXY]
+
             if not errors:
                 return self.async_create_entry(
                     title="",
@@ -690,6 +724,11 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
             if CONF_OPTION_TCP_PROXY in self.options
             else self.config_entry.options.get(CONF_OPTION_TCP_PROXY, {})
         )
+        mqtt_proxy_options = (
+            self.options[CONF_OPTION_MQTT_PROXY]
+            if CONF_OPTION_MQTT_PROXY in self.options
+            else self.config_entry.options.get(CONF_OPTION_MQTT_PROXY, {})
+        )
         options_schema = vol.Schema(
             {
                 vol.Required(CONF_OPTION_FILTER_NODES, default=list(selected_nodes.keys())): cv.multi_select(
@@ -708,6 +747,9 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                 ),
                 vol.Required(CONF_OPTION_TCP_PROXY): data_entry_flow.section(
                     _build_meshtastic_tcp_schema(tcp_proxy_options), {"collapsed": "tcp_proxy" in errors}
+                ),
+                vol.Required(CONF_OPTION_MQTT_PROXY): data_entry_flow.section(
+                    _build_meshtastic_mqtt_proxy_schema(mqtt_proxy_options), {"collapsed": True}
                 ),
             }
         )

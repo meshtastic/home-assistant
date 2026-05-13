@@ -90,6 +90,17 @@
           "enable": "Enable TCP Proxy",
           "port": "TCP Port"
         }
+      },
+      "mqtt_proxy": {
+        "description": "Configure MQTT proxy behavior for bridging LoRa mesh traffic over the internet. Requires the device to have MQTT enabled with proxy_to_client_enabled in its firmware settings. Default/public channels (LongFast, etc.) are automatically excluded to prevent serial link saturation.",
+        "data": {
+          "downlink": "Enable MQTT Downlink Forwarding",
+          "uplink_relay": "Enable LoRa-to-MQTT Uplink Relay"
+        },
+        "data_description": {
+          "downlink": "Subscribe to MQTT topics for channels with downlink enabled and forward messages to the radio. This allows internet-connected MQTT gateways to send messages into your local LoRa mesh.",
+          "uplink_relay": "Re-encrypt and publish LoRa-received packets to MQTT for channels with uplink enabled. This is needed because the firmware in proxy mode only publishes packets the device originates, not packets received from other LoRa nodes."
+        }
       }
     },
     "error": {
@@ -140,6 +151,18 @@
             "data": {
               "enable": "Enable TCP Proxy",
               "port": "TCP Port"
+            }
+          },
+          "mqtt_proxy": {
+            "name": "MQTT Proxy",
+            "description": "Configure MQTT proxy behavior for bridging LoRa mesh traffic over the internet. Requires the device to have MQTT enabled with proxy_to_client_enabled in its firmware settings. Default/public channels (LongFast, etc.) are automatically excluded to prevent serial link saturation.",
+            "data": {
+              "downlink": "Enable MQTT Downlink Forwarding",
+              "uplink_relay": "Enable LoRa-to-MQTT Uplink Relay"
+            },
+            "data_description": {
+              "downlink": "Subscribe to MQTT topics for channels with downlink enabled and forward messages to the radio. This allows internet-connected MQTT gateways to send messages into your local LoRa mesh.",
+              "uplink_relay": "Re-encrypt and publish LoRa-received packets to MQTT for channels with uplink enabled. This is needed because the firmware in proxy mode only publishes packets the device originates, not packets received from other LoRa nodes."
             }
           }
         }

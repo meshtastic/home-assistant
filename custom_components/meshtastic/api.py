@@ -95,6 +95,8 @@ class MeshtasticApiClient:
         config_entry_id: str | None,
         *,
         no_nodes: bool = False,
+        enable_mqtt_downlink: bool = False,
+        enable_mqtt_uplink_relay: bool = False,
     ) -> None:
         self._logger = LOGGER.getChild(self.__class__.__name__)
         self._connected = asyncio.Event()
@@ -120,7 +122,11 @@ class MeshtasticApiClient:
             raise ValueError(msg)
 
         self._interface = AioMeshInterface(
-            connection=connection, no_nodes=no_nodes, heartbeat_interval=timedelta(minutes=5)
+            connection=connection,
+            no_nodes=no_nodes,
+            heartbeat_interval=timedelta(minutes=5),
+            enable_mqtt_downlink=enable_mqtt_downlink,
+            enable_mqtt_uplink_relay=enable_mqtt_uplink_relay,
         )
         self._packet_processor: asyncio.Task | None = None
         self._background_tasks: set[asyncio.Task] = set()
