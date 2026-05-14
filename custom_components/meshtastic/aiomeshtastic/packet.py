@@ -46,6 +46,10 @@ class Packet[T]:
     @property
     def port_num(self) -> portnums_pb2.PortNum | None:
         return self.data.portnum if self.data is not None else None
+    
+    @property
+    def hops_count(self) -> int:
+        return self.mesh_packet.hop_start - self.mesh_packet.hop_limit
 
     @cached_property
     def app_payload(self) -> T:  # noqa: PLR0911
