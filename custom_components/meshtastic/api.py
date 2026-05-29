@@ -74,6 +74,7 @@ class EventMeshtasticApiTelemetryType(StrEnum):
     DEVICE_METRICS = "device_metrics"
     LOCAL_STATS = "local_stats"
     ENVIRONMENT_METRICS = "environment_metrics"
+    AIR_QUALITY_METRICS = "air_quality_metrics"
     POWER_METRICS = "power_metrics"
 
 
@@ -293,6 +294,7 @@ class MeshtasticApiClient:
         device_metrics = telemetry.get("deviceMetrics")
         local_stats = telemetry.get("localStats")
         environment_metrics = telemetry.get("environmentMetrics")
+        air_quality_metrics = telemetry.get("airQualityMetrics")
         power_metrics = telemetry.get("powerMetrics")
 
         node_info = {"name": node.long_name}
@@ -312,6 +314,12 @@ class MeshtasticApiClient:
             event_data = self._build_event_data(node.id, environment_metrics)
             event_data[ATTR_EVENT_MESHTASTIC_API_NODE_INFO] = node_info
             event_data[ATTR_EVENT_MESHTASTIC_API_TELEMETRY_TYPE] = EventMeshtasticApiTelemetryType.ENVIRONMENT_METRICS
+            self._hass.bus.async_fire(EVENT_MESHTASTIC_API_TELEMETRY, event_data)
+
+        if air_quality_metrics:
+            event_data = self._build_event_data(node.id, air_quality_metrics)
+            event_data[ATTR_EVENT_MESHTASTIC_API_NODE_INFO] = node_info
+            event_data[ATTR_EVENT_MESHTASTIC_API_TELEMETRY_TYPE] = EventMeshtasticApiTelemetryType.AIR_QUALITY_METRICS
             self._hass.bus.async_fire(EVENT_MESHTASTIC_API_TELEMETRY, event_data)
 
         if power_metrics:

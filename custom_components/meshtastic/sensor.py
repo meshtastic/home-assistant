@@ -50,6 +50,10 @@ if TYPE_CHECKING:
     from .data import MeshtasticConfigEntry, MeshtasticData
 
 
+UNIT_PARTICLES_PER_DECILITER = "particles/dL"
+UNIT_MEGAOHM = "MOhm"
+
+
 def _build_sensors(nodes: Mapping[int, Mapping[str, Any]], runtime_data: MeshtasticData) -> Iterable[MeshtasticSensor]:
     entities = []
     entities += _build_node_sensors(nodes, runtime_data)
@@ -565,6 +569,7 @@ def _build_environment_metrics_sensors(
     def add_sensor_base(  # noqa: PLR0913
         node_id: int,
         node_info: dict[str, Any],
+        name: str,
         value_key: str,
         device_class: SensorDeviceClass | None,
         unit_of_measurement: str | None = None,
@@ -577,6 +582,7 @@ def _build_environment_metrics_sensors(
                     coordinator=coordinator,
                     entity_description=MeshtasticSensorEntityDescription(
                         key="environment_" + key,
+                        name=name,
                         translation_key="environment_" + key,
                         native_unit_of_measurement=unit_of_measurement,
                         device_class=device_class,
@@ -592,25 +598,30 @@ def _build_environment_metrics_sensors(
         for node_id, node_info in nodes_with_environment_metrics.items():
             add_sensor = partial(add_sensor_base, node_id, node_info)
 
-            add_sensor("temperature", SensorDeviceClass.TEMPERATURE, UnitOfTemperature.CELSIUS)
-            add_sensor("relativeHumidity", SensorDeviceClass.HUMIDITY, PERCENTAGE)
-            add_sensor("barometricPressure", SensorDeviceClass.ATMOSPHERIC_PRESSURE, UnitOfPressure.HPA)
-            add_sensor("gasResistance", None, UnitOfPressure.HPA)
-            add_sensor("iaq", SensorDeviceClass.AQI, None)
+            add_sensor("Temperature", "temperature", SensorDeviceClass.TEMPERATURE, UnitOfTemperature.CELSIUS)
+            add_sensor("Relative Humidity", "relativeHumidity", SensorDeviceClass.HUMIDITY, PERCENTAGE)
+            add_sensor(
+                "Barometric Pressure",
+                "barometricPressure",
+                SensorDeviceClass.ATMOSPHERIC_PRESSURE,
+                UnitOfPressure.HPA,
+            )
+            add_sensor("Gas Resistance", "gasResistance", None, UNIT_MEGAOHM)
+            add_sensor("Indoor Air Quality", "iaq", SensorDeviceClass.AQI, None)
 
-            add_sensor("distance", SensorDeviceClass.DISTANCE, UnitOfLength.MILLIMETERS)
+            add_sensor("Distance", "distance", SensorDeviceClass.DISTANCE, UnitOfLength.MILLIMETERS)
 
-            add_sensor("lux", SensorDeviceClass.ILLUMINANCE, LIGHT_LUX)
-            add_sensor("white_lux", SensorDeviceClass.ILLUMINANCE, LIGHT_LUX)
-            add_sensor("ir_lux", SensorDeviceClass.ILLUMINANCE, LIGHT_LUX)
-            add_sensor("uv_lux", SensorDeviceClass.ILLUMINANCE, LIGHT_LUX)
+            add_sensor("Illuminance", "lux", SensorDeviceClass.ILLUMINANCE, LIGHT_LUX)
+            add_sensor("White Light", "white_lux", SensorDeviceClass.ILLUMINANCE, LIGHT_LUX)
+            add_sensor("Infrared Light", "ir_lux", SensorDeviceClass.ILLUMINANCE, LIGHT_LUX)
+            add_sensor("Ultraviolet Light", "uv_lux", SensorDeviceClass.ILLUMINANCE, LIGHT_LUX)
 
-            add_sensor("wind_direction", SensorDeviceClass.WIND_SPEED, DEGREE)
-            add_sensor("wind_speed", SensorDeviceClass.WIND_SPEED, UnitOfSpeed.METERS_PER_SECOND)
-            add_sensor("wind_gust", SensorDeviceClass.WIND_SPEED, UnitOfSpeed.METERS_PER_SECOND)
-            add_sensor("wind_lull", SensorDeviceClass.WIND_SPEED, UnitOfSpeed.METERS_PER_SECOND)
+            add_sensor("Wind Direction", "wind_direction", None, DEGREE)
+            add_sensor("Wind Speed", "wind_speed", SensorDeviceClass.WIND_SPEED, UnitOfSpeed.METERS_PER_SECOND)
+            add_sensor("Wind Gust", "wind_gust", None, UnitOfSpeed.METERS_PER_SECOND)
+            add_sensor("Wind Lull", "wind_lull", None, UnitOfSpeed.METERS_PER_SECOND)
 
-            add_sensor("weight", SensorDeviceClass.WEIGHT, UnitOfMass.KILOGRAMS)
+            add_sensor("Weight", "weight", SensorDeviceClass.WEIGHT, UnitOfMass.KILOGRAMS)
 
     except:  # noqa: E722
         LOGGER.warning("Failed to create environment metric entities", exc_info=True)
@@ -637,6 +648,7 @@ def _build_air_quality_metrics_sensors(
     def add_sensor_base(  # noqa: PLR0913
         node_id: int,
         node_info: dict[str, Any],
+        name: str,
         value_key: str,
         device_class: SensorDeviceClass | None,
         unit_of_measurement: str | None = None,
@@ -649,6 +661,7 @@ def _build_air_quality_metrics_sensors(
                     coordinator=coordinator,
                     entity_description=MeshtasticSensorEntityDescription(
                         key="airquality_" + key,
+                        name=name,
                         translation_key="airquality_" + key,
                         native_unit_of_measurement=unit_of_measurement,
                         device_class=device_class,
@@ -664,20 +677,35 @@ def _build_air_quality_metrics_sensors(
         for node_id, node_info in nodes_with_environment_metrics.items():
             add_sensor = partial(add_sensor_base, node_id, node_info)
 
-            add_sensor("pm10Standard", SensorDeviceClass.PM10, CONCENTRATION_MICROGRAMS_PER_CUBIC_METER)
-            add_sensor("pm25Standard", SensorDeviceClass.PM25, CONCENTRATION_MICROGRAMS_PER_CUBIC_METER)
-            add_sensor("pm100Standard", None, CONCENTRATION_MICROGRAMS_PER_CUBIC_METER)
+            add_sensor("PM1.0 Standard", "pm10Standard", None, CONCENTRATION_MICROGRAMS_PER_CUBIC_METER)
+            add_sensor(
+                "PM2.5 Standard",
+                "pm25Standard",
+                SensorDeviceClass.PM25,
+                CONCENTRATION_MICROGRAMS_PER_CUBIC_METER,
+            )
+            add_sensor("PM10 Standard", "pm100Standard", SensorDeviceClass.PM10, CONCENTRATION_MICROGRAMS_PER_CUBIC_METER)
 
-            add_sensor("pm10Environmental", SensorDeviceClass.PM10, CONCENTRATION_MICROGRAMS_PER_CUBIC_METER)
-            add_sensor("pm25Environmental", SensorDeviceClass.PM25, CONCENTRATION_MICROGRAMS_PER_CUBIC_METER)
-            add_sensor("pm100Environmental", None, CONCENTRATION_MICROGRAMS_PER_CUBIC_METER)
+            add_sensor("PM1.0 Environmental", "pm10Environmental", None, CONCENTRATION_MICROGRAMS_PER_CUBIC_METER)
+            add_sensor(
+                "PM2.5 Environmental",
+                "pm25Environmental",
+                SensorDeviceClass.PM25,
+                CONCENTRATION_MICROGRAMS_PER_CUBIC_METER,
+            )
+            add_sensor(
+                "PM10 Environmental",
+                "pm100Environmental",
+                SensorDeviceClass.PM10,
+                CONCENTRATION_MICROGRAMS_PER_CUBIC_METER,
+            )
 
-            add_sensor("particles03um", None, CONCENTRATION_MICROGRAMS_PER_CUBIC_METER)
-            add_sensor("particles05um", None, CONCENTRATION_MICROGRAMS_PER_CUBIC_METER)
-            add_sensor("particles10um", SensorDeviceClass.PM10, CONCENTRATION_MICROGRAMS_PER_CUBIC_METER)
-            add_sensor("particles25um", SensorDeviceClass.PM25, CONCENTRATION_MICROGRAMS_PER_CUBIC_METER)
-            add_sensor("particles50um", None, CONCENTRATION_MICROGRAMS_PER_CUBIC_METER)
-            add_sensor("particles100um", None, CONCENTRATION_MICROGRAMS_PER_CUBIC_METER)
+            add_sensor("Particles 0.3um", "particles03um", None, UNIT_PARTICLES_PER_DECILITER)
+            add_sensor("Particles 0.5um", "particles05um", None, UNIT_PARTICLES_PER_DECILITER)
+            add_sensor("Particles 1.0um", "particles10um", None, UNIT_PARTICLES_PER_DECILITER)
+            add_sensor("Particles 2.5um", "particles25um", None, UNIT_PARTICLES_PER_DECILITER)
+            add_sensor("Particles 5.0um", "particles50um", None, UNIT_PARTICLES_PER_DECILITER)
+            add_sensor("Particles 10.0um", "particles100um", None, UNIT_PARTICLES_PER_DECILITER)
     except:  # noqa: E722
         LOGGER.warning("Failed to create air quality metric entities", exc_info=True)
 
