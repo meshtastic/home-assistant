@@ -240,7 +240,7 @@ class MeshtasticWebConfigEntryView(HomeAssistantView):
         request: HomeAssistantRequest,  # noqa: ARG002
         entity_id: str,
     ) -> web.Response:
-        if not entity_id.startswith("gateway_"):
+        if not entity_id.startswith("gateway"):
             return web.FileResponse(Path(__file__).parent / "static" / entity_id, headers={"Cache-Control": "no-cache"})
 
         entity_registry = er.async_get(self._hass)
