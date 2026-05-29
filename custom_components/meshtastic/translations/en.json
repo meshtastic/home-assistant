@@ -31,7 +31,7 @@
           "bluetooth_address": "Bluetooth Address"
         },
         "data_description": {
-          "bluetooth_address": "Device address in form of 00:11:22:33:FF:EE"
+          "bluetooth_address": "Device address in form of 00:11:22:33:FF:EE. Letters must be capitalized."
         }
       },
       "discovery_bluetooth_confirm": {
