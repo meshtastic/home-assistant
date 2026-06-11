@@ -26,6 +26,7 @@ from homeassistant.const import (
     LIGHT_LUX,
     PERCENTAGE,
     SIGNAL_STRENGTH_DECIBELS,
+    SIGNAL_STRENGTH_DECIBELS_MILLIWATT,
     UnitOfElectricCurrent,
     UnitOfElectricPotential,
     UnitOfInformation,
@@ -513,6 +514,26 @@ def _build_local_stats_sensors(
                     value_fn=lambda device: device.coordinator.data[device.node_id]
                     .get("localStats", {})
                     .get("heapFreeBytes", None),
+                ),
+                gateway=gateway,
+                node_id=node_id,
+            )
+            for node_id, node_info in nodes_with_local_stats.items()
+        ]
+
+        entities += [
+            MeshtasticSensor(
+                coordinator=coordinator,
+                entity_description=MeshtasticSensorEntityDescription(
+                    key="stats_noise_floor",
+                    name="Noise Floor",
+                    icon="mdi:signal",
+                    native_unit_of_measurement=SIGNAL_STRENGTH_DECIBELS_MILLIWATT,
+                    device_class=SensorDeviceClass.SIGNAL_STRENGTH,
+                    state_class=SensorStateClass.MEASUREMENT,
+                    value_fn=lambda device: device.coordinator.data[device.node_id]
+                    .get("localStats", {})
+                    .get("noiseFloor", None),
                 ),
                 gateway=gateway,
                 node_id=node_id,
