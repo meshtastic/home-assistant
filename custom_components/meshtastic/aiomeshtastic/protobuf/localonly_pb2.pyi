@@ -3,83 +3,89 @@
 isort:skip_file
 """
 
-import builtins
-import google.protobuf.descriptor
-import google.protobuf.message
-from . import config_pb2
-from . import module_config_pb2
-import typing
+from google.protobuf import descriptor as _descriptor
+from google.protobuf import message as _message
+from meshtastic.aiomeshtastic.protobuf import config_pb2 as _config_pb2
+from meshtastic.aiomeshtastic.protobuf import module_config_pb2 as _module_config_pb2
+import builtins as _builtins
+import sys
+import typing as _typing
 
-DESCRIPTOR: google.protobuf.descriptor.FileDescriptor
+if sys.version_info >= (3, 11):
+    from typing import TypeAlias as _TypeAlias, Never as _Never
+else:
+    from typing_extensions import TypeAlias as _TypeAlias, Never as _Never
 
-@typing.final
-class LocalConfig(google.protobuf.message.Message):
+DESCRIPTOR: _descriptor.FileDescriptor
+
+@_typing.final
+class LocalConfig(_message.Message):
     """
     Protobuf structures common to apponly.proto and deviceonly.proto
     This is never sent over the wire, only for local use
     """
 
-    DESCRIPTOR: google.protobuf.descriptor.Descriptor
+    DESCRIPTOR: _descriptor.Descriptor
 
-    DEVICE_FIELD_NUMBER: builtins.int
-    POSITION_FIELD_NUMBER: builtins.int
-    POWER_FIELD_NUMBER: builtins.int
-    NETWORK_FIELD_NUMBER: builtins.int
-    DISPLAY_FIELD_NUMBER: builtins.int
-    LORA_FIELD_NUMBER: builtins.int
-    BLUETOOTH_FIELD_NUMBER: builtins.int
-    VERSION_FIELD_NUMBER: builtins.int
-    SECURITY_FIELD_NUMBER: builtins.int
-    version: builtins.int
+    DEVICE_FIELD_NUMBER: _builtins.int
+    POSITION_FIELD_NUMBER: _builtins.int
+    POWER_FIELD_NUMBER: _builtins.int
+    NETWORK_FIELD_NUMBER: _builtins.int
+    DISPLAY_FIELD_NUMBER: _builtins.int
+    LORA_FIELD_NUMBER: _builtins.int
+    BLUETOOTH_FIELD_NUMBER: _builtins.int
+    VERSION_FIELD_NUMBER: _builtins.int
+    SECURITY_FIELD_NUMBER: _builtins.int
+    version: _builtins.int
     """
     A version integer used to invalidate old save files when we make
     incompatible changes This integer is set at build time and is private to
     NodeDB.cpp in the device code.
     """
-    @property
-    def device(self) -> config_pb2.Config.DeviceConfig:
+    @_builtins.property
+    def device(self) -> _config_pb2.Config.DeviceConfig:
         """
         The part of the config that is specific to the Device
         """
 
-    @property
-    def position(self) -> config_pb2.Config.PositionConfig:
+    @_builtins.property
+    def position(self) -> _config_pb2.Config.PositionConfig:
         """
         The part of the config that is specific to the GPS Position
         """
 
-    @property
-    def power(self) -> config_pb2.Config.PowerConfig:
+    @_builtins.property
+    def power(self) -> _config_pb2.Config.PowerConfig:
         """
         The part of the config that is specific to the Power settings
         """
 
-    @property
-    def network(self) -> config_pb2.Config.NetworkConfig:
+    @_builtins.property
+    def network(self) -> _config_pb2.Config.NetworkConfig:
         """
         The part of the config that is specific to the Wifi Settings
         """
 
-    @property
-    def display(self) -> config_pb2.Config.DisplayConfig:
+    @_builtins.property
+    def display(self) -> _config_pb2.Config.DisplayConfig:
         """
         The part of the config that is specific to the Display
         """
 
-    @property
-    def lora(self) -> config_pb2.Config.LoRaConfig:
+    @_builtins.property
+    def lora(self) -> _config_pb2.Config.LoRaConfig:
         """
         The part of the config that is specific to the Lora Radio
         """
 
-    @property
-    def bluetooth(self) -> config_pb2.Config.BluetoothConfig:
+    @_builtins.property
+    def bluetooth(self) -> _config_pb2.Config.BluetoothConfig:
         """
         The part of the config that is specific to the Bluetooth settings
         """
 
-    @property
-    def security(self) -> config_pb2.Config.SecurityConfig:
+    @_builtins.property
+    def security(self) -> _config_pb2.Config.SecurityConfig:
         """
         The part of the config that is specific to Security settings
         """
@@ -87,142 +93,172 @@ class LocalConfig(google.protobuf.message.Message):
     def __init__(
         self,
         *,
-        device: config_pb2.Config.DeviceConfig | None = ...,
-        position: config_pb2.Config.PositionConfig | None = ...,
-        power: config_pb2.Config.PowerConfig | None = ...,
-        network: config_pb2.Config.NetworkConfig | None = ...,
-        display: config_pb2.Config.DisplayConfig | None = ...,
-        lora: config_pb2.Config.LoRaConfig | None = ...,
-        bluetooth: config_pb2.Config.BluetoothConfig | None = ...,
-        version: builtins.int = ...,
-        security: config_pb2.Config.SecurityConfig | None = ...,
+        device: _config_pb2.Config.DeviceConfig | None = ...,
+        position: _config_pb2.Config.PositionConfig | None = ...,
+        power: _config_pb2.Config.PowerConfig | None = ...,
+        network: _config_pb2.Config.NetworkConfig | None = ...,
+        display: _config_pb2.Config.DisplayConfig | None = ...,
+        lora: _config_pb2.Config.LoRaConfig | None = ...,
+        bluetooth: _config_pb2.Config.BluetoothConfig | None = ...,
+        version: _builtins.int = ...,
+        security: _config_pb2.Config.SecurityConfig | None = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing.Literal["bluetooth", b"bluetooth", "device", b"device", "display", b"display", "lora", b"lora", "network", b"network", "position", b"position", "power", b"power", "security", b"security"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["bluetooth", b"bluetooth", "device", b"device", "display", b"display", "lora", b"lora", "network", b"network", "position", b"position", "power", b"power", "security", b"security", "version", b"version"]) -> None: ...
+    _HasFieldArgType: _TypeAlias = _typing.Literal["bluetooth", b"bluetooth", "device", b"device", "display", b"display", "lora", b"lora", "network", b"network", "position", b"position", "power", b"power", "security", b"security"]  # noqa: Y015
+    def HasField(self, field_name: _HasFieldArgType) -> _builtins.bool: ...
+    _ClearFieldArgType: _TypeAlias = _typing.Literal["bluetooth", b"bluetooth", "device", b"device", "display", b"display", "lora", b"lora", "network", b"network", "position", b"position", "power", b"power", "security", b"security", "version", b"version"]  # noqa: Y015
+    def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
+    def WhichOneof(self, oneof_group: _Never) -> None: ...
 
-global___LocalConfig = LocalConfig
+Global___LocalConfig: _TypeAlias = LocalConfig  # noqa: Y015
 
-@typing.final
-class LocalModuleConfig(google.protobuf.message.Message):
-    DESCRIPTOR: google.protobuf.descriptor.Descriptor
+@_typing.final
+class LocalModuleConfig(_message.Message):
+    DESCRIPTOR: _descriptor.Descriptor
 
-    MQTT_FIELD_NUMBER: builtins.int
-    SERIAL_FIELD_NUMBER: builtins.int
-    EXTERNAL_NOTIFICATION_FIELD_NUMBER: builtins.int
-    STORE_FORWARD_FIELD_NUMBER: builtins.int
-    RANGE_TEST_FIELD_NUMBER: builtins.int
-    TELEMETRY_FIELD_NUMBER: builtins.int
-    CANNED_MESSAGE_FIELD_NUMBER: builtins.int
-    AUDIO_FIELD_NUMBER: builtins.int
-    REMOTE_HARDWARE_FIELD_NUMBER: builtins.int
-    NEIGHBOR_INFO_FIELD_NUMBER: builtins.int
-    AMBIENT_LIGHTING_FIELD_NUMBER: builtins.int
-    DETECTION_SENSOR_FIELD_NUMBER: builtins.int
-    PAXCOUNTER_FIELD_NUMBER: builtins.int
-    VERSION_FIELD_NUMBER: builtins.int
-    version: builtins.int
+    MQTT_FIELD_NUMBER: _builtins.int
+    SERIAL_FIELD_NUMBER: _builtins.int
+    EXTERNAL_NOTIFICATION_FIELD_NUMBER: _builtins.int
+    STORE_FORWARD_FIELD_NUMBER: _builtins.int
+    RANGE_TEST_FIELD_NUMBER: _builtins.int
+    TELEMETRY_FIELD_NUMBER: _builtins.int
+    CANNED_MESSAGE_FIELD_NUMBER: _builtins.int
+    AUDIO_FIELD_NUMBER: _builtins.int
+    REMOTE_HARDWARE_FIELD_NUMBER: _builtins.int
+    NEIGHBOR_INFO_FIELD_NUMBER: _builtins.int
+    AMBIENT_LIGHTING_FIELD_NUMBER: _builtins.int
+    DETECTION_SENSOR_FIELD_NUMBER: _builtins.int
+    PAXCOUNTER_FIELD_NUMBER: _builtins.int
+    STATUSMESSAGE_FIELD_NUMBER: _builtins.int
+    TRAFFIC_MANAGEMENT_FIELD_NUMBER: _builtins.int
+    TAK_FIELD_NUMBER: _builtins.int
+    VERSION_FIELD_NUMBER: _builtins.int
+    version: _builtins.int
     """
     A version integer used to invalidate old save files when we make
     incompatible changes This integer is set at build time and is private to
     NodeDB.cpp in the device code.
     """
-    @property
-    def mqtt(self) -> module_config_pb2.ModuleConfig.MQTTConfig:
+    @_builtins.property
+    def mqtt(self) -> _module_config_pb2.ModuleConfig.MQTTConfig:
         """
         The part of the config that is specific to the MQTT module
         """
 
-    @property
-    def serial(self) -> module_config_pb2.ModuleConfig.SerialConfig:
+    @_builtins.property
+    def serial(self) -> _module_config_pb2.ModuleConfig.SerialConfig:
         """
         The part of the config that is specific to the Serial module
         """
 
-    @property
-    def external_notification(self) -> module_config_pb2.ModuleConfig.ExternalNotificationConfig:
+    @_builtins.property
+    def external_notification(self) -> _module_config_pb2.ModuleConfig.ExternalNotificationConfig:
         """
         The part of the config that is specific to the ExternalNotification module
         """
 
-    @property
-    def store_forward(self) -> module_config_pb2.ModuleConfig.StoreForwardConfig:
+    @_builtins.property
+    def store_forward(self) -> _module_config_pb2.ModuleConfig.StoreForwardConfig:
         """
         The part of the config that is specific to the Store & Forward module
         """
 
-    @property
-    def range_test(self) -> module_config_pb2.ModuleConfig.RangeTestConfig:
+    @_builtins.property
+    def range_test(self) -> _module_config_pb2.ModuleConfig.RangeTestConfig:
         """
         The part of the config that is specific to the RangeTest module
         """
 
-    @property
-    def telemetry(self) -> module_config_pb2.ModuleConfig.TelemetryConfig:
+    @_builtins.property
+    def telemetry(self) -> _module_config_pb2.ModuleConfig.TelemetryConfig:
         """
         The part of the config that is specific to the Telemetry module
         """
 
-    @property
-    def canned_message(self) -> module_config_pb2.ModuleConfig.CannedMessageConfig:
+    @_builtins.property
+    def canned_message(self) -> _module_config_pb2.ModuleConfig.CannedMessageConfig:
         """
         The part of the config that is specific to the Canned Message module
         """
 
-    @property
-    def audio(self) -> module_config_pb2.ModuleConfig.AudioConfig:
+    @_builtins.property
+    def audio(self) -> _module_config_pb2.ModuleConfig.AudioConfig:
         """
         The part of the config that is specific to the Audio module
         """
 
-    @property
-    def remote_hardware(self) -> module_config_pb2.ModuleConfig.RemoteHardwareConfig:
+    @_builtins.property
+    def remote_hardware(self) -> _module_config_pb2.ModuleConfig.RemoteHardwareConfig:
         """
         The part of the config that is specific to the Remote Hardware module
         """
 
-    @property
-    def neighbor_info(self) -> module_config_pb2.ModuleConfig.NeighborInfoConfig:
+    @_builtins.property
+    def neighbor_info(self) -> _module_config_pb2.ModuleConfig.NeighborInfoConfig:
         """
         The part of the config that is specific to the Neighbor Info module
         """
 
-    @property
-    def ambient_lighting(self) -> module_config_pb2.ModuleConfig.AmbientLightingConfig:
+    @_builtins.property
+    def ambient_lighting(self) -> _module_config_pb2.ModuleConfig.AmbientLightingConfig:
         """
         The part of the config that is specific to the Ambient Lighting module
         """
 
-    @property
-    def detection_sensor(self) -> module_config_pb2.ModuleConfig.DetectionSensorConfig:
+    @_builtins.property
+    def detection_sensor(self) -> _module_config_pb2.ModuleConfig.DetectionSensorConfig:
         """
         The part of the config that is specific to the Detection Sensor module
         """
 
-    @property
-    def paxcounter(self) -> module_config_pb2.ModuleConfig.PaxcounterConfig:
+    @_builtins.property
+    def paxcounter(self) -> _module_config_pb2.ModuleConfig.PaxcounterConfig:
         """
         Paxcounter Config
+        """
+
+    @_builtins.property
+    def statusmessage(self) -> _module_config_pb2.ModuleConfig.StatusMessageConfig:
+        """
+        StatusMessage Config
+        """
+
+    @_builtins.property
+    def traffic_management(self) -> _module_config_pb2.ModuleConfig.TrafficManagementConfig:
+        """
+        The part of the config that is specific to the Traffic Management module
+        """
+
+    @_builtins.property
+    def tak(self) -> _module_config_pb2.ModuleConfig.TAKConfig:
+        """
+        TAK Config
         """
 
     def __init__(
         self,
         *,
-        mqtt: module_config_pb2.ModuleConfig.MQTTConfig | None = ...,
-        serial: module_config_pb2.ModuleConfig.SerialConfig | None = ...,
-        external_notification: module_config_pb2.ModuleConfig.ExternalNotificationConfig | None = ...,
-        store_forward: module_config_pb2.ModuleConfig.StoreForwardConfig | None = ...,
-        range_test: module_config_pb2.ModuleConfig.RangeTestConfig | None = ...,
-        telemetry: module_config_pb2.ModuleConfig.TelemetryConfig | None = ...,
-        canned_message: module_config_pb2.ModuleConfig.CannedMessageConfig | None = ...,
-        audio: module_config_pb2.ModuleConfig.AudioConfig | None = ...,
-        remote_hardware: module_config_pb2.ModuleConfig.RemoteHardwareConfig | None = ...,
-        neighbor_info: module_config_pb2.ModuleConfig.NeighborInfoConfig | None = ...,
-        ambient_lighting: module_config_pb2.ModuleConfig.AmbientLightingConfig | None = ...,
-        detection_sensor: module_config_pb2.ModuleConfig.DetectionSensorConfig | None = ...,
-        paxcounter: module_config_pb2.ModuleConfig.PaxcounterConfig | None = ...,
-        version: builtins.int = ...,
+        mqtt: _module_config_pb2.ModuleConfig.MQTTConfig | None = ...,
+        serial: _module_config_pb2.ModuleConfig.SerialConfig | None = ...,
+        external_notification: _module_config_pb2.ModuleConfig.ExternalNotificationConfig | None = ...,
+        store_forward: _module_config_pb2.ModuleConfig.StoreForwardConfig | None = ...,
+        range_test: _module_config_pb2.ModuleConfig.RangeTestConfig | None = ...,
+        telemetry: _module_config_pb2.ModuleConfig.TelemetryConfig | None = ...,
+        canned_message: _module_config_pb2.ModuleConfig.CannedMessageConfig | None = ...,
+        audio: _module_config_pb2.ModuleConfig.AudioConfig | None = ...,
+        remote_hardware: _module_config_pb2.ModuleConfig.RemoteHardwareConfig | None = ...,
+        neighbor_info: _module_config_pb2.ModuleConfig.NeighborInfoConfig | None = ...,
+        ambient_lighting: _module_config_pb2.ModuleConfig.AmbientLightingConfig | None = ...,
+        detection_sensor: _module_config_pb2.ModuleConfig.DetectionSensorConfig | None = ...,
+        paxcounter: _module_config_pb2.ModuleConfig.PaxcounterConfig | None = ...,
+        statusmessage: _module_config_pb2.ModuleConfig.StatusMessageConfig | None = ...,
+        traffic_management: _module_config_pb2.ModuleConfig.TrafficManagementConfig | None = ...,
+        tak: _module_config_pb2.ModuleConfig.TAKConfig | None = ...,
+        version: _builtins.int = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing.Literal["ambient_lighting", b"ambient_lighting", "audio", b"audio", "canned_message", b"canned_message", "detection_sensor", b"detection_sensor", "external_notification", b"external_notification", "mqtt", b"mqtt", "neighbor_info", b"neighbor_info", "paxcounter", b"paxcounter", "range_test", b"range_test", "remote_hardware", b"remote_hardware", "serial", b"serial", "store_forward", b"store_forward", "telemetry", b"telemetry"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["ambient_lighting", b"ambient_lighting", "audio", b"audio", "canned_message", b"canned_message", "detection_sensor", b"detection_sensor", "external_notification", b"external_notification", "mqtt", b"mqtt", "neighbor_info", b"neighbor_info", "paxcounter", b"paxcounter", "range_test", b"range_test", "remote_hardware", b"remote_hardware", "serial", b"serial", "store_forward", b"store_forward", "telemetry", b"telemetry", "version", b"version"]) -> None: ...
+    _HasFieldArgType: _TypeAlias = _typing.Literal["ambient_lighting", b"ambient_lighting", "audio", b"audio", "canned_message", b"canned_message", "detection_sensor", b"detection_sensor", "external_notification", b"external_notification", "mqtt", b"mqtt", "neighbor_info", b"neighbor_info", "paxcounter", b"paxcounter", "range_test", b"range_test", "remote_hardware", b"remote_hardware", "serial", b"serial", "statusmessage", b"statusmessage", "store_forward", b"store_forward", "tak", b"tak", "telemetry", b"telemetry", "traffic_management", b"traffic_management"]  # noqa: Y015
+    def HasField(self, field_name: _HasFieldArgType) -> _builtins.bool: ...
+    _ClearFieldArgType: _TypeAlias = _typing.Literal["ambient_lighting", b"ambient_lighting", "audio", b"audio", "canned_message", b"canned_message", "detection_sensor", b"detection_sensor", "external_notification", b"external_notification", "mqtt", b"mqtt", "neighbor_info", b"neighbor_info", "paxcounter", b"paxcounter", "range_test", b"range_test", "remote_hardware", b"remote_hardware", "serial", b"serial", "statusmessage", b"statusmessage", "store_forward", b"store_forward", "tak", b"tak", "telemetry", b"telemetry", "traffic_management", b"traffic_management", "version", b"version"]  # noqa: Y015
+    def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
+    def WhichOneof(self, oneof_group: _Never) -> None: ...
 
-global___LocalModuleConfig = LocalModuleConfig
+Global___LocalModuleConfig: _TypeAlias = LocalModuleConfig  # noqa: Y015

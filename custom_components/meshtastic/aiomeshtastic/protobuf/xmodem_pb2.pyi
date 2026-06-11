@@ -3,30 +3,30 @@
 isort:skip_file
 """
 
-import builtins
-import google.protobuf.descriptor
-import google.protobuf.internal.enum_type_wrapper
-import google.protobuf.message
+from google.protobuf import descriptor as _descriptor
+from google.protobuf import message as _message
+from google.protobuf.internal import enum_type_wrapper as _enum_type_wrapper
+import builtins as _builtins
 import sys
-import typing
+import typing as _typing
 
-if sys.version_info >= (3, 10):
-    import typing as typing_extensions
+if sys.version_info >= (3, 11):
+    from typing import TypeAlias as _TypeAlias, Never as _Never
 else:
-    import typing_extensions
+    from typing_extensions import TypeAlias as _TypeAlias, Never as _Never
 
-DESCRIPTOR: google.protobuf.descriptor.FileDescriptor
+DESCRIPTOR: _descriptor.FileDescriptor
 
-@typing.final
-class XModem(google.protobuf.message.Message):
-    DESCRIPTOR: google.protobuf.descriptor.Descriptor
+@_typing.final
+class XModem(_message.Message):
+    DESCRIPTOR: _descriptor.Descriptor
 
     class _Control:
-        ValueType = typing.NewType("ValueType", builtins.int)
-        V: typing_extensions.TypeAlias = ValueType
+        ValueType = _typing.NewType("ValueType", _builtins.int)
+        V: _TypeAlias = ValueType  # noqa: Y015
 
-    class _ControlEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[XModem._Control.ValueType], builtins.type):
-        DESCRIPTOR: google.protobuf.descriptor.EnumDescriptor
+    class _ControlEnumTypeWrapper(_enum_type_wrapper._EnumTypeWrapper[XModem._Control.ValueType], _builtins.type):
+        DESCRIPTOR: _descriptor.EnumDescriptor
         NUL: XModem._Control.ValueType  # 0
         SOH: XModem._Control.ValueType  # 1
         STX: XModem._Control.ValueType  # 2
@@ -46,22 +46,26 @@ class XModem(google.protobuf.message.Message):
     CAN: XModem.Control.ValueType  # 24
     CTRLZ: XModem.Control.ValueType  # 26
 
-    CONTROL_FIELD_NUMBER: builtins.int
-    SEQ_FIELD_NUMBER: builtins.int
-    CRC16_FIELD_NUMBER: builtins.int
-    BUFFER_FIELD_NUMBER: builtins.int
-    control: global___XModem.Control.ValueType
-    seq: builtins.int
-    crc16: builtins.int
-    buffer: builtins.bytes
+    CONTROL_FIELD_NUMBER: _builtins.int
+    SEQ_FIELD_NUMBER: _builtins.int
+    CRC16_FIELD_NUMBER: _builtins.int
+    BUFFER_FIELD_NUMBER: _builtins.int
+    control: Global___XModem.Control.ValueType
+    seq: _builtins.int
+    crc16: _builtins.int
+    buffer: _builtins.bytes
     def __init__(
         self,
         *,
-        control: global___XModem.Control.ValueType = ...,
-        seq: builtins.int = ...,
-        crc16: builtins.int = ...,
-        buffer: builtins.bytes = ...,
+        control: Global___XModem.Control.ValueType = ...,
+        seq: _builtins.int = ...,
+        crc16: _builtins.int = ...,
+        buffer: _builtins.bytes = ...,
     ) -> None: ...
-    def ClearField(self, field_name: typing.Literal["buffer", b"buffer", "control", b"control", "crc16", b"crc16", "seq", b"seq"]) -> None: ...
+    _HasFieldArgType: _TypeAlias = _Never  # noqa: Y015
+    def HasField(self, field_name: _HasFieldArgType) -> _builtins.bool: ...
+    _ClearFieldArgType: _TypeAlias = _typing.Literal["buffer", b"buffer", "control", b"control", "crc16", b"crc16", "seq", b"seq"]  # noqa: Y015
+    def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
+    def WhichOneof(self, oneof_group: _Never) -> None: ...
 
-global___XModem = XModem
+Global___XModem: _TypeAlias = XModem  # noqa: Y015

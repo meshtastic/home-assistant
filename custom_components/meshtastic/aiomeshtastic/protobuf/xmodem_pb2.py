@@ -24,14 +24,14 @@ _sym_db = _symbol_database.Default()
 
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n.meshtastic/aiomeshtastic/protobuf/xmodem.proto\x12!meshtastic.aiomeshtastic.protobuf\"\xcd\x01\n\x06XModem\x12\x42\n\x07\x63ontrol\x18\x01 \x01(\x0e\x32\x31.meshtastic.aiomeshtastic.protobuf.XModem.Control\x12\x0b\n\x03seq\x18\x02 \x01(\r\x12\r\n\x05\x63rc16\x18\x03 \x01(\r\x12\x0e\n\x06\x62uffer\x18\x04 \x01(\x0c\"S\n\x07\x43ontrol\x12\x07\n\x03NUL\x10\x00\x12\x07\n\x03SOH\x10\x01\x12\x07\n\x03STX\x10\x02\x12\x07\n\x03\x45OT\x10\x04\x12\x07\n\x03\x41\x43K\x10\x06\x12\x07\n\x03NAK\x10\x15\x12\x07\n\x03\x43\x41N\x10\x18\x12\t\n\x05\x43TRLZ\x10\x1a\x42\x61\n\x13\x63om.geeksville.meshB\x0cXmodemProtosZ\"github.com/meshtastic/go/generated\xaa\x02\x14Meshtastic.Protobufs\xba\x02\x00\x62\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n.meshtastic/aiomeshtastic/protobuf/xmodem.proto\x12!meshtastic.aiomeshtastic.protobuf\"\xcd\x01\n\x06XModem\x12\x42\n\x07\x63ontrol\x18\x01 \x01(\x0e\x32\x31.meshtastic.aiomeshtastic.protobuf.XModem.Control\x12\x0b\n\x03seq\x18\x02 \x01(\r\x12\r\n\x05\x63rc16\x18\x03 \x01(\r\x12\x0e\n\x06\x62uffer\x18\x04 \x01(\x0c\"S\n\x07\x43ontrol\x12\x07\n\x03NUL\x10\x00\x12\x07\n\x03SOH\x10\x01\x12\x07\n\x03STX\x10\x02\x12\x07\n\x03\x45OT\x10\x04\x12\x07\n\x03\x41\x43K\x10\x06\x12\x07\n\x03NAK\x10\x15\x12\x07\n\x03\x43\x41N\x10\x18\x12\t\n\x05\x43TRLZ\x10\x1a\x42\x62\n\x14org.meshtastic.protoB\x0cXmodemProtosZ\"github.com/meshtastic/go/generated\xaa\x02\x14Meshtastic.Protobufs\xba\x02\x00\x62\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
 _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'meshtastic.aiomeshtastic.protobuf.xmodem_pb2', _globals)
 if not _descriptor._USE_C_DESCRIPTORS:
   _globals['DESCRIPTOR']._loaded_options = None
-  _globals['DESCRIPTOR']._serialized_options = b'\n\023com.geeksville.meshB\014XmodemProtosZ\"github.com/meshtastic/go/generated\252\002\024Meshtastic.Protobufs\272\002\000'
+  _globals['DESCRIPTOR']._serialized_options = b'\n\024org.meshtastic.protoB\014XmodemProtosZ\"github.com/meshtastic/go/generated\252\002\024Meshtastic.Protobufs\272\002\000'
   _globals['_XMODEM']._serialized_start=86
   _globals['_XMODEM']._serialized_end=291
   _globals['_XMODEM_CONTROL']._serialized_start=208

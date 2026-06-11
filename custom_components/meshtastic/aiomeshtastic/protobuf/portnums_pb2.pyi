@@ -3,25 +3,25 @@
 isort:skip_file
 """
 
-import builtins
-import google.protobuf.descriptor
-import google.protobuf.internal.enum_type_wrapper
+from google.protobuf import descriptor as _descriptor
+from google.protobuf.internal import enum_type_wrapper as _enum_type_wrapper
+import builtins as _builtins
 import sys
-import typing
+import typing as _typing
 
 if sys.version_info >= (3, 10):
-    import typing as typing_extensions
+    from typing import TypeAlias as _TypeAlias
 else:
-    import typing_extensions
+    from typing_extensions import TypeAlias as _TypeAlias
 
-DESCRIPTOR: google.protobuf.descriptor.FileDescriptor
+DESCRIPTOR: _descriptor.FileDescriptor
 
 class _PortNum:
-    ValueType = typing.NewType("ValueType", builtins.int)
-    V: typing_extensions.TypeAlias = ValueType
+    ValueType = _typing.NewType("ValueType", _builtins.int)
+    V: _TypeAlias = ValueType  # noqa: Y015
 
-class _PortNumEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[_PortNum.ValueType], builtins.type):
-    DESCRIPTOR: google.protobuf.descriptor.EnumDescriptor
+class _PortNumEnumTypeWrapper(_enum_type_wrapper._EnumTypeWrapper[_PortNum.ValueType], _builtins.type):
+    DESCRIPTOR: _descriptor.EnumDescriptor
     UNKNOWN_APP: _PortNum.ValueType  # 0
     """
     Deprecated: do not use in new code (formerly called OPAQUE)
@@ -101,6 +101,10 @@ class _PortNumEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._EnumTy
     """
     Module/port for handling key verification requests.
     """
+    REMOTE_SHELL_APP: _PortNum.ValueType  # 13
+    """
+    Module/port for handling primitive remote shell access.
+    """
     REPLY_APP: _PortNum.ValueType  # 32
     """
     Provides a 'ping' service that replies to any packet it receives.
@@ -116,6 +120,20 @@ class _PortNumEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._EnumTy
     """
     Paxcounter lib included in the firmware
     ENCODING: protobuf
+    """
+    STORE_FORWARD_PLUSPLUS_APP: _PortNum.ValueType  # 35
+    """
+    Store and Forward++ module included in the firmware
+    ENCODING: protobuf
+    This module is specifically for Native Linux nodes, and provides a Git-style
+    chain of messages.
+    """
+    NODE_STATUS_APP: _PortNum.ValueType  # 36
+    """
+    Node Status module
+    ENCODING: protobuf
+    This module allows setting an extra string of status for a node.
+    Broadcasts on change and on a timer, possibly once a day.
     """
     SERIAL_APP: _PortNum.ValueType  # 64
     """
@@ -183,6 +201,11 @@ class _PortNumEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._EnumTy
     """
     PowerStress based monitoring support (for automated power consumption testing)
     """
+    LORAWAN_BRIDGE: _PortNum.ValueType  # 75
+    """
+    LoraWAN Payload Transport
+    ENCODING: compact binary LoRaWAN uplink (10-byte RF metadata + PHY payload) - see LoRaWANBridgeModule
+    """
     RETICULUM_TUNNEL_APP: _PortNum.ValueType  # 76
     """
     Reticulum Network Stack Tunnel App
@@ -193,6 +216,18 @@ class _PortNumEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._EnumTy
     App for transporting Cayenne Low Power Payload, popular for LoRaWAN sensor nodes. Offers ability to send
     arbitrary telemetry over meshtastic that is not covered by telemetry.proto
     ENCODING: CayenneLLP
+    """
+    ATAK_PLUGIN_V2: _PortNum.ValueType  # 78
+    """
+    ATAK Plugin V2
+    Portnum for payloads from the official Meshtastic ATAK plugin using
+    TAKPacketV2 with zstd dictionary compression.
+    """
+    GROUPALARM_APP: _PortNum.ValueType  # 112
+    """
+    GroupAlarm integration
+    Used for transporting GroupAlarm-related messages between Meshtastic nodes
+    and companion applications/services.
     """
     PRIVATE_APP: _PortNum.ValueType  # 256
     """
@@ -305,6 +340,10 @@ KEY_VERIFICATION_APP: PortNum.ValueType  # 12
 """
 Module/port for handling key verification requests.
 """
+REMOTE_SHELL_APP: PortNum.ValueType  # 13
+"""
+Module/port for handling primitive remote shell access.
+"""
 REPLY_APP: PortNum.ValueType  # 32
 """
 Provides a 'ping' service that replies to any packet it receives.
@@ -320,6 +359,20 @@ PAXCOUNTER_APP: PortNum.ValueType  # 34
 """
 Paxcounter lib included in the firmware
 ENCODING: protobuf
+"""
+STORE_FORWARD_PLUSPLUS_APP: PortNum.ValueType  # 35
+"""
+Store and Forward++ module included in the firmware
+ENCODING: protobuf
+This module is specifically for Native Linux nodes, and provides a Git-style
+chain of messages.
+"""
+NODE_STATUS_APP: PortNum.ValueType  # 36
+"""
+Node Status module
+ENCODING: protobuf
+This module allows setting an extra string of status for a node.
+Broadcasts on change and on a timer, possibly once a day.
 """
 SERIAL_APP: PortNum.ValueType  # 64
 """
@@ -387,6 +440,11 @@ POWERSTRESS_APP: PortNum.ValueType  # 74
 """
 PowerStress based monitoring support (for automated power consumption testing)
 """
+LORAWAN_BRIDGE: PortNum.ValueType  # 75
+"""
+LoraWAN Payload Transport
+ENCODING: compact binary LoRaWAN uplink (10-byte RF metadata + PHY payload) - see LoRaWANBridgeModule
+"""
 RETICULUM_TUNNEL_APP: PortNum.ValueType  # 76
 """
 Reticulum Network Stack Tunnel App
@@ -397,6 +455,18 @@ CAYENNE_APP: PortNum.ValueType  # 77
 App for transporting Cayenne Low Power Payload, popular for LoRaWAN sensor nodes. Offers ability to send
 arbitrary telemetry over meshtastic that is not covered by telemetry.proto
 ENCODING: CayenneLLP
+"""
+ATAK_PLUGIN_V2: PortNum.ValueType  # 78
+"""
+ATAK Plugin V2
+Portnum for payloads from the official Meshtastic ATAK plugin using
+TAKPacketV2 with zstd dictionary compression.
+"""
+GROUPALARM_APP: PortNum.ValueType  # 112
+"""
+GroupAlarm integration
+Used for transporting GroupAlarm-related messages between Meshtastic nodes
+and companion applications/services.
 """
 PRIVATE_APP: PortNum.ValueType  # 256
 """
@@ -413,4 +483,4 @@ MAX: PortNum.ValueType  # 511
 """
 Currently we limit port nums to no higher than this value
 """
-global___PortNum = PortNum
+Global___PortNum: _TypeAlias = PortNum  # noqa: Y015
