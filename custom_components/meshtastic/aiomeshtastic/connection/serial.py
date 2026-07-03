@@ -6,7 +6,6 @@ import asyncio
 import contextlib
 import re
 from asyncio import StreamReader, StreamReaderProtocol, StreamWriter
-from typing import cast
 
 import serial
 import serial_asyncio
@@ -86,7 +85,6 @@ class SerialConnection(StreamingClientTransport, asyncio.Protocol):
     async def _disconnect(self) -> None:
         if self._writer:
             self._writer.close()
-            cast("serial_asyncio.SerialTransport", self._writer.transport).serial.close()
             self._writer = None
             self._reader = None
 
