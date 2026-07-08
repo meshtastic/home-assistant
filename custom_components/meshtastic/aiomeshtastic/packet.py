@@ -62,6 +62,8 @@ class Packet[T]:
             return routing
         if port_num == portnums_pb2.PortNum.TEXT_MESSAGE_APP:
             return payload.decode()
+        if port_num == portnums_pb2.PortNum.DETECTION_SENSOR_APP:
+            return payload.decode()
         if port_num == portnums_pb2.PortNum.TELEMETRY_APP:
             telemetry = telemetry_pb2.Telemetry()
             telemetry.ParseFromString(payload)
