@@ -115,7 +115,7 @@ class MeshtasticDeviceTracker(MeshtasticNodeEntity, TrackerEntity):
         self._attr_extra_state_attributes = {
             k: v
             for k, v in position.items()
-            if k in ["altitude", "groundSpeed", "groundTrack", "locationSource", "satsInView"]
+            if k in ["altitude", "groundSpeed", "groundTrack", "locationSource", "satsInView", "PDOP", "HDOP", "VDOP"]
         }
 
     @property
