@@ -64,7 +64,26 @@ class ClientProxyTransport(StreamingClientTransport):
 
     async def _disconnect(self) -> None:
         self._writer.close()
-        await self._writer.wait_closed()
+        # A client that vanished mid-connection leaves the socket in a state where
+        # `wait_closed()` raises: RST gives ConnectionResetError, a half-open socket
+        # gives BrokenPipeError, and a peer that simply stopped answering (phone
+        # asleep, network switched) surfaces as TimeoutError or ConnectionAbortedError
+        # once the kernel gives up. All of those are OSError subclasses, so catching
+        # OSError covers the family while AttributeError, TypeError and CancelledError
+        # still propagate.
+        #
+        # This matters because `_handle_client` awaits `disconnect()` from a `finally`
+        # block, outside its own `except`, so anything raised here escapes the handler
+        # and asyncio reports "Unhandled exception in client_connected_cb".
+        #
+        # Losing a peer that is already gone is the normal end of a proxy session, but
+        # it is logged rather than silently swallowed: `disconnect()` is also reached
+        # from the client-requested disconnect path, where a failure here means queued
+        # packets were dropped on a connection the client believed it closed cleanly.
+        try:
+            await self._writer.wait_closed()
+        except OSError:
+            _LOGGER.debug("Ignoring error while closing proxy client connection", exc_info=True)
 
     @property
     def is_connected(self) -> bool:
