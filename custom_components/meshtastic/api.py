@@ -380,6 +380,7 @@ class MeshtasticApiClient:
             node.id,
             {
                 "from": packet.from_id,
+                "fromId": f"!{packet.from_id:08x}" if packet.from_id is not None else None,
                 "to": {"node": to_node, "channel": to_channel},
                 "gateway": self.get_own_node()["num"],
                 "message": packet.app_payload,
@@ -396,6 +397,14 @@ class MeshtasticApiClient:
         )
 
         event_data["message_id"] = packet.mesh_packet.id
+
+        mesh_packet = packet.mesh_packet
+        if mesh_packet is not None:
+            if mesh_packet.hop_start > 0:
+                event_data["hopsAway"] = mesh_packet.hop_start - mesh_packet.hop_limit
+            event_data["rxSnr"] = mesh_packet.rx_snr
+            event_data["rxRssi"] = mesh_packet.rx_rssi
+
         self._hass.bus.async_fire(EVENT_MESHTASTIC_API_TEXT_MESSAGE, event_data)
 
     async def _on_detection_sensor(self, node: MeshNode, packet: Packet) -> None:
