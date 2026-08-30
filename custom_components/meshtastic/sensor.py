@@ -125,7 +125,7 @@ def _build_node_sensors(
 
     def last_heard(device: MeshtasticNodeEntity) -> datetime.datetime | None:
         last_heard_int = device.coordinator.data[device.node_id].get("lastHeard")
-        if last_heard_int is None:
+        if not last_heard_int:
             return None
         return datetime.datetime.fromtimestamp(last_heard_int, tz=datetime.UTC)
 
