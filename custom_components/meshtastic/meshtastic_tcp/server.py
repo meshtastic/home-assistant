@@ -84,7 +84,7 @@ class ClientProxyTransport(StreamingClientTransport):
 
     @property
     def is_connected(self) -> bool:
-        return True
+        return not self._writer.is_closing()
 
 
 class MeshtasticTcpProxy:

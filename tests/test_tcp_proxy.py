@@ -239,3 +239,11 @@ async def test_failed_close_falls_back_to_abort(
         await handler
     assert writer.aborted
     assert proxy._clients == {}
+
+
+async def test_is_connected_reflects_transport_state() -> None:
+    reader, writer = client()
+    connection = server.ClientProxyTransport(reader, writer)
+    assert connection.is_connected
+    await connection.disconnect()
+    assert not connection.is_connected
