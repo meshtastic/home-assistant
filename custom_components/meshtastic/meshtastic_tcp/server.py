@@ -89,8 +89,8 @@ class ClientProxyTransport(StreamingClientTransport):
 
 class MeshtasticTcpProxy:
     def __init__(self, interface: MeshInterface, host: str | None = None, port: int | None = None) -> None:
-        # per-client live queue -> that client's disconnect event
-        self._clients: dict[asyncio.Queue, asyncio.Event] = {}
+        # per-client live queue -> that client's disconnect event and peer name
+        self._clients: dict[asyncio.Queue, tuple[asyncio.Event, str]] = {}
         self._handlers: set[asyncio.Task] = set()
         self._forward_task = None
         self._interface = interface
@@ -146,10 +146,9 @@ class MeshtasticTcpProxy:
         self._handlers.add(handler)
         queue = asyncio.Queue(maxsize=_CLIENT_QUEUE_SIZE)
         disconnect_event = asyncio.Event()
-        self._clients[queue] = disconnect_event
         try:
-            peer = writer.transport.get_extra_info("peername", (None, None, None, None))
-            peer_name = "{}:{}".format(*peer[0:2])
+            peer_name = "{}:{}".format(*writer.transport.get_extra_info("peername", (None, None))[0:2])
+            self._clients[queue] = (disconnect_event, peer_name)
 
             async def forward_to_radio() -> None:
                 while True:
@@ -195,6 +194,10 @@ class MeshtasticTcpProxy:
                 for task in tasks:
                     task.cancel()
                 results = await asyncio.gather(*tasks, return_exceptions=True)
+            if isinstance(results[1], TimeoutError):
+                _LOGGER.warning(
+                    "Proxy client %s did not take a frame within %s s, disconnecting it", peer_name, _WRITE_TIMEOUT_S
+                )
             _LOGGER.debug(
                 "Closed proxy connection %s: %s",
                 peer_name,
@@ -203,7 +206,7 @@ class MeshtasticTcpProxy:
         except Exception:  # noqa: BLE001
             _LOGGER.warning("Failed handling proxy connection", exc_info=True)
         finally:
-            del self._clients[queue]
+            self._clients.pop(queue, None)
             try:
                 await client_connection.disconnect()
             finally:
@@ -214,12 +217,12 @@ class MeshtasticTcpProxy:
             while True:
                 async for packet in self._interface.from_radio_stream():
                     # never await here: one client that does not keep up must not hold up the others
-                    for queue, disconnect_event in self._clients.items():
+                    for queue, (disconnect_event, peer_name) in self._clients.items():
                         try:
                             queue.put_nowait(packet)
                         except asyncio.QueueFull:
                             if not disconnect_event.is_set():
-                                _LOGGER.warning("Proxy client is not keeping up, disconnecting it")
+                                _LOGGER.warning("Proxy client %s is not keeping up, disconnecting it", peer_name)
                                 disconnect_event.set()
         except asyncio.CancelledError:
             pass
@@ -228,5 +231,5 @@ class MeshtasticTcpProxy:
             _LOGGER.exception("Forwarding from gateway failed, closing tcp proxy and its clients")
             if self._server:
                 self._server.close()
-            for disconnect_event in self._clients.values():
+            for disconnect_event, _ in self._clients.values():
                 disconnect_event.set()

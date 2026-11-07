@@ -196,7 +196,7 @@ def bootstrap(nonce: int) -> list[mesh_pb2.FromRadio]:
 
 
 async def test_wedged_client_is_evicted_while_healthy_client_bootstraps(
-    proxy: server.MeshtasticTcpProxy, monkeypatch: pytest.MonkeyPatch
+    proxy: server.MeshtasticTcpProxy, monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
 ) -> None:
     monkeypatch.setattr(server, "_CLIENT_QUEUE_SIZE", 4)
     wedged_reader, wedged_writer = client(FakeWriter(drain_hangs=True))
@@ -215,6 +215,7 @@ async def test_wedged_client_is_evicted_while_healthy_client_bootstraps(
     async with asyncio.timeout(2):
         await wedged
     assert wedged_writer.closing
+    assert f"Proxy client 127.0.0.1:{wedged_writer.port} is not keeping up" in caplog.text
     await wait_until(lambda: healthy_writer.received() == expected)
     assert not healthy.done()
 
@@ -293,3 +294,18 @@ async def test_stop_is_bounded_with_wedged_clients(
     assert proxy._forward_task.done()
     assert proxy._handlers == set()
     assert proxy._clients == {}
+
+
+async def test_write_deadline_drop_is_logged_with_peer(
+    proxy: server.MeshtasticTcpProxy, monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
+) -> None:
+    monkeypatch.setattr(server, "_WRITE_TIMEOUT_S", 0.05)
+    reader, writer = client(FakeWriter(drain_hangs=True))
+    handler = asyncio.create_task(proxy._handle_client(reader, writer))
+    await asyncio.sleep(0)
+
+    proxy._interface.packets.put_nowait(node_info(1))
+    async with asyncio.timeout(2):
+        await handler
+    warnings = [r.getMessage() for r in caplog.records if r.levelname == "WARNING"]
+    assert warnings == [f"Proxy client 127.0.0.1:{writer.port} did not take a frame within 0.05 s, disconnecting it"]
