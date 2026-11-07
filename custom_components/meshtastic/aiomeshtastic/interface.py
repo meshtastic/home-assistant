@@ -546,7 +546,15 @@ class MeshInterface:
         elif packet.HasField("metadata"):
             self._connected_node_metadata = packet.metadata
         elif packet.HasField("channel"):
-            self._connected_node_channels.append(packet.channel)
+            # replace by index: a bootstrap requested by another party (e.g. a TCP proxy client) resends all channels
+            channels = self._connected_node_channels
+            for i, existing in enumerate(channels):
+                if existing.index == packet.channel.index:
+                    channels[i] = packet.channel
+                    break
+            else:
+                channels.append(packet.channel)
+                channels.sort(key=lambda c: c.index)
         elif packet.HasField("queueStatus"):
             self._connected_node_queue_status = packet.queueStatus
         elif packet.HasField("log_record"):
