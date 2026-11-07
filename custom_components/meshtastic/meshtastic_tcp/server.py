@@ -95,6 +95,7 @@ class MeshtasticTcpProxy:
         self._forward_task = None
         self._interface = interface
         self._should_stop = False
+        self._stopping = False
         self._host = host
         self._port = port or 4403
         self._server: asyncio.Server | None = None
@@ -111,6 +112,7 @@ class MeshtasticTcpProxy:
         await self.stop()
 
     async def start(self) -> None:
+        self._stopping = False
         if not self._interface.is_running:
             self._should_stop = True
             await self._interface.start()
@@ -119,6 +121,8 @@ class MeshtasticTcpProxy:
         self._forward_task = asyncio.create_task(self._forward_from_radio(), name="tcp_proxy_read_from_gateway")
 
     async def stop(self) -> None:
+        # a handler that first runs after the snapshot below would otherwise never be cancelled
+        self._stopping = True
         if self._server:
             self._server.close()
 
@@ -137,7 +141,7 @@ class MeshtasticTcpProxy:
 
     async def _handle_client(self, reader: StreamReader, writer: StreamWriter) -> None:
         client_connection = ClientProxyTransport(reader, writer)
-        if self._forward_task is None or self._forward_task.done():
+        if self._stopping or self._forward_task is None or self._forward_task.done():
             # without the forwarder this client would never receive anything
             await client_connection.disconnect()
             return

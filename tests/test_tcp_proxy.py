@@ -309,3 +309,15 @@ async def test_write_deadline_drop_is_logged_with_peer(
         await handler
     warnings = [r.getMessage() for r in caplog.records if r.levelname == "WARNING"]
     assert warnings == [f"Proxy client 127.0.0.1:{writer.port} did not take a frame within 0.05 s, disconnecting it"]
+
+
+async def test_client_arriving_during_stop_is_refused(proxy: server.MeshtasticTcpProxy) -> None:
+    reader, writer = client()
+    # accepted before stop(), but first runs while stop() waits for the forwarder to cancel
+    late = asyncio.create_task(proxy._handle_client(reader, writer))
+    await proxy.stop()
+    async with asyncio.timeout(1):
+        await late
+    assert writer.closing
+    assert proxy._handlers == set()
+    assert proxy._clients == {}
