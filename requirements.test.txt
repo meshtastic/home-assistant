@@ -3,4 +3,9 @@ coverage
 pytest
 pytest-asyncio
 pytest-cov
-pytest-homeassistant-custom-component
+# tied to homeassistant==2024.11.0 in requirements.txt
+pytest-homeassistant-custom-component==0.13.181
+# josepy 2 removed APIs that the acme imports performed by Home Assistant need
+josepy<2
+# Home Assistant 2024.11.0's own constraint
+protobuf==5.28.3
