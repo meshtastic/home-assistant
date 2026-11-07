@@ -321,3 +321,46 @@ async def test_client_arriving_during_stop_is_refused(proxy: server.MeshtasticTc
     assert writer.closing
     assert proxy._handlers == set()
     assert proxy._clients == {}
+
+
+@pytest.mark.usefixtures("socket_enabled")  # pytest-homeassistant-custom-component blocks sockets
+async def test_loopback_bootstrap_and_disconnect() -> None:
+    """Real asyncio server, socket and framing on loopback; only the upstream interface is faked."""
+    proxy = server.MeshtasticTcpProxy(FakeInterface(), host="127.0.0.1")
+    proxy._port = 0  # the constructor maps 0 to the default port; let the OS choose one
+    await proxy.start()
+    try:
+        port = proxy._server.sockets[0].getsockname()[1]
+        reader, writer = await asyncio.open_connection("127.0.0.1", port)
+        writer.write(FRAME(mesh_pb2.ToRadio(want_config_id=7).SerializeToString()))
+        await writer.drain()
+        await wait_until(lambda: len(proxy._interface._connection.sent) == 1)
+        assert proxy._interface._connection.sent[0].want_config_id == 7
+
+        # about the size of a real bootstrap, written before the client reads anything
+        expected = [
+            mesh_pb2.FromRadio(node_info=mesh_pb2.NodeInfo(num=num, user=mesh_pb2.User(long_name=f"node {num:04}" * 4)))
+            for num in range(300)
+        ]
+        for packet in expected:
+            proxy._interface.packets.put_nowait(packet)
+
+        received = []
+        async with asyncio.timeout(5):
+            while len(received) < len(expected):
+                header = await reader.readexactly(4)
+                assert header[:2] == bytes([StreamingClientTransport.START1, StreamingClientTransport.START2])
+                from_radio = mesh_pb2.FromRadio()
+                from_radio.ParseFromString(await reader.readexactly((header[2] << 8) + header[3]))
+                received.append(from_radio)
+        assert received == expected
+
+        writer.write(FRAME(mesh_pb2.ToRadio(disconnect=True).SerializeToString()))
+        await writer.drain()
+        async with asyncio.timeout(5):
+            assert await reader.read() == b""
+        assert len(proxy._interface._connection.sent) == 1
+        writer.close()
+        await writer.wait_closed()
+    finally:
+        await proxy.stop()
