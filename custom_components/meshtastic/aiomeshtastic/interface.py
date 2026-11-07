@@ -287,7 +287,7 @@ class MeshInterface:
             return None
 
         if index is not None:
-            if len(self._connected_node_channels) < index:
+            if len(self._connected_node_channels) <= index:
                 return None
 
             channel = self._connected_node_channels[index]
@@ -1089,7 +1089,7 @@ class MeshInterface:
             to_node = self.BROADCAST_NUM
 
         if channel_index is not None:
-            if len(self._connected_node_channels) < channel_index:
+            if len(self._connected_node_channels) <= channel_index:
                 msg = "Unavailable channel index"
                 raise ValueError(msg)
 
