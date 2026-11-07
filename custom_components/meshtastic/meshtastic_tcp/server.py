@@ -19,6 +19,8 @@ _LOGGER = LOGGER.getChild(__name__)
 
 # a client that cannot take a frame within this time is not reading and gets disconnected
 _WRITE_TIMEOUT_S = 30.0
+# FromRadio messages buffered per client; a full bootstrap of a large mesh is a few hundred
+_CLIENT_QUEUE_SIZE = 1024
 
 
 class ClientProxyTransport(StreamingClientTransport):
@@ -77,8 +79,8 @@ class ClientProxyTransport(StreamingClientTransport):
 
 class MeshtasticTcpProxy:
     def __init__(self, interface: MeshInterface, host: str | None = None, port: int | None = None) -> None:
-        self._client_queues: set[asyncio.Queue] = set()
-        self._clients = {}
+        # per-client live queue -> that client's disconnect event
+        self._clients: dict[asyncio.Queue, asyncio.Event] = {}
         self._forward_task = None
         self._interface = interface
         self._should_stop = False
@@ -116,10 +118,10 @@ class MeshtasticTcpProxy:
             self._should_stop = False
 
     async def _handle_client(self, reader: StreamReader, writer: StreamWriter) -> None:
-        queue = asyncio.Queue()
-        self._client_queues.add(queue)
+        queue = asyncio.Queue(maxsize=_CLIENT_QUEUE_SIZE)
         client_connection = ClientProxyTransport(reader, writer)
         disconnect_event = asyncio.Event()
+        self._clients[queue] = disconnect_event
         try:
             peer = writer.transport.get_extra_info("peername", (None, None, None, None))
             peer_name = "{}:{}".format(*peer[0:2])
@@ -171,15 +173,21 @@ class MeshtasticTcpProxy:
         except:  # noqa: E722
             _LOGGER.warning("Failed handling proxy connection")
         finally:
-            self._client_queues.remove(queue)
+            del self._clients[queue]
             await client_connection.disconnect()
 
     async def _forward_from_radio(self) -> None:
         try:
             while True:
                 async for packet in self._interface.from_radio_stream():
-                    for queue in self._client_queues:
-                        await queue.put(packet)
+                    # never await here: one client that does not keep up must not hold up the others
+                    for queue, disconnect_event in self._clients.items():
+                        try:
+                            queue.put_nowait(packet)
+                        except asyncio.QueueFull:
+                            if not disconnect_event.is_set():
+                                _LOGGER.warning("Proxy client is not keeping up, disconnecting it")
+                                disconnect_event.set()
         except asyncio.CancelledError:
             pass
         except:  # noqa: E722

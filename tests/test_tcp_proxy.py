@@ -37,6 +37,7 @@ class FakeInterface:
     async def from_radio_stream(self) -> AsyncIterator[mesh_pb2.FromRadio]:
         while True:
             yield await self.packets.get()
+            await asyncio.sleep(0)  # a real upstream yields between frames
 
 
 class FakeServer:
@@ -180,3 +181,41 @@ async def test_dead_peer_eof_closes_handler(proxy: server.MeshtasticTcpProxy) ->
     async with asyncio.timeout(2):
         await handler
     assert writer.closing
+
+
+def bootstrap(nonce: int) -> list[mesh_pb2.FromRadio]:
+    return [
+        mesh_pb2.FromRadio(my_info=mesh_pb2.MyNodeInfo(my_node_num=1)),
+        *(node_info(num) for num in range(1, 9)),
+        mesh_pb2.FromRadio(config_complete_id=nonce),
+    ]
+
+
+async def test_wedged_client_is_evicted_while_healthy_client_bootstraps(
+    proxy: server.MeshtasticTcpProxy, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(server, "_CLIENT_QUEUE_SIZE", 4)
+    wedged_reader, wedged_writer = client(FakeWriter(drain_hangs=True))
+    healthy_reader, healthy_writer = client()
+    wedged = asyncio.create_task(proxy._handle_client(wedged_reader, wedged_writer))
+    healthy = asyncio.create_task(proxy._handle_client(healthy_reader, healthy_writer))
+
+    send(healthy_reader, mesh_pb2.ToRadio(want_config_id=1234))
+    await wait_until(lambda: len(proxy._interface._connection.sent) == 1)
+    assert proxy._interface._connection.sent[0].want_config_id == 1234
+
+    expected = bootstrap(1234)
+    for packet in expected:
+        proxy._interface.packets.put_nowait(packet)
+
+    async with asyncio.timeout(2):
+        await wedged
+    assert wedged_writer.closing
+    await wait_until(lambda: healthy_writer.received() == expected)
+    assert not healthy.done()
+
+    # live traffic still flows to the healthy client after the eviction
+    proxy._interface.packets.put_nowait(node_info(42))
+    await wait_until(lambda: healthy_writer.received()[-1:] == [node_info(42)])
+    healthy_reader.feed_eof()
+    await healthy
