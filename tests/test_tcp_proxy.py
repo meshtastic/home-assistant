@@ -219,3 +219,23 @@ async def test_wedged_client_is_evicted_while_healthy_client_bootstraps(
     await wait_until(lambda: healthy_writer.received()[-1:] == [node_info(42)])
     healthy_reader.feed_eof()
     await healthy
+
+
+@pytest.mark.parametrize(
+    "writer",
+    [
+        pytest.param(FakeWriter(close_error=ConnectionResetError()), id="broken close"),
+        pytest.param(FakeWriter(close_hangs=True), id="hanging close"),
+    ],
+)
+async def test_failed_close_falls_back_to_abort(
+    proxy: server.MeshtasticTcpProxy, monkeypatch: pytest.MonkeyPatch, writer: FakeWriter
+) -> None:
+    monkeypatch.setattr(server, "_CLOSE_TIMEOUT_S", 0.05)
+    reader, writer = client(writer)
+    handler = asyncio.create_task(proxy._handle_client(reader, writer))
+    reader.feed_eof()
+    async with asyncio.timeout(2):
+        await handler
+    assert writer.aborted
+    assert proxy._clients == {}

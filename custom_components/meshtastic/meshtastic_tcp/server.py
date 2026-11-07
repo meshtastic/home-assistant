@@ -21,6 +21,8 @@ _LOGGER = LOGGER.getChild(__name__)
 _WRITE_TIMEOUT_S = 30.0
 # FromRadio messages buffered per client; a full bootstrap of a large mesh is a few hundred
 _CLIENT_QUEUE_SIZE = 1024
+# wait_closed() can hang on a peer that does not read, or raise on a broken one
+_CLOSE_TIMEOUT_S = 5.0
 
 
 class ClientProxyTransport(StreamingClientTransport):
@@ -70,7 +72,15 @@ class ClientProxyTransport(StreamingClientTransport):
 
     async def _disconnect(self) -> None:
         self._writer.close()
-        await self._writer.wait_closed()
+        closed = False
+        try:
+            await asyncio.wait_for(self._writer.wait_closed(), _CLOSE_TIMEOUT_S)
+            closed = True
+        except Exception:  # noqa: BLE001
+            self._logger.debug("Graceful close of proxy client failed, aborting", exc_info=True)
+        finally:
+            if not closed:
+                self._writer.transport.abort()
 
     @property
     def is_connected(self) -> bool:
