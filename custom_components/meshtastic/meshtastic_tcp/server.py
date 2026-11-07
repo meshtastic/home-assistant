@@ -17,6 +17,9 @@ from custom_components.meshtastic.const import LOGGER
 
 _LOGGER = LOGGER.getChild(__name__)
 
+# a client that cannot take a frame within this time is not reading and gets disconnected
+_WRITE_TIMEOUT_S = 30.0
+
 
 class ClientProxyTransport(StreamingClientTransport):
     def __init__(self, reader: StreamReader, writer: StreamWriter) -> None:
@@ -48,6 +51,7 @@ class ClientProxyTransport(StreamingClientTransport):
 
     async def _write_bytes(self, data: bytes) -> bool:
         self._writer.write(data)
+        await asyncio.wait_for(self._writer.drain(), _WRITE_TIMEOUT_S)
         return True
 
     def _can_read(self) -> bool:
