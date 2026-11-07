@@ -36,7 +36,10 @@ class FakeInterface:
 
     async def from_radio_stream(self) -> AsyncIterator[mesh_pb2.FromRadio]:
         while True:
-            yield await self.packets.get()
+            packet = await self.packets.get()
+            if isinstance(packet, Exception):
+                raise packet
+            yield packet
             await asyncio.sleep(0)  # a real upstream yields between frames
 
 
@@ -137,6 +140,7 @@ async def proxy(monkeypatch: pytest.MonkeyPatch) -> AsyncIterator[server.Meshtas
     monkeypatch.setattr(server.asyncio, "start_server", fake_start_server)
     instance = server.MeshtasticTcpProxy(FakeInterface())
     await instance.start()
+    await asyncio.sleep(0)  # let the forwarder subscribe
     yield instance
     await instance.stop()
 
@@ -247,3 +251,45 @@ async def test_is_connected_reflects_transport_state() -> None:
     assert connection.is_connected
     await connection.disconnect()
     assert not connection.is_connected
+
+
+async def test_forwarder_failure_closes_listener_and_clients(
+    proxy: server.MeshtasticTcpProxy, caplog: pytest.LogCaptureFixture
+) -> None:
+    reader, writer = client()
+    handler = asyncio.create_task(proxy._handle_client(reader, writer))
+    await asyncio.sleep(0)
+
+    proxy._interface.packets.put_nowait(RuntimeError("upstream listener failed"))
+    async with asyncio.timeout(2):
+        await handler
+    assert writer.closing
+    assert proxy._server.closed
+    assert "Forwarding from gateway failed" in caplog.text
+
+    # a connection that still races in is closed instead of being served nothing
+    late_reader, late_writer = client()
+    async with asyncio.timeout(2):
+        await proxy._handle_client(late_reader, late_writer)
+    assert late_writer.closing
+    assert proxy._clients == {}
+
+
+async def test_stop_is_bounded_with_wedged_clients(
+    proxy: server.MeshtasticTcpProxy, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(server, "_CLOSE_TIMEOUT_S", 0.05)
+    writers = [FakeWriter(drain_hangs=True, close_hangs=True) for _ in range(3)]
+    handlers = [asyncio.create_task(proxy._handle_client(*client(w))) for w in writers]
+    await asyncio.sleep(0)
+    proxy._interface.packets.put_nowait(node_info(1))
+    await wait_until(lambda: all(w.data for w in writers))
+
+    async with asyncio.timeout(1):
+        await proxy.stop()
+    assert all(h.done() for h in handlers)
+    assert all(w.aborted for w in writers)
+    assert proxy._server.closed
+    assert proxy._forward_task.done()
+    assert proxy._handlers == set()
+    assert proxy._clients == {}

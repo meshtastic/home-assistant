@@ -91,6 +91,7 @@ class MeshtasticTcpProxy:
     def __init__(self, interface: MeshInterface, host: str | None = None, port: int | None = None) -> None:
         # per-client live queue -> that client's disconnect event
         self._clients: dict[asyncio.Queue, asyncio.Event] = {}
+        self._handlers: set[asyncio.Task] = set()
         self._forward_task = None
         self._interface = interface
         self._should_stop = False
@@ -118,18 +119,32 @@ class MeshtasticTcpProxy:
         self._forward_task = asyncio.create_task(self._forward_from_radio(), name="tcp_proxy_read_from_gateway")
 
     async def stop(self) -> None:
-        self._forward_task.cancel()
-
         if self._server:
             self._server.close()
+
+        tasks = [task for task in (self._forward_task, *self._handlers) if task is not None]
+        for task in tasks:
+            task.cancel()
+        if tasks:
+            # each handler's close is itself bounded, so this only guards against the unexpected
+            _, pending = await asyncio.wait(tasks, timeout=2 * _CLOSE_TIMEOUT_S)
+            if pending:
+                _LOGGER.warning("%d tcp proxy tasks did not stop in time", len(pending))
 
         if self._should_stop:
             await self._interface.stop()
             self._should_stop = False
 
     async def _handle_client(self, reader: StreamReader, writer: StreamWriter) -> None:
-        queue = asyncio.Queue(maxsize=_CLIENT_QUEUE_SIZE)
         client_connection = ClientProxyTransport(reader, writer)
+        if self._forward_task is None or self._forward_task.done():
+            # without the forwarder this client would never receive anything
+            await client_connection.disconnect()
+            return
+
+        handler = asyncio.current_task()
+        self._handlers.add(handler)
+        queue = asyncio.Queue(maxsize=_CLIENT_QUEUE_SIZE)
         disconnect_event = asyncio.Event()
         self._clients[queue] = disconnect_event
         try:
@@ -176,15 +191,23 @@ class MeshtasticTcpProxy:
             try:
                 await asyncio.wait([task_wait_disconnect, task_read, task_write], return_when=asyncio.FIRST_COMPLETED)
             finally:
-                task_read.cancel()
-                task_write.cancel()
-                task_wait_disconnect.cancel()
-            _LOGGER.debug("Closed proxy connection %s", peer_name)
-        except:  # noqa: E722
-            _LOGGER.warning("Failed handling proxy connection")
+                tasks = (task_read, task_write, task_wait_disconnect)
+                for task in tasks:
+                    task.cancel()
+                results = await asyncio.gather(*tasks, return_exceptions=True)
+            _LOGGER.debug(
+                "Closed proxy connection %s: %s",
+                peer_name,
+                [r for r in results if isinstance(r, Exception)],
+            )
+        except Exception:  # noqa: BLE001
+            _LOGGER.warning("Failed handling proxy connection", exc_info=True)
         finally:
             del self._clients[queue]
-            await client_connection.disconnect()
+            try:
+                await client_connection.disconnect()
+            finally:
+                self._handlers.discard(handler)
 
     async def _forward_from_radio(self) -> None:
         try:
@@ -200,5 +223,10 @@ class MeshtasticTcpProxy:
                                 disconnect_event.set()
         except asyncio.CancelledError:
             pass
-        except:  # noqa: E722
-            _LOGGER.warning("Failuring during forwarding from gateway", exc_info=True)
+        except Exception:
+            # without this task no client receives anything, so stop pretending to serve
+            _LOGGER.exception("Forwarding from gateway failed, closing tcp proxy and its clients")
+            if self._server:
+                self._server.close()
+            for disconnect_event in self._clients.values():
+                disconnect_event.set()
