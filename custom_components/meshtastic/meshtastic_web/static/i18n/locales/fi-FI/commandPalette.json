@@ -1,0 +1,51 @@
+{
+  "emptyState": "Tuloksia ei löytynyt.",
+  "page": {
+    "title": "Komentovalikko"
+  },
+  "pinGroup": {
+    "label": "Kiinnitä komentoryhmä"
+  },
+  "unpinGroup": {
+    "label": "Irroita komentoryhmä"
+  },
+  "goto": {
+    "label": "Siirry",
+    "command": {
+      "messages": "Viestit",
+      "map": "Kartta",
+      "config": "Asetukset",
+      "nodes": "Laitteet"
+    }
+  },
+  "manage": {
+    "label": "Hallinnoi",
+    "command": {
+      "switchNode": "Vaihda laitetta",
+      "connectNewNode": "Yhdistä uusi laite"
+    }
+  },
+  "contextual": {
+    "label": "Kontekstin mukainen",
+    "command": {
+      "qrCode": "QR-koodi",
+      "qrGenerator": "QR-koodigeneraattori",
+      "qrImport": "Tuo",
+      "scheduleShutdown": "Ajasta sammutus",
+      "scheduleReboot": "Käynnistä laite uudelleen",
+      "resetNodeDb": "Nollaa laitteen DB-tietokanta",
+      "dfuMode": "Syötä DFU-tila",
+      "factoryResetDevice": "Palauta tehdasasetukset",
+      "factoryResetConfig": "Tehdasasetusten palautusasetukset",
+      "disconnect": "Katkaise yhteys"
+    }
+  },
+  "debug": {
+    "label": "Vianetsintä",
+    "command": {
+      "reconfigure": "Määritä uudelleen",
+      "clearAllStoredMessages": "Tyhjennä kaikki tallennetut viesti",
+      "clearAllStores": "Tyhjennä kaikki paikallisesta tallennustilasta"
+    }
+  }
+}

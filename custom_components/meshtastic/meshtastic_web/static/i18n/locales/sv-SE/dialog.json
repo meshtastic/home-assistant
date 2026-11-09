@@ -1,0 +1,238 @@
+{
+  "deleteMessages": {
+    "description": "Den här åtgärden kommer att rensa all meddelandehistorik. Detta kan inte ångras. Är du säker på att du vill fortsätta?",
+    "title": "Rensa alla meddelanden"
+  },
+  "import": {
+    "description": "Den aktuella LoRa konfigurationen kommer att skrivas över.",
+    "error": {
+      "invalidUrl": "Ogiltig Meshtastic URL"
+    },
+    "channelPrefix": "Kanal: ",
+    "primary": "Primär ",
+    "doNotImport": "Importera inte",
+    "channelName": "Namn",
+    "channelSlot": "Plats",
+    "channelSetUrl": "Kanalinställning/QR-kod URL",
+    "useLoraConfig": "Importera LoRa-konfiguration",
+    "presetDescription": "Den nuvarande LoRa-konfigurationen kommer att ersättas.",
+    "title": "Importera kanaluppsättning"
+  },
+  "locationResponse": {
+    "title": "Plats: {{identifier}}",
+    "altitude": "Höjd:",
+    "coordinates": "Koordinater: ",
+    "noCoordinates": "Koordinater saknas"
+  },
+  "pkiRegenerateDialog": {
+    "title": "Förnya nyckel?",
+    "description": "Är du säker på att du vill förnya den fördelade nyckeln?",
+    "regenerate": "Förnya"
+  },
+  "addConnection": {
+    "title": "Lägg till anslutning",
+    "description": "Välj en anslutningstyp och fyll i uppgifterna",
+    "validation": {
+      "requiresWebBluetooth": "Den här anslutningstypen kräver <0>Web Bluetooth</0>. Använd en webbläsare som stöds, till exempel Chrome eller Edge.",
+      "requiresWebSerial": "Den här anslutningstypen kräver <0>Web Serial</0>. Använd en webbläsare som stöds, till exempel Chrome eller Edge.",
+      "requiresSecureContext": "Denna applikation kräver en <0>säker kontext</0>. Anslut med HTTPS eller localhost.",
+      "additionallyRequiresSecureContext": "Dessutom kräver den ett <0>säker kontext</0>. Vänligen anslut med HTTPS eller localhost."
+    },
+    "bluetoothConnection": {
+      "namePlaceholder": "Min Bluetooth-nod",
+      "supported": {
+        "title": "Web Bluetooth stöds"
+      },
+      "notSupported": {
+        "title": "Web Bluetooth stöds inte",
+        "description": "Din webbläsare eller enhet har inte stöd för Web Bluetooth"
+      },
+      "short": "BT: {{deviceName}}",
+      "long": "Bluetooth-enhet",
+      "device": "Enhet",
+      "selectDevice": "Välj enhet",
+      "selected": "Bluetooth-enhet vald",
+      "notSelected": "Ingen enhet vald",
+      "helperText": "Använder Meshtastic Bluetooth-tjänsten för upptäckt."
+    },
+    "serialConnection": {
+      "namePlaceholder": "Min seriella nod",
+      "helperText": "Att välja en port ger behörighet så att appen kan öppna den för att ansluta.",
+      "supported": {
+        "title": "Web Serial stöds"
+      },
+      "notSupported": {
+        "title": "Web Serial stöds inte",
+        "description": "Din webbläsare eller enhet har inte stöd för Web Serial"
+      },
+      "portSelected": {
+        "title": "Seriell port vald",
+        "description": "Portbehörigheter beviljade."
+      },
+      "port": "Port",
+      "selectPort": "Välj port",
+      "deviceName": "USB {{vendorId}}:{{productId}}",
+      "notSelected": "Ingen port vald"
+    },
+    "httpConnection": {
+      "namePlaceholder": "Min HTTP-nod",
+      "inputPlaceholder": "192.168.1.10 eller meshtastic.local",
+      "heading": "URL eller IP",
+      "useHttps": "Använd HTTPS",
+      "invalidUrl": {
+        "title": "Ogiltig adress",
+        "description": "Ange en giltig HTTP- eller HTTPS-URL."
+      },
+      "connectionTest": {
+        "description": "Testa konnetionen innan du sparar för att verifiera att enheten är nåbar.",
+        "button": {
+          "loading": "Testar...",
+          "label": "Testa anslutningen"
+        },
+        "reachable": "Nåbar",
+        "notReachable": "Kan inte nås",
+        "success": {
+          "title": "Anslutningstest lyckades",
+          "description": "Enheten verkar vara nåbar."
+        },
+        "failure": {
+          "title": "Anslutningen misslyckades",
+          "description": "Kunde inte nå enheten. Kontrollera URL:en och försök igen."
+        }
+      }
+    }
+  },
+  "nodeDetails": {
+    "message": "Meddelande",
+    "requestPosition": "Begär plats",
+    "traceRoute": "Spåra rutt",
+    "airTxUtilization": "Sändningsutnyttjande",
+    "allRawMetrics": "All oformaterad data",
+    "batteryLevel": "Batterinivå",
+    "channelUtilization": "Kanalutnyttjande",
+    "details": "Detaljer:",
+    "deviceMetrics": "Enhetens mätvärden:",
+    "hardware": "Hårdvara: ",
+    "lastHeard": "Senast hörd: ",
+    "nodeHexPrefix": "Nod-hex: ",
+    "nodeNumber": "Nodnummer: ",
+    "position": "Plats:",
+    "role": "Roll: ",
+    "uptime": "Drifttid: ",
+    "voltage": "Spänning",
+    "title": "Nodinformation för {{identifier}}",
+    "ignoreNode": "Ignorera nod",
+    "removeNode": "Ta bort nod",
+    "unignoreNode": "Ta bort favoritmarkering",
+    "security": "Säkerhet:",
+    "publicKey": "Publik nyckel: ",
+    "messageable": "Övervakad: ",
+    "KeyManuallyVerifiedTrue": "Den publika nyckeln har verifierats manuellt",
+    "KeyManuallyVerifiedFalse": "Den publika nyckeln är inte manuellt verifierad"
+  },
+  "pkiBackup": {
+    "loseKeysWarning": "Om du förlorar dina nycklar måste du återställa din enhet.",
+    "secureBackup": "Det är viktigt att säkerhetskopiera dina publika och privata nycklar och förvara din säkerhetskopia säkert.",
+    "footer": "=== END OF KEYS ===",
+    "header": "=== MESHTASTIC KEYS FOR {{longName}} ({{shortName}}) ===",
+    "privateKey": "Privat nyckel:",
+    "publicKey": "Publik nyckel:",
+    "fileName": "meshtastic_keys_{{longName}}_{{shortName}}.txt",
+    "title": "Säkerhetskopiera nycklar"
+  },
+  "pkiBackupReminder": {
+    "description": "Vi rekommenderar att du säkerhetskopierar dina nycklar regelbundet. Vill du säkerhetskopiera nu?",
+    "title": "Påminnelse om säkerhetskopiering",
+    "remindLaterPrefix": "Påminn mig om",
+    "remindNever": "Påminn mig aldrig",
+    "backupNow": "Säkerhetskopiera nu"
+  },
+  "pkiRegenerate": {
+    "description": "Är du säker på att du vill förnya nyckelpar?",
+    "title": "Förnya nyckelpar"
+  },
+  "qr": {
+    "addChannels": "Lägg till kanaler",
+    "replaceChannels": "Ersätt kanaler",
+    "description": "Den aktuella LoRa-konfigurationen kommer också att delas.",
+    "sharableUrl": "Delbar URL",
+    "title": "Generera QR-kod"
+  },
+  "reboot": {
+    "title": "Starta om enhet",
+    "description": "Starta om nu eller schemalägga en omstart av den anslutna noden. Alternativt kan du välja att starta om till OTA (Over-the-Air) läge.",
+    "ota": "Starta om till OTA-läge",
+    "enterDelay": "Ange fördröjning",
+    "scheduled": "Omstart har schemalagts",
+    "schedule": "Schemalägg omstart",
+    "now": "Starta om nu",
+    "cancel": "Avbryt schemalagd omstart"
+  },
+  "refreshKeys": {
+    "description": {
+      "acceptNewKeys": "Detta kommer att ta bort noden från enheten och begära nya nycklar.",
+      "keyMismatchReasonSuffix": ". Detta beror på att fjärrnodens nuvarande publika nyckel inte matchar den tidigare lagrade nyckeln för den här noden.",
+      "unableToSendDmPrefix": "Din nod kan inte skicka ett direkt meddelande till noden: "
+    },
+    "acceptNewKeys": "Godkänn nya nycklar",
+    "title": "Nycklarna matchar inte - {{identifier}}"
+  },
+  "removeNode": {
+    "description": "Är du säker på att du vill ta bort den här noden?",
+    "title": "Ta bort noden?"
+  },
+  "shutdown": {
+    "title": "Schemalägg avstängning",
+    "description": "Stäng av den anslutna noden efter x minuter."
+  },
+  "traceRoute": {
+    "routeToDestination": "Rutt till destination:",
+    "routeBack": "Rutt tillbaka:"
+  },
+  "tracerouteResponse": {
+    "title": "Spåra rutt: {{identifier}}"
+  },
+  "unsafeRoles": {
+    "confirmUnderstanding": "Ja, jag vet vad jag gör",
+    "conjunction": " och blogginlägget om ",
+    "postamble": " och förstår konsekvenserna av att ändra roll.",
+    "preamble": "Jag har läst ",
+    "choosingRightDeviceRole": "Att välja rätt enhetsroll",
+    "deviceRoleDocumentation": "Dokumentation för enhetsroll",
+    "title": "Är du säker?"
+  },
+  "managedMode": {
+    "confirmUnderstanding": "Ja, jag vet vad jag gör",
+    "title": "Är du säker?",
+    "description": "Aktivering av fjärrhanterat läge blockerar klienter (inklusive webbklienten) från att skriva inställningar till en radio. När detta är aktiverat kan enhetens inställningar endast ändras via fjärradministratörsmeddelanden. Den här inställningen krävs inte för fjärradministration."
+  },
+  "clientNotification": {
+    "title": "Meddelande från enheten",
+    "TraceRoute can only be sent once every 30 seconds": "Ruttspårning kan bara skickas en gång per 30 sekunder",
+    "Compromised keys were detected and regenerated.": "Komprometterade nycklar upptäcktes på enheten och nya har genererats."
+  },
+  "resetNodeDb": {
+    "title": "Återställ noddatabas",
+    "description": "Detta kommer att rensa alla noder från den anslutna enhetens noddatabas och rensa all meddelandehistorik i klienten. Detta kan inte ångras. Är du säker på att du vill fortsätta?",
+    "confirm": "Återställ noddatabas",
+    "failedTitle": "Det gick inte att återställa noddatabasen. Försök igen."
+  },
+  "clearAllStores": {
+    "title": "Töm all lokal lagring",
+    "description": "Detta kommer att rensa all lokalt lagrad data, inklusive meddelandehistorik och noddatabaser för alla tidigare anslutna enheter. Detta kommer att kräva att du återansluter till din nod och kan inte ångras. Är du säker på att du vill fortsätta?",
+    "confirm": "Töm all lokal lagring",
+    "failedTitle": "Det gick inte att rensa lokal lagring. Försök igen."
+  },
+  "factoryResetDevice": {
+    "title": "Fabriksåterställ enhet",
+    "description": "Detta kommer fabriksåterställa den anslutna enheten, radera alla konfigurationer och data på enheten samt alla noder och meddelanden som sparats i klienten. Detta kan inte ångras. Är du säker på att du vill fortsätta?",
+    "confirm": "Fabriksåterställ enhet",
+    "failedTitle": "Det gick inte att utföra fabriksåterställningen. Försök igen."
+  },
+  "factoryResetConfig": {
+    "title": "Fabriksåterställ konfigurationen",
+    "description": "Detta kommer fabriksåterställa konfigurationen på den anslutna enheten och radera alla inställningar på enheten. Detta kan inte ångras. Är du säker på att du vill fortsätta?",
+    "confirm": "Fabriksåterställ konfigurationen",
+    "failedTitle": "Det gick inte att utföra fabriksåterställningen. Försök igen."
+  }
+}

@@ -68,6 +68,7 @@ uv run python -m pytest tests # the tests
 uv run python -m pytest tests/test_tcp_proxy.py -k disconnect   # one test
 scripts/develop               # standalone Home Assistant on config/configuration.yaml
 uv run --no-default-groups --group protobuf bash scripts/generate_protobufs   # see CONTRIBUTING.md for GNU sed
+scripts/build_web_client vX.Y.Z   # rebuild the bundled web client from a meshtastic/web tag with scripts/web-client/patches
 ```
 
 `hacs.json` sets the minimum Home Assistant version (2026.8.0), which the `dev` group in `pyproject.toml` pins for

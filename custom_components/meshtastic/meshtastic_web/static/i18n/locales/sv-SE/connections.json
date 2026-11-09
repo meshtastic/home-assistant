@@ -1,0 +1,34 @@
+{
+  "page": {
+    "title": "Anslut till en Meshtastic-enhet",
+    "description": "Lägg till en enhetsanslutning via HTTP, Bluetooth eller seriell kommunikation. Dina sparade anslutningar sparas i din webbläsare."
+  },
+  "connectionType_ble": "BLE",
+  "connectionType_serial": "Seriell kommunikation",
+  "connectionType_network": "Nätverk",
+  "deleteConnection": "Ta bort anslutning",
+  "areYouSure": "Detta kommer ta bort {{name}}. Du kan inte ångra denna åtgärd.",
+  "moreActions": "Fler åtgärder",
+  "noConnections": {
+    "title": "Inga anslutningar än.",
+    "description": "Skapa din första anslutning. Den ansluts omedelbart och sparas."
+  },
+  "lastConnectedAt": "Senast ansluten: {{date}}",
+  "neverConnected": "Aldrig ansluten",
+  "toasts": {
+    "connected": "Ansluten",
+    "nowConnected": "{{name}} är nu ansluten",
+    "nowDisconnected": "{{name}} är nu frånkopplad",
+    "disconnected": "Frånkopplad",
+    "failed": "Anslutning misslyckades",
+    "checkConnetion": "Kontrollera enheten och inställningarna och försök igen",
+    "defaultSet": "Standard vald",
+    "defaultConnection": "Standardanslutningen är nu {{nameisconnected}}",
+    "deleted": "Borttagen",
+    "deletedByName": "{{name}} togs bort",
+    "pickConnectionAgain": "Kunde inte ansluta. Du kan behöva välja enheten/porten på nytt.",
+    "added": "Anslutning tillagd",
+    "savedByName": "{{name}} sparad.",
+    "savedCantConnect": "Anslutningen har sparats men enheten kunde inte anslutas till."
+  }
+}

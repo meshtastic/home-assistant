@@ -1,0 +1,234 @@
+{
+  "navigation": {
+    "title": "Навигация",
+    "messages": "Сообщения",
+    "map": "Карта",
+    "settings": "Настройки",
+    "channels": "Каналы",
+    "radioConfig": "Настройки радио",
+    "deviceConfig": "Настройки устройства",
+    "moduleConfig": "Настройки модулей",
+    "manageConnections": "Управление подключениями",
+    "nodes": "Ноды"
+  },
+  "app": {
+    "title": "Meshtastic",
+    "logo": "Логотип Meshtastic"
+  },
+  "sidebar": {
+    "collapseToggle": {
+      "button": {
+        "open": "Открыть боковую панель",
+        "close": "Закрыть боковую панель"
+      }
+    },
+    "deviceInfo": {
+      "volts": "{{voltage}} В",
+      "firmware": {
+        "title": "Прошивка",
+        "version": "v{{version}}",
+        "buildDate": "Дата сборки: {{date}}"
+      }
+    }
+  },
+  "batteryStatus": {
+    "charging": "{{level}}% зарядки",
+    "pluggedIn": "Подключено к питанию",
+    "title": "Батарея"
+  },
+  "search": {
+    "nodes": "Поиск нод...",
+    "channels": "Поиск каналов...",
+    "commandPalette": "Поиск команд..."
+  },
+  "toast": {
+    "positionRequestSent": {
+      "title": "Запрос позиции отправлен."
+    },
+    "requestingPosition": {
+      "title": "Запрашиваем позицию, пожалуйста, подождите..."
+    },
+    "sendingTraceroute": {
+      "title": "Отправляем трассировку, пожалуйста, подождите..."
+    },
+    "tracerouteSent": {
+      "title": "Трассировка отправлена."
+    },
+    "savedChannel": {
+      "title": "Канал сохранён: {{channelName}}"
+    },
+    "messages": {
+      "pkiEncryption": {
+        "title": "Чат использует шифрование PKI."
+      },
+      "pskEncryption": {
+        "title": "Чат использует шифрование PSK."
+      }
+    },
+    "configSaveError": {
+      "title": "Ошибка сохранения настроек",
+      "description": "При сохранении настроек произошла ошибка."
+    },
+    "validationError": {
+      "title": "Есть ошибки в настройках",
+      "description": "Исправьте ошибки конфигурации перед сохранением."
+    },
+    "saveSuccess": {
+      "title": "Сохранение настроек",
+      "description": "Изменение конфигурации {{case}} сохранено."
+    },
+    "saveAllSuccess": {
+      "title": "Сохранено",
+      "description": "Все изменения конфигурации сохранены."
+    },
+    "favoriteNode": {
+      "title": "{{action}} {{nodeName}} {{direction}}",
+      "action": {
+        "added": "Добавлено",
+        "removed": "Удалено",
+        "to": "в избранное",
+        "from": "из избранного"
+      }
+    },
+    "ignoreNode": {
+      "title": "{{action}} {{nodeName}} {{direction}}",
+      "action": {
+        "added": "Добавлено",
+        "removed": "Удалено",
+        "to": "в список игнорирования",
+        "from": "из списка игнорирования"
+      }
+    }
+  },
+  "notifications": {
+    "copied": {
+      "label": "Скопировано!"
+    },
+    "copyToClipboard": {
+      "label": "Копировать в буфер обмена"
+    },
+    "hidePassword": {
+      "label": "Скрыть пароль"
+    },
+    "showPassword": {
+      "label": "Показать пароль"
+    },
+    "deliveryStatus": {
+      "delivered": "Доставлено",
+      "failed": "Доставка не удалась",
+      "waiting": "Ожидание",
+      "unknown": "Неизвестно"
+    }
+  },
+  "general": {
+    "label": "Общие"
+  },
+  "hardware": {
+    "label": "Оборудование"
+  },
+  "metrics": {
+    "label": "Метрики"
+  },
+  "role": {
+    "label": "Роль"
+  },
+  "filter": {
+    "label": "Фильтр"
+  },
+  "advanced": {
+    "label": "Дополнительно"
+  },
+  "clearInput": {
+    "label": "Очистить ввод"
+  },
+  "resetFilters": {
+    "label": "Сбросить фильтры"
+  },
+  "nodeName": {
+    "label": "Имя/номер ноды",
+    "placeholder": "Meshtastic 1234"
+  },
+  "airtimeUtilization": {
+    "label": "Загрузка эфира (%)",
+    "short": "Загрузка эф. (%)"
+  },
+  "batteryLevel": {
+    "label": "Уровень батареи (%)",
+    "labelText": "Уровень батареи (%): {{value}}"
+  },
+  "batteryVoltage": {
+    "label": "Напряжение батареи (В)",
+    "title": "Напряжение"
+  },
+  "channelUtilization": {
+    "label": "Загрузка канала (%)",
+    "short": "Загрузка кан. (%)"
+  },
+  "hops": {
+    "direct": "Прямой",
+    "label": "Количество прыжков",
+    "text": "Количество прыжков: {{value}}"
+  },
+  "lastHeard": {
+    "label": "Последний раз слышен",
+    "labelText": "Последний раз слышен: {{value}}",
+    "nowLabel": "Сейчас"
+  },
+  "snr": {
+    "label": "SNR (дБ)"
+  },
+  "favorites": {
+    "label": "Избранное"
+  },
+  "hide": {
+    "label": "Скрыть"
+  },
+  "showOnly": {
+    "label": "Показывать только"
+  },
+  "viaMqtt": {
+    "label": "Подключено через MQTT"
+  },
+  "hopsUnknown": {
+    "label": "Неизвестное число прыжков"
+  },
+  "showUnheard": {
+    "label": "Неизвестно время последнего приёма"
+  },
+  "languagePicker": {
+    "label": "Язык",
+    "changeLanguage": "Изменить язык"
+  },
+  "theme": {
+    "dark": "Тёмная",
+    "light": "Светлая",
+    "system": "Автоматически",
+    "changeTheme": "Изменить цветовую схему"
+  },
+  "errorPage": {
+    "title": "Это немного неловко...",
+    "description1": "Очень жаль, но в веб-клиенте произошла ошибка, из-за которой он аварийно завершился. <br /> Этого не должно быть, и мы работаем над исправлением.",
+    "description2": "Лучший способ предотвратить это в будущем — сообщить нам о проблеме.",
+    "reportInstructions": "Пожалуйста, включите в отчёт следующую информацию:",
+    "reportSteps": {
+      "step1": "Что вы делали, когда произошла ошибка",
+      "step2": "Что вы ожидали",
+      "step3": "Что произошло на самом деле",
+      "step4": "Любую другую важную информацию"
+    },
+    "reportLink": "Вы можете сообщить о проблеме в нашем <0>GitHub</0>",
+    "connectionsLink": "Вернуться к <0>подключениям</0>",
+    "detailsSummary": "Детали ошибки",
+    "errorMessageLabel": "Сообщение об ошибке:",
+    "stackTraceLabel": "Стек вызовов:",
+    "fallbackError": "{{error}}"
+  },
+  "footer": {
+    "text": "Работает на <0>▲ Vercel</0> | Meshtastic® — зарегистрированный товарный знак Meshtastic LLC. | <1>Юридическая информация</1>",
+    "commitSha": "SHA коммита: {{sha}}"
+  },
+  "language": {
+    "label": "Язык",
+    "changeLanguage": "Change Language"
+  }
+}

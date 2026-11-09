@@ -1,0 +1,448 @@
+{
+  "page": {
+    "tabAmbientLighting": "Подсветка",
+    "tabAudio": "Аудио",
+    "tabCannedMessage": "Шаблоны",
+    "tabDetectionSensor": "Датчик обнаружения",
+    "tabExternalNotification": "Внешн. уведомл.",
+    "tabMqtt": "MQTT",
+    "tabNeighborInfo": "Инфо о соседях",
+    "tabPaxcounter": "Paxcounter",
+    "tabRangeTest": "Тест дальности",
+    "tabSerial": "COM-порт",
+    "tabStoreAndForward": "S&F",
+    "tabTelemetry": "Телеметрия"
+  },
+  "ambientLighting": {
+    "title": "Настройки подсветки",
+    "description": "Настройки модуля подсветки",
+    "ledState": {
+      "label": "Состояние LED",
+      "description": "Включить или выключить LED"
+    },
+    "current": {
+      "label": "Ток",
+      "description": "Устанавливает ток для LED-выхода. По умолчанию 10"
+    },
+    "red": {
+      "label": "Красный",
+      "description": "Устанавливает яркость красного LED. Значения 0–255"
+    },
+    "green": {
+      "label": "Зелёный",
+      "description": "Устанавливает яркость зелёного LED. Значения 0–255"
+    },
+    "blue": {
+      "label": "Синий",
+      "description": "Устанавливает яркость синего LED. Значения 0–255"
+    }
+  },
+  "audio": {
+    "title": "Настройки аудио",
+    "description": "Настройки аудио-модуля",
+    "codec2Enabled": {
+      "label": "Codec 2 включён",
+      "description": "Включить аудиокодирование Codec 2"
+    },
+    "pttPin": {
+      "label": "Пин PTT",
+      "description": "GPIO-пин для PTT"
+    },
+    "bitrate": {
+      "label": "Битрейт",
+      "description": "Битрейт для аудиокодирования"
+    },
+    "i2sWs": {
+      "label": "i2S WS",
+      "description": "GPIO-пин для i2S WS"
+    },
+    "i2sSd": {
+      "label": "i2S SD",
+      "description": "GPIO-пин для i2S SD"
+    },
+    "i2sDin": {
+      "label": "i2S DIN",
+      "description": "GPIO-пин для i2S DIN"
+    },
+    "i2sSck": {
+      "label": "i2S SCK",
+      "description": "GPIO-пин для i2S SCK"
+    }
+  },
+  "cannedMessage": {
+    "title": "Настройки шаблонных сообщений",
+    "description": "Настройки модуля шаблонных сообщений",
+    "moduleEnabled": {
+      "label": "Модуль включён",
+      "description": "Включить шаблонные сообщения"
+    },
+    "rotary1Enabled": {
+      "label": "Энкодер #1 включён",
+      "description": "Включить энкодер"
+    },
+    "inputbrokerPinA": {
+      "label": "Пин энкодера A",
+      "description": "Значение GPIO (1–39) для порта A энкодера"
+    },
+    "inputbrokerPinB": {
+      "label": "Пин энкодера B",
+      "description": "Значение GPIO (1–39) для порта B энкодера"
+    },
+    "inputbrokerPinPress": {
+      "label": "Пин нажатия энкодера",
+      "description": "Значение GPIO (1–39) для нажатия энкодера"
+    },
+    "inputbrokerEventCw": {
+      "label": "Событие по часовой",
+      "description": "Выберите событие ввода."
+    },
+    "inputbrokerEventCcw": {
+      "label": "Событие против часовой",
+      "description": "Выберите событие ввода."
+    },
+    "inputbrokerEventPress": {
+      "label": "Событие нажатия",
+      "description": "Выберите событие ввода"
+    },
+    "updown1Enabled": {
+      "label": "Вверх/вниз включён",
+      "description": "Включить энкодер вверх/вниз"
+    },
+    "allowInputSource": {
+      "label": "Разрешённый источник ввода",
+      "description": "Выберите из: '_any', 'rotEnc1', 'upDownEnc1', 'cardkb'"
+    },
+    "sendBell": {
+      "label": "Отправлять звонок",
+      "description": "Отправляет символ звонка с каждым сообщением"
+    }
+  },
+  "detectionSensor": {
+    "title": "Настройки датчика обнаружения",
+    "description": "Настройки модуля датчика обнаружения",
+    "enabled": {
+      "label": "Включено",
+      "description": "Включить или отключить модуль датчика обнаружения"
+    },
+    "minimumBroadcastSecs": {
+      "label": "Мин. интервал рассылки",
+      "description": "Минимальный интервал в секундах между отправкой сообщений по mesh-сети при изменении состояния"
+    },
+    "stateBroadcastSecs": {
+      "label": "Интервал рассылки состояния",
+      "description": "Интервал в секундах между отправкой сообщений с текущим состоянием, независимо от изменений"
+    },
+    "sendBell": {
+      "label": "Отправлять звонок",
+      "description": "Отправлять ASCII-звонок с тревожным сообщением"
+    },
+    "name": {
+      "label": "Понятное имя",
+      "description": "Используется для форматирования сообщения, отправляемого по mesh-сети. Максимум 20 символов"
+    },
+    "monitorPin": {
+      "label": "Пин мониторинга",
+      "description": "GPIO-пин для мониторинга изменений состояния"
+    },
+    "detectionTriggerType": {
+      "label": "Тип триггера",
+      "description": "Тип события-триггера"
+    },
+    "usePullup": {
+      "label": "Использовать подтяжку",
+      "description": "Использовать режим INPUT_PULLUP для GPIO-пина"
+    }
+  },
+  "externalNotification": {
+    "title": "Настройки внешних уведомлений",
+    "description": "Настройка модуля внешних уведомлений",
+    "enabled": {
+      "label": "Модуль включён",
+      "description": "Включить внешние уведомления"
+    },
+    "outputMs": {
+      "label": "Длительность (мс)",
+      "description": "Длительность (мс)"
+    },
+    "output": {
+      "label": "Выход",
+      "description": "Выход"
+    },
+    "outputVibra": {
+      "label": "Выход вибро",
+      "description": "Выход вибро"
+    },
+    "outputBuzzer": {
+      "label": "Выход зуммера",
+      "description": "Выход зуммера"
+    },
+    "active": {
+      "label": "Активен",
+      "description": "Активен"
+    },
+    "alertMessage": {
+      "label": "Сообщение тревоги",
+      "description": "Сообщение тревоги"
+    },
+    "alertMessageVibra": {
+      "label": "Вибро при сообщении",
+      "description": "Вибро при сообщении"
+    },
+    "alertMessageBuzzer": {
+      "label": "Зуммер при сообщении",
+      "description": "Зуммер при сообщении"
+    },
+    "alertBell": {
+      "label": "Звонок тревоги",
+      "description": "Запускать тревогу при получении входящего звонка?"
+    },
+    "alertBellVibra": {
+      "label": "Вибро при звонке",
+      "description": "Вибро при звонке"
+    },
+    "alertBellBuzzer": {
+      "label": "Зуммер при звонке",
+      "description": "Зуммер при звонке"
+    },
+    "usePwm": {
+      "label": "Использовать PWM",
+      "description": "Использовать PWM"
+    },
+    "nagTimeout": {
+      "label": "Тайм-аут напоминания",
+      "description": "Тайм-аут напоминания"
+    },
+    "useI2sAsBuzzer": {
+      "label": "Использовать пин I²S как зуммер",
+      "description": "Назначить пин I²S как выход зуммера"
+    }
+  },
+  "mqtt": {
+    "title": "Настройки MQTT",
+    "description": "Настройки модуля MQTT",
+    "enabled": {
+      "label": "Включено",
+      "description": "Включить или отключить MQTT"
+    },
+    "address": {
+      "label": "Адрес сервера MQTT",
+      "description": "Адрес сервера MQTT для стандартных/пользовательских серверов"
+    },
+    "username": {
+      "label": "Имя пользователя MQTT",
+      "description": "Имя пользователя MQTT для стандартных/пользовательских серверов"
+    },
+    "password": {
+      "label": "Пароль MQTT",
+      "description": "Пароль MQTT для стандартных/пользовательских серверов"
+    },
+    "encryptionEnabled": {
+      "label": "Шифрование включено",
+      "description": "Включить или отключить шифрование MQTT. Примечание: если опция не включена, все сообщения отправляются брокеру MQTT без шифрования, даже если на каналах аплинка заданы ключи шифрования. Это включает данные позиции."
+    },
+    "jsonEnabled": {
+      "label": "JSON включён",
+      "description": "Отправлять/получать JSON-пакеты по MQTT"
+    },
+    "tlsEnabled": {
+      "label": "TLS включён",
+      "description": "Включить или отключить TLS"
+    },
+    "root": {
+      "label": "Корневой топик",
+      "description": "Корневой топик MQTT для стандартных/пользовательских серверов"
+    },
+    "proxyToClientEnabled": {
+      "label": "Прокси MQTT-клиента",
+      "description": "Использует сетевое подключение для проксирования MQTT-сообщений клиенту."
+    },
+    "mapReportingEnabled": {
+      "label": "Отправка отчётов карты включена",
+      "description": "Ваша нода будет периодически отправлять незашифрованный пакет отчёта карты на настроенный MQTT-сервер; он включает ID, короткое и полное имя, приблизительное местоположение, модель оборудования, роль, версию прошивки, регион LoRa, пресет модема и имя первичного канала."
+    },
+    "mapReportSettings": {
+      "publishIntervalSecs": {
+        "label": "Интервал публикации отчёта (с)",
+        "description": "Интервал в секундах для публикации отчётов карты"
+      },
+      "positionPrecision": {
+        "label": "Приблизительное местоположение",
+        "description": "Передаваемая позиция будет точной в пределах этого расстояния",
+        "options": {
+          "metric_km23": "В пределах 23 км",
+          "metric_km12": "В пределах 12 км",
+          "metric_km5_8": "В пределах 5,8 км",
+          "metric_km2_9": "В пределах 2,9 км",
+          "metric_km1_5": "В пределах 1,5 км",
+          "metric_m700": "В пределах 700 м",
+          "metric_m350": "В пределах 350 м",
+          "metric_m200": "В пределах 200 м",
+          "metric_m90": "В пределах 90 м",
+          "metric_m50": "В пределах 50 м",
+          "imperial_mi15": "В пределах 15 миль",
+          "imperial_mi7_3": "В пределах 7,3 мили",
+          "imperial_mi3_6": "В пределах 3,6 мили",
+          "imperial_mi1_8": "В пределах 1,8 мили",
+          "imperial_mi0_9": "В пределах 0,9 мили",
+          "imperial_mi0_5": "В пределах 0,5 мили",
+          "imperial_mi0_2": "В пределах 0,2 мили",
+          "imperial_ft600": "В пределах 600 футов",
+          "imperial_ft300": "В пределах 300 футов",
+          "imperial_ft150": "В пределах 150 футов"
+        }
+      }
+    }
+  },
+  "neighborInfo": {
+    "title": "Настройки информации о соседях",
+    "description": "Настройки модуля информации о соседях",
+    "enabled": {
+      "label": "Включено",
+      "description": "Включить или отключить модуль информации о соседях"
+    },
+    "updateInterval": {
+      "label": "Интервал обновления",
+      "description": "Интервал в секундах между попытками отправки информации о соседях по mesh-сети"
+    }
+  },
+  "paxcounter": {
+    "title": "Настройки Paxcounter",
+    "description": "Настройки модуля Paxcounter",
+    "enabled": {
+      "label": "Модуль включён",
+      "description": "Включить Paxcounter"
+    },
+    "paxcounterUpdateInterval": {
+      "label": "Интервал обновления (сек.)",
+      "description": "Сколько ждать между отправкой пакетов Paxcounter"
+    },
+    "wifiThreshold": {
+      "label": "Порог WiFi RSSI",
+      "description": "При каком уровне WiFi RSSI увеличивать счётчик. По умолчанию -80."
+    },
+    "bleThreshold": {
+      "label": "Порог BLE RSSI",
+      "description": "При каком уровне BLE RSSI увеличивать счётчик. По умолчанию -80."
+    }
+  },
+  "rangeTest": {
+    "title": "Настройки теста дальности",
+    "description": "Настройки модуля теста дальности",
+    "enabled": {
+      "label": "Модуль включён",
+      "description": "Включить тест дальности"
+    },
+    "sender": {
+      "label": "Интервал сообщений",
+      "description": "Сколько ждать между отправкой тестовых пакетов"
+    },
+    "save": {
+      "label": "Сохранять CSV в хранилище",
+      "description": "Только ESP32"
+    }
+  },
+  "serial": {
+    "title": "Настройки COM-порта",
+    "description": "Настройки модуля COM-порта",
+    "enabled": {
+      "label": "Модуль включён",
+      "description": "Включить вывод в COM-порт"
+    },
+    "echo": {
+      "label": "Эхо",
+      "description": "Все отправляемые вами пакеты будут возвращаться на устройство"
+    },
+    "rxd": {
+      "label": "Пин приёма",
+      "description": "Установите GPIO-пин для RXD."
+    },
+    "txd": {
+      "label": "Пин передачи",
+      "description": "Установите GPIO-пин для TXD."
+    },
+    "baud": {
+      "label": "Скорость (бод)",
+      "description": "Скорость передачи по COM-порту"
+    },
+    "timeout": {
+      "label": "Тайм-аут",
+      "description": "Секунды ожидания, прежде чем считать пакет «завершённым»"
+    },
+    "mode": {
+      "label": "Режим",
+      "description": "Выберите режим"
+    },
+    "overrideConsoleSerialPort": {
+      "label": "Переопределить консольный COM-порт",
+      "description": "Если к консоли подключён COM-порт, этот параметр его переопределит."
+    }
+  },
+  "storeForward": {
+    "title": "Настройки Store & Forward",
+    "description": "Настройки модуля Store & Forward",
+    "enabled": {
+      "label": "Модуль включён",
+      "description": "Включить Store & Forward"
+    },
+    "heartbeat": {
+      "label": "Heartbeat включён",
+      "description": "Включить heartbeat Store & Forward"
+    },
+    "records": {
+      "label": "Количество записей",
+      "description": "Количество записей для хранения"
+    },
+    "historyReturnMax": {
+      "label": "Максимум возврата истории",
+      "description": "Максимальное число записей для возврата"
+    },
+    "historyReturnWindow": {
+      "label": "Окно возврата истории",
+      "description": "Возвращать записи из этого временного окна (минуты)"
+    }
+  },
+  "telemetry": {
+    "title": "Настройки телеметрии",
+    "description": "Настройки модуля телеметрии",
+    "deviceUpdateInterval": {
+      "label": "Метрики устройства",
+      "description": "Интервал обновления метрик устройства (секунды)"
+    },
+    "environmentUpdateInterval": {
+      "label": "Интервал обновления метрик окружения (секунды)",
+      "description": ""
+    },
+    "environmentMeasurementEnabled": {
+      "label": "Модуль включён",
+      "description": "Включить телеметрию окружения"
+    },
+    "environmentScreenEnabled": {
+      "label": "Показывать на экране",
+      "description": "Показывать модуль телеметрии на OLED-экране"
+    },
+    "environmentDisplayFahrenheit": {
+      "label": "Показывать Фаренгейт",
+      "description": "Показывать температуру в Фаренгейтах"
+    },
+    "airQualityEnabled": {
+      "label": "Качество воздуха включено",
+      "description": "Включить телеметрию качества воздуха"
+    },
+    "airQualityInterval": {
+      "label": "Интервал обновления качества воздуха",
+      "description": "Как часто отправлять данные о качестве воздуха по mesh-сети"
+    },
+    "powerMeasurementEnabled": {
+      "label": "Измерение питания включено",
+      "description": "Включить телеметрию измерения питания"
+    },
+    "powerUpdateInterval": {
+      "label": "Интервал обновления питания",
+      "description": "Как часто отправлять данные о питании по mesh-сети"
+    },
+    "powerScreenEnabled": {
+      "label": "Экран питания включён",
+      "description": "Включить экран телеметрии питания"
+    }
+  }
+}

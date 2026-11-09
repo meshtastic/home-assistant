@@ -1,0 +1,50 @@
+#!/usr/bin/env bash
+
+# Rebuild the bundled web client from a meshtastic/web release tag.
+# Usage: scripts/build_web_client v2.7.2
+# Needs git, node and pnpm (or corepack). Patches live in scripts/web-client/patches.
+
+set -euo pipefail
+
+cd "$(dirname "$0")/.."
+root="$(pwd)"
+
+tag="${1:-}"
+if [[ ! "$tag" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+  echo "usage: scripts/build_web_client vX.Y.Z" >&2
+  exit 2
+fi
+
+if command -v pnpm >/dev/null 2>&1; then
+  pnpm=(pnpm)
+else
+  pnpm=(corepack pnpm)
+fi
+
+work="$(mktemp -d)"
+trap 'rm -rf "$work"' EXIT
+
+git clone --quiet --depth 1 --branch "$tag" https://github.com/meshtastic/web.git "$work/web"
+cd "$work/web"
+
+for patch in "$root"/scripts/web-client/patches/*.patch; do
+  echo "applying $(basename "$patch")"
+  git apply --whitespace=nowarn "$patch"
+done
+
+HUSKY=0 "${pnpm[@]}" install --frozen-lockfile
+(cd apps/web && "${pnpm[@]}" exec vite build --base /meshtastic/web/)
+
+static="$root/custom_components/meshtastic/meshtastic_web/static"
+rm -rf "$static"
+cp -R apps/web/dist "$static"
+
+cat > "$root/custom_components/meshtastic/meshtastic_web/version.py" <<PY
+# SPDX-FileCopyrightText: 2024-2025 Pascal Brogle @broglep
+#
+# SPDX-License-Identifier: MIT
+
+VERSION = "$tag"
+PY
+
+echo "bundled meshtastic/web $tag into $static"

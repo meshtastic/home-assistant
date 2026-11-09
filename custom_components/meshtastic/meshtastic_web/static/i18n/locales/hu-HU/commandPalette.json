@@ -1,0 +1,51 @@
+{
+  "emptyState": "Nincs találat.",
+  "page": {
+    "title": "Parancsmenü"
+  },
+  "pinGroup": {
+    "label": "Parancscsoport rögzítése"
+  },
+  "unpinGroup": {
+    "label": "Parancscsoport feloldása"
+  },
+  "goto": {
+    "label": "Ugrás",
+    "command": {
+      "messages": "Üzenetek",
+      "map": "Térkép",
+      "config": "Konfiguráció",
+      "nodes": "Csomópontok"
+    }
+  },
+  "manage": {
+    "label": "Kezelés",
+    "command": {
+      "switchNode": "Csomópont váltása",
+      "connectNewNode": "Új csomópont csatlakoztatása"
+    }
+  },
+  "contextual": {
+    "label": "Kontextusos",
+    "command": {
+      "qrCode": "QR-kód",
+      "qrGenerator": "Generátor",
+      "qrImport": "Importálás",
+      "scheduleShutdown": "Leállítás ütemezése",
+      "scheduleReboot": "Eszköz újraindítása",
+      "resetNodeDb": "Csomópont-adatbázis visszaállítása",
+      "dfuMode": "DFU módba lépés",
+      "factoryResetDevice": "Gyári visszaállítás (eszköz)",
+      "factoryResetConfig": "Gyári visszaállítás (konfiguráció)",
+      "disconnect": "Leválasztás"
+    }
+  },
+  "debug": {
+    "label": "Hibakeresés",
+    "command": {
+      "reconfigure": "Újrakonfigurálás",
+      "clearAllStoredMessages": "Összes tárolt üzenet törlése",
+      "clearAllStores": "Összes helyi tár törlése"
+    }
+  }
+}
