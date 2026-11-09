@@ -44,14 +44,13 @@ def _build_binary_sensors(
                 name="Powered",
                 icon="mdi:power-plug",
                 device_class=BinarySensorDeviceClass.POWER,
-                exists_fn=lambda device: device.coordinator.data[device.node_id]
-                .get("deviceMetrics", {})
-                .get("batteryLevel", None)
-                is not None,
-                value_fn=lambda device: device.coordinator.data[device.node_id]
-                .get("deviceMetrics", {})
-                .get("batteryLevel", 0)
-                > 100,  # noqa: PLR2004
+                exists_fn=lambda device: (
+                    device.coordinator.data[device.node_id].get("deviceMetrics", {}).get("batteryLevel", None)
+                    is not None
+                ),
+                value_fn=lambda device: (
+                    device.coordinator.data[device.node_id].get("deviceMetrics", {}).get("batteryLevel", 0) > 100  # noqa: PLR2004
+                ),
             ),
             gateway=gateway,
             node_id=node_id,

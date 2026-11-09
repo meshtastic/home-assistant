@@ -10,6 +10,7 @@ from abc import abstractmethod
 from collections.abc import AsyncIterable, Awaitable, Callable, Coroutine
 from contextlib import asynccontextmanager
 from types import TracebackType
+from typing import Self
 
 import google
 from google.protobuf.message import Message
@@ -97,7 +98,7 @@ class ClientApiConnection:
     def is_connected(self) -> bool:
         pass
 
-    async def __aenter__(self) -> "ClientApiConnection":
+    async def __aenter__(self) -> Self:
         if not self.is_connected:
             await self.connect()
         return self
@@ -443,7 +444,7 @@ class ClientApiConnection:
             self._logger.debug("Reconnect in progress, waiting")
             complete_task = asyncio.create_task(self._reconnect_completed.wait())
             failed_task = asyncio.create_task(self._reconnect_failed.wait())
-            done, pending = await asyncio.wait([complete_task, failed_task], return_when=asyncio.FIRST_COMPLETED)
+            done, _ = await asyncio.wait([complete_task, failed_task], return_when=asyncio.FIRST_COMPLETED)
             if done == {failed_task}:
                 msg = "Already ongoing reconnect failed"
                 raise ClientApiConnectionError(msg)

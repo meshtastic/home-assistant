@@ -232,9 +232,9 @@ def _build_device_sensors(
                 native_unit_of_measurement=UnitOfTime.SECONDS,
                 device_class=SensorDeviceClass.DURATION,
                 state_class=SensorStateClass.TOTAL_INCREASING,
-                value_fn=lambda device: device.coordinator.data[device.node_id]
-                .get("deviceMetrics", {})
-                .get("uptimeSeconds", None),
+                value_fn=lambda device: (
+                    device.coordinator.data[device.node_id].get("deviceMetrics", {}).get("uptimeSeconds", None)
+                ),
             ),
             gateway=gateway,
             node_id=node_id,
@@ -276,9 +276,9 @@ def _build_device_sensors(
                 native_unit_of_measurement=UnitOfElectricPotential.VOLT,
                 device_class=SensorDeviceClass.VOLTAGE,
                 state_class=SensorStateClass.MEASUREMENT,
-                value_fn=lambda device: device.coordinator.data[device.node_id]
-                .get("deviceMetrics", {})
-                .get("voltage", None),
+                value_fn=lambda device: (
+                    device.coordinator.data[device.node_id].get("deviceMetrics", {}).get("voltage", None)
+                ),
             ),
             gateway=gateway,
             node_id=node_id,
@@ -294,9 +294,9 @@ def _build_device_sensors(
                 icon="mdi:signal-distance-variant",
                 native_unit_of_measurement=PERCENTAGE,
                 state_class=SensorStateClass.MEASUREMENT,
-                value_fn=lambda device: device.coordinator.data[device.node_id]
-                .get("deviceMetrics", {})
-                .get("channelUtilization", None),
+                value_fn=lambda device: (
+                    device.coordinator.data[device.node_id].get("deviceMetrics", {}).get("channelUtilization", None)
+                ),
             ),
             gateway=gateway,
             node_id=node_id,
@@ -312,9 +312,9 @@ def _build_device_sensors(
                 icon="mdi:timer",
                 native_unit_of_measurement=PERCENTAGE,
                 state_class=SensorStateClass.MEASUREMENT,
-                value_fn=lambda device: device.coordinator.data[device.node_id]
-                .get("deviceMetrics", {})
-                .get("airUtilTx", None),
+                value_fn=lambda device: (
+                    device.coordinator.data[device.node_id].get("deviceMetrics", {}).get("airUtilTx", None)
+                ),
             ),
             gateway=gateway,
             node_id=node_id,
@@ -342,9 +342,9 @@ def _build_local_stats_sensors(
                     name="Packets sent",
                     icon="mdi:call-made",
                     state_class=SensorStateClass.TOTAL_INCREASING,
-                    value_fn=lambda device: device.coordinator.data[device.node_id]
-                    .get("localStats", {})
-                    .get("numPacketsTx", None),
+                    value_fn=lambda device: (
+                        device.coordinator.data[device.node_id].get("localStats", {}).get("numPacketsTx", None)
+                    ),
                 ),
                 gateway=gateway,
                 node_id=node_id,
@@ -360,9 +360,9 @@ def _build_local_stats_sensors(
                     name="Packets received",
                     icon="mdi:call-received",
                     state_class=SensorStateClass.TOTAL_INCREASING,
-                    value_fn=lambda device: device.coordinator.data[device.node_id]
-                    .get("localStats", {})
-                    .get("numPacketsRx", None),
+                    value_fn=lambda device: (
+                        device.coordinator.data[device.node_id].get("localStats", {}).get("numPacketsRx", None)
+                    ),
                 ),
                 gateway=gateway,
                 node_id=node_id,
@@ -378,9 +378,9 @@ def _build_local_stats_sensors(
                     name="Malformed Packets received",
                     icon="mdi:call-missed",
                     state_class=SensorStateClass.TOTAL_INCREASING,
-                    value_fn=lambda device: device.coordinator.data[device.node_id]
-                    .get("localStats", {})
-                    .get("numPacketsRxBad", None),
+                    value_fn=lambda device: (
+                        device.coordinator.data[device.node_id].get("localStats", {}).get("numPacketsRxBad", None)
+                    ),
                 ),
                 gateway=gateway,
                 node_id=node_id,
@@ -396,9 +396,9 @@ def _build_local_stats_sensors(
                     name="Duplicate Packets received",
                     icon="mdi:call-split",
                     state_class=SensorStateClass.TOTAL_INCREASING,
-                    value_fn=lambda device: device.coordinator.data[device.node_id]
-                    .get("localStats", {})
-                    .get("numRxDupe", None),
+                    value_fn=lambda device: (
+                        device.coordinator.data[device.node_id].get("localStats", {}).get("numRxDupe", None)
+                    ),
                 ),
                 gateway=gateway,
                 node_id=node_id,
@@ -414,9 +414,9 @@ def _build_local_stats_sensors(
                     name="Packets relayed",
                     icon="mdi:call-missed",
                     state_class=SensorStateClass.TOTAL_INCREASING,
-                    value_fn=lambda device: device.coordinator.data[device.node_id]
-                    .get("localStats", {})
-                    .get("numTxRelay", None),
+                    value_fn=lambda device: (
+                        device.coordinator.data[device.node_id].get("localStats", {}).get("numTxRelay", None)
+                    ),
                 ),
                 gateway=gateway,
                 node_id=node_id,
@@ -432,9 +432,9 @@ def _build_local_stats_sensors(
                     name="Packets relay canceled",
                     icon="mdi:call-missed",
                     state_class=SensorStateClass.TOTAL_INCREASING,
-                    value_fn=lambda device: device.coordinator.data[device.node_id]
-                    .get("localStats", {})
-                    .get("numTxRelayCanceled", None),
+                    value_fn=lambda device: (
+                        device.coordinator.data[device.node_id].get("localStats", {}).get("numTxRelayCanceled", None)
+                    ),
                 ),
                 gateway=gateway,
                 node_id=node_id,
@@ -450,9 +450,9 @@ def _build_local_stats_sensors(
                     name="Online Nodes",
                     icon="mdi:radio-handheld",
                     state_class=SensorStateClass.TOTAL,
-                    value_fn=lambda device: device.coordinator.data[device.node_id]
-                    .get("localStats", {})
-                    .get("numOnlineNodes", None),
+                    value_fn=lambda device: (
+                        device.coordinator.data[device.node_id].get("localStats", {}).get("numOnlineNodes", None)
+                    ),
                 ),
                 gateway=gateway,
                 node_id=node_id,
@@ -468,9 +468,9 @@ def _build_local_stats_sensors(
                     name="Total Nodes",
                     icon="mdi:radio-handheld",
                     state_class=SensorStateClass.TOTAL,
-                    value_fn=lambda device: device.coordinator.data[device.node_id]
-                    .get("localStats", {})
-                    .get("numTotalNodes", None),
+                    value_fn=lambda device: (
+                        device.coordinator.data[device.node_id].get("localStats", {}).get("numTotalNodes", None)
+                    ),
                 ),
                 gateway=gateway,
                 node_id=node_id,
