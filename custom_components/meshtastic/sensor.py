@@ -43,6 +43,7 @@ from homeassistant.const import (
 
 from . import LOGGER, helpers
 from .entity import MeshtasticNodeEntity
+from .field_metadata import device_role_attributes
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterable, Mapping
@@ -87,6 +88,7 @@ async def async_unload_entry(
 class MeshtasticSensorEntityDescription(SensorEntityDescription):
     exists_fn: Callable[[MeshtasticSensor], bool] = lambda _: True
     value_fn: Callable[[MeshtasticSensor], StateType]
+    attributes_fn: Callable[[MeshtasticSensor], dict[str, Any]] | None = None
 
 
 class MeshtasticSensor(MeshtasticNodeEntity, SensorEntity):
@@ -106,6 +108,8 @@ class MeshtasticSensor(MeshtasticNodeEntity, SensorEntity):
         LOGGER.debug("Updating sensor attributes: %s", self)
         self._attr_native_value = self.entity_description.value_fn(self)
         self._attr_available = self._attr_native_value is not None
+        if self.entity_description.attributes_fn is not None:
+            self._attr_extra_state_attributes = self.entity_description.attributes_fn(self)
 
 
 def _build_node_sensors(
@@ -178,6 +182,9 @@ def _build_node_sensors(
                 key="node_role",
                 icon="mdi:card-account-details",
                 value_fn=lambda device: device.coordinator.data[device.node_id].get("user", {}).get("role", None),
+                attributes_fn=lambda device: dict(
+                    device_role_attributes(device.coordinator.data[device.node_id].get("user", {}).get("role", None))
+                ),
             ),
             gateway=gateway,
             node_id=node_id,

@@ -18,6 +18,7 @@ from homeassistant.components.text import (
 
 from . import helpers
 from .entity import MeshtasticNodeEntity
+from .field_metadata import device_role_attributes
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterable, Mapping
@@ -40,6 +41,9 @@ def _build_texts(nodes: Mapping[int, Mapping[str, Any]], runtime_data: Meshtasti
                 key="node_role",
                 icon="mdi:card-account-details",
                 value_fn=lambda device: device.coordinator.data[device.node_id].get("user", {}).get("role", None),
+                attributes_fn=lambda device: dict(
+                    device_role_attributes(device.coordinator.data[device.node_id].get("user", {}).get("role", None))
+                ),
             ),
             gateway=gateway,
             node_id=node_id,
@@ -95,6 +99,7 @@ async def async_unload_entry(
 @dataclass(kw_only=True)
 class MeshtasticTextEntityDescription(TextEntityDescription):
     value_fn: Callable[[MeshtasticText], str]
+    attributes_fn: Callable[[MeshtasticText], dict[str, Any]] | None = None
 
 
 class MeshtasticText(MeshtasticNodeEntity, TextEntity):
@@ -111,3 +116,5 @@ class MeshtasticText(MeshtasticNodeEntity, TextEntity):
 
     def _async_update_attrs(self) -> None:
         self._attr_native_value = self.entity_description.value_fn(self)
+        if self.entity_description.attributes_fn is not None:
+            self._attr_extra_state_attributes = self.entity_description.attributes_fn(self)
