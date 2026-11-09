@@ -126,7 +126,7 @@ async def async_setup_message_logger(hass: HomeAssistant, entry: MeshtasticConfi
             return
 
         from_node_id = data["from"]
-        from_device = device_registry.async_get_device(identifiers={(DOMAIN, str(from_node_id))})
+        from_device = device_registry.async_get_device_by_identifier((DOMAIN, str(from_node_id)), entry.entry_id)
 
         gateway_node_id = data["gateway"]
         to = data["to"]
@@ -180,7 +180,7 @@ async def async_setup_message_logger(hass: HomeAssistant, entry: MeshtasticConfi
         if (to_channel_id := to.get("channel", None)) is not None:
             channel_unique_id = GatewayChannelEntity.build_unique_id(config_entry_id, gateway_node_id, to_channel_id)
             to_channel_entity_id = entity_registry.async_get_entity_id(DOMAIN, DOMAIN, channel_unique_id)
-            to_device = device_registry.async_get_device(identifiers={(DOMAIN, str(gateway_node_id))})
+            to_device = device_registry.async_get_device_by_identifier((DOMAIN, str(gateway_node_id)), config_entry_id)
         else:
             to_channel_entity_id = None
         return to_device, to_channel_entity_id
@@ -189,7 +189,7 @@ async def async_setup_message_logger(hass: HomeAssistant, entry: MeshtasticConfi
         config_entry_id: str, gateway_node_id: int, to: Mapping[str, Any]
     ) -> tuple[dr.DeviceEntry | None, str | None]:
         if (to_node_id := to.get("node", None)) is not None:
-            to_device = device_registry.async_get_device(identifiers={(DOMAIN, str(to_node_id))})
+            to_device = device_registry.async_get_device_by_identifier((DOMAIN, str(to_node_id)), config_entry_id)
             dm_unique_id = GatewayDirectMessageEntity.build_unique_id(config_entry_id, gateway_node_id)
             to_dm_entity_id = entity_registry.async_get_entity_id(DOMAIN, DOMAIN, dm_unique_id)
         else:
