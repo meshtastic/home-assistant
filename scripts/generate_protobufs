@@ -46,7 +46,7 @@ $SEDCMD 's/\(meshtastic\./(meshtastic.aiomeshtastic.protobuf./g' "${INDIR}/"*.pr
 # adjust nanopb
 $SEDCMD 's/^import "nanopb.proto";/import "meshtastic\/aiomeshtastic\/protobuf\/nanopb.proto";/' "${INDIR}/"*.proto
 
-# Generate the python files; grpcio-tools from requirements.protobuf.txt provides protoc as a module
+# Generate the python files; grpcio-tools from the protobuf dependency group provides protoc as a module
 PROTOC="${PROTOC:-python3 -m grpc_tools.protoc}"
 $PROTOC -I="$TMPDIR/in" --python_out "${OUTDIR}" "--mypy_out=${PYIDIR}" "${INDIR}/"*.proto
 

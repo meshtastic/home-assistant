@@ -3,18 +3,19 @@
   "rebaseWhen": "conflicted",
   "extends": ["config:recommended", ":semanticCommits", ":dependencyDashboard"],
   "labels": ["dependencies"],
-  "pip_requirements": { "fileMatch": ["(^|/)requirements[\\w.-]*\\.txt$"] },
+  "pep621": { "enabled": true },
+  "lockFileMaintenance": { "enabled": true },
   "github-actions": { "pinDigests": true },
   "packageRules": [
     {
       "description": "The minimum Home Assistant version moves only on purpose, from the dependency dashboard",
-      "matchManagers": ["pip_requirements"],
+      "matchManagers": ["pep621"],
       "matchPackageNames": ["homeassistant"],
       "dependencyDashboardApproval": true
     },
     {
       "description": "These pins are taken from the pinned Home Assistant release and move by hand with it, never on their own",
-      "matchManagers": ["pip_requirements"],
+      "matchManagers": ["pep621"],
       "matchPackageNames": ["pytest-homeassistant-custom-component", "protobuf", "josepy", "bleak"],
       "enabled": false
     }
