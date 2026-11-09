@@ -31,6 +31,27 @@ from .listener import ClientApiConnectionPacketStreamListener
 LOGGER = logging.getLogger(__package__)
 
 
+class _LazyProtobufLog:
+    """
+    Defer protobuf formatting until a log record is actually emitted.
+
+    repr() of a protobuf is expensive and these are logged per packet. Passed
+    as a logging argument it would otherwise be evaluated on every call, even
+    with debug logging disabled, which is enough to stall the event loop while
+    a node database is streaming.
+    """
+
+    __slots__ = ("_message",)
+
+    def __init__(self, message: Message) -> None:
+        self._message = message
+
+    def __str__(self) -> str:
+        return repr(self._message).replace("\n", "")
+
+    __repr__ = __str__
+
+
 class ClientApiConnection:
     _CONFIG_ID_MINIMAL = 69420
 
@@ -517,5 +538,5 @@ class ClientApiConnection:
         await self.send_packet(m)
 
     @staticmethod
-    def _protobuf_log(message: Message) -> str:
-        return repr(message).replace("\n", "")
+    def _protobuf_log(message: Message) -> _LazyProtobufLog:
+        return _LazyProtobufLog(message)
