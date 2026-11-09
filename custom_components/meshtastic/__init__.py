@@ -225,10 +225,10 @@ async def _async_follow_renumbered_nodes(
         renumbered[old_gateway_num] = gateway_num
 
     for old_num, new_num in renumbered.items():
-        if device_registry.async_get_device(identifiers={(DOMAIN, str(new_num))}) is not None:
+        if device_registry.async_get_device_by_identifier((DOMAIN, str(new_num)), entry.entry_id) is not None:
             LOGGER.warning("Node %s renumbered to %s, which already has a device; not merging", old_num, new_num)
             continue
-        device = device_registry.async_get_device(identifiers={(DOMAIN, str(old_num))})
+        device = device_registry.async_get_device_by_identifier((DOMAIN, str(old_num)), entry.entry_id)
         if device is not None:
             device_registry.async_update_device(device.id, new_identifiers={(DOMAIN, str(new_num))})
         LOGGER.info("Node %s renumbered to %s, moved its device and entities", old_num, new_num)
@@ -287,13 +287,9 @@ async def _setup_meshtastic_devices(
 async def _remove_meshtastic_device(
     device_registry: DeviceRegistry, entry: MeshtasticConfigEntry, node_id: int
 ) -> None:
-    device = device_registry.async_get_device(identifiers={(DOMAIN, str(node_id))})
-    # only clean up devices if they are exclusively from us
+    device = device_registry.async_get_device_by_identifier((DOMAIN, str(node_id)), entry.entry_id)
     if device:
-        if device.config_entries == {entry.entry_id}:
-            device_registry.async_remove_device(device.id)
-        else:
-            device_registry.async_update_device(device.id, remove_config_entry_id=entry.entry_id)
+        device_registry.async_remove_device(device.id)
 
 
 async def _setup_meshtastic_device(  # noqa: PLR0913
@@ -312,36 +308,12 @@ async def _setup_meshtastic_device(  # noqa: PLR0913
         connections.add((dr.CONNECTION_NETWORK_MAC, mac_address))
     hops_away = node.get("hopsAway", 99)
     snr = node.get("snr", 0)
-    existing_device = device_registry.async_get_device(identifiers={(DOMAIN, str(node_id))})
-    via_device = None
-    if existing_device is not None and existing_device.config_entries != {entry.entry_id}:
-        # get other meshtastic connections
-
-        connection_parts = [
-            tuple(v.split("/"))
-            for k, v in existing_device.connections
-            if k == DOMAIN and not v.startswith(f"{gateway_node_id}/")
-        ]
-        meshtastic_connections = [
-            (int(source), int(target), int(hops), float(snr)) for source, target, hops, snr in connection_parts
-        ]
-        if node_id == gateway_node_id:
-            # add ourselves with highest prio so we don't get another via device
-            meshtastic_connections.append((gateway_node_id, node_id, -1, 999))
-        else:
-            meshtastic_connections.append((gateway_node_id, node_id, hops_away, snr))
-        try:
-            sorted_connections = sorted(meshtastic_connections, key=lambda x: (x[2], -x[3]))
-            closest_gateway = sorted_connections[0][0]
-            via_device = (DOMAIN, str(closest_gateway))
-        except Exception:  # noqa: BLE001
-            LOGGER.warning("Failed to find closest gateway", exc_info=True)
-    else:
-        via_device = (DOMAIN, str(gateway_node_id)) if gateway_node_id != node_id else None
-
-    # remove via_device when it is set to ourself
-    if (via_device is not None and int(via_device[1]) == node_id) or (gateway_node_id == node_id):
-        via_device = None
+    existing_device = device_registry.async_get_device_by_identifier((DOMAIN, str(node_id)), entry.entry_id)
+    # None clears the via device (the gateway has none); UNDEFINED keeps it while the gateway device is unregistered
+    via_device_id = None
+    if gateway_node_id != node_id:
+        gateway_device = device_registry.async_get_device_by_identifier((DOMAIN, str(gateway_node_id)), entry.entry_id)
+        via_device_id = gateway_device.id if gateway_device is not None else UNDEFINED
 
     if existing_device:
         connections.update(existing_device.connections)
@@ -365,7 +337,7 @@ async def _setup_meshtastic_device(  # noqa: PLR0913
         model=device_hardware_names.get(hw_model) if known else UNDEFINED,
         model_id=str(hw_model) if known else UNDEFINED,
         serial_number=node["user"]["id"],
-        via_device=via_device,
+        via_device_id=via_device_id,
         sw_version=client.metadata.get("firmwareVersion")
         if gateway_node["num"] == node_id and client.metadata
         else None,
@@ -374,7 +346,7 @@ async def _setup_meshtastic_device(  # noqa: PLR0913
         device_registry.async_update_device(
             d.id,
             new_connections=connections,
-            via_device_id=None if via_device is None else UNDEFINED,
+            via_device_id=via_device_id,
         )
     except DeviceConnectionCollisionError as e:
         LOGGER.debug("Conflict with other device connections, only using meshtastic connections. %s", e)
@@ -382,7 +354,7 @@ async def _setup_meshtastic_device(  # noqa: PLR0913
         device_registry.async_update_device(
             d.id,
             new_connections=own_connections,
-            via_device_id=None if via_device is None else UNDEFINED,
+            via_device_id=via_device_id,
         )
 
 
@@ -528,7 +500,8 @@ async def _add_entities_for_entry(hass: HomeAssistant, entities: list[Entity], e
     for e in entities:
         device_id = UNDEFINED
         if e.device_info:
-            device = device_registry.async_get_device(identifiers=e.device_info["identifiers"])
+            identifier = next(iter(e.device_info["identifiers"]))
+            device = device_registry.async_get_device_by_identifier(identifier, entry.entry_id)
             if device:
                 device_id = device.id
         try:

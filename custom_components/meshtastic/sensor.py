@@ -21,20 +21,20 @@ from homeassistant.components.sensor import (
 )
 from homeassistant.config import callback
 from homeassistant.const import (
-    CONCENTRATION_MICROGRAMS_PER_CUBIC_METER,
-    CONCENTRATION_PARTS_PER_MILLION,
     DEGREE,
     LIGHT_LUX,
     PERCENTAGE,
     SIGNAL_STRENGTH_DECIBELS,
     SIGNAL_STRENGTH_DECIBELS_MILLIWATT,
     UnitOfConductivity,
+    UnitOfDensity,
     UnitOfElectricCurrent,
     UnitOfElectricPotential,
     UnitOfInformation,
     UnitOfIrradiance,
     UnitOfLength,
     UnitOfPressure,
+    UnitOfRatio,
     UnitOfSpeed,
     UnitOfTemperature,
     UnitOfTime,
@@ -798,20 +798,20 @@ def _build_air_quality_metrics_sensors(
         for node_id, node_info in nodes_with_environment_metrics.items():
             add_sensor = partial(add_sensor_base, node_id, node_info)
 
-            add_sensor("pm10Standard", SensorDeviceClass.PM10, CONCENTRATION_MICROGRAMS_PER_CUBIC_METER)
-            add_sensor("pm25Standard", SensorDeviceClass.PM25, CONCENTRATION_MICROGRAMS_PER_CUBIC_METER)
-            add_sensor("pm100Standard", None, CONCENTRATION_MICROGRAMS_PER_CUBIC_METER)
+            add_sensor("pm10Standard", SensorDeviceClass.PM10, UnitOfDensity.MICROGRAMS_PER_CUBIC_METER)
+            add_sensor("pm25Standard", SensorDeviceClass.PM25, UnitOfDensity.MICROGRAMS_PER_CUBIC_METER)
+            add_sensor("pm100Standard", None, UnitOfDensity.MICROGRAMS_PER_CUBIC_METER)
 
-            add_sensor("pm10Environmental", SensorDeviceClass.PM10, CONCENTRATION_MICROGRAMS_PER_CUBIC_METER)
-            add_sensor("pm25Environmental", SensorDeviceClass.PM25, CONCENTRATION_MICROGRAMS_PER_CUBIC_METER)
-            add_sensor("pm100Environmental", None, CONCENTRATION_MICROGRAMS_PER_CUBIC_METER)
+            add_sensor("pm10Environmental", SensorDeviceClass.PM10, UnitOfDensity.MICROGRAMS_PER_CUBIC_METER)
+            add_sensor("pm25Environmental", SensorDeviceClass.PM25, UnitOfDensity.MICROGRAMS_PER_CUBIC_METER)
+            add_sensor("pm100Environmental", None, UnitOfDensity.MICROGRAMS_PER_CUBIC_METER)
 
-            add_sensor("particles03um", None, CONCENTRATION_MICROGRAMS_PER_CUBIC_METER)
-            add_sensor("particles05um", None, CONCENTRATION_MICROGRAMS_PER_CUBIC_METER)
-            add_sensor("particles10um", SensorDeviceClass.PM10, CONCENTRATION_MICROGRAMS_PER_CUBIC_METER)
-            add_sensor("particles25um", SensorDeviceClass.PM25, CONCENTRATION_MICROGRAMS_PER_CUBIC_METER)
-            add_sensor("particles50um", None, CONCENTRATION_MICROGRAMS_PER_CUBIC_METER)
-            add_sensor("particles100um", None, CONCENTRATION_MICROGRAMS_PER_CUBIC_METER)
+            add_sensor("particles03um", None, UnitOfDensity.MICROGRAMS_PER_CUBIC_METER)
+            add_sensor("particles05um", None, UnitOfDensity.MICROGRAMS_PER_CUBIC_METER)
+            add_sensor("particles10um", SensorDeviceClass.PM10, UnitOfDensity.MICROGRAMS_PER_CUBIC_METER)
+            add_sensor("particles25um", SensorDeviceClass.PM25, UnitOfDensity.MICROGRAMS_PER_CUBIC_METER)
+            add_sensor("particles50um", None, UnitOfDensity.MICROGRAMS_PER_CUBIC_METER)
+            add_sensor("particles100um", None, UnitOfDensity.MICROGRAMS_PER_CUBIC_METER)
     except:  # noqa: E722
         LOGGER.warning("Failed to create air quality metric entities", exc_info=True)
 
@@ -879,8 +879,8 @@ def _build_soil_water_metrics_sensors(
             add_sensor("orp", None, UnitOfElectricPotential.MILLIVOLT)
             add_sensor("chemicalOxygenDemand", None, "mg/L")
             add_sensor("turbidity", None, "NTU")
-            add_sensor("nitrate", None, CONCENTRATION_PARTS_PER_MILLION)
-            add_sensor("ammonium", None, CONCENTRATION_PARTS_PER_MILLION)
+            add_sensor("nitrate", None, UnitOfRatio.PARTS_PER_MILLION)
+            add_sensor("ammonium", None, UnitOfRatio.PARTS_PER_MILLION)
             add_sensor("biochemicalOxygenDemand", None, "mg/L")
             add_sensor(
                 "solarIrradiance",
