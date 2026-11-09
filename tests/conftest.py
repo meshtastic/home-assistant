@@ -14,6 +14,7 @@ from unittest.mock import AsyncMock, patch
 import pytest
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
+from custom_components.meshtastic.aiomeshtastic.interface import ConnectionState
 from custom_components.meshtastic.const import (
     CONF_CONNECTION_TCP_HOST,
     CONF_CONNECTION_TCP_PORT,
@@ -65,6 +66,10 @@ class FakeClient:
         self.disconnect = AsyncMock()
         self.metadata = {"firmwareVersion": "2.8.0"}
         self.my_info = {"myNodeNum": gateway_num}
+        self.connection_state = ConnectionState.CONNECTED
+
+    def add_connection_state_listener(self, listener: Any) -> Any:  # noqa: ARG002
+        return lambda: None
 
     @property
     def node_count(self) -> int:
