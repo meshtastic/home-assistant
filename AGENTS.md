@@ -75,8 +75,8 @@ per config entry from 2026.8, so look them up with `async_get_device_by_identifi
 
 ## CI and merging
 
-- CI is `lint.yml` (ruff), `validate.yml` (HACS and hassfest, also nightly) and `release.yml` (zip on
-  release). Nothing runs pytest, so run the tests yourself when touching the proxy or channel handling.
+- CI is `lint.yml` (ruff), `tests.yml` (pytest on Python 3.14), `validate.yml` (HACS and hassfest,
+  also nightly) and `release.yml` (zip on release).
 - Fork pull requests from first-time contributors wait for a maintainer to approve their workflow runs.
 - The CLA assistant check must pass. Pull requests are squash-merged with Conventional titles.
 - Dependabot opens the dependency bumps. Pins that follow Home Assistant 2026.8 (`bleak`, `protobuf`
