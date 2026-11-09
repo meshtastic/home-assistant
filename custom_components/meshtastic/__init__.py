@@ -143,7 +143,9 @@ async def async_setup_entry(
     try:
         await _async_setup_connected_entry(hass, entry, client, coordinator)
     except BaseException:
-        # unload never runs for a failed setup, and many radios accept only one API connection
+        # unload never runs for a failed setup, and many radios accept only one API connection;
+        # the options flow must not pick up the stopped client either
+        entry.runtime_data = None
         with contextlib.suppress(Exception):
             await client.disconnect()
         raise
