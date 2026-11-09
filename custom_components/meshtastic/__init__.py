@@ -266,12 +266,14 @@ async def _setup_meshtastic_device(  # noqa: PLR0913
     if gateway_node_id != node_id:
         connections.add((DOMAIN, f"{gateway_node_id}/{node_id}/{hops_away}/{snr}"))
 
+    # MessageToDict omits hwModel when the node reports UNSET
+    hw_model = node["user"].get("hwModel")
     d = device_registry.async_get_or_create(
         config_entry_id=entry.entry_id,
         identifiers={(DOMAIN, str(node_id))},
         name=node["user"]["longName"],
-        model=device_hardware_names.get(node["user"]["hwModel"], None),
-        model_id=str(node["user"]["hwModel"]),
+        model=device_hardware_names.get(hw_model),
+        model_id=None if hw_model is None else str(hw_model),
         serial_number=node["user"]["id"],
         via_device=via_device,
         sw_version=client.metadata.get("firmwareVersion")
