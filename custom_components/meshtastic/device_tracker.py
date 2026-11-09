@@ -22,6 +22,9 @@ if TYPE_CHECKING:
     from .data import MeshtasticConfigEntry, MeshtasticData
 
 
+PARALLEL_UPDATES = 0
+
+
 def _build_device_trackers(
     nodes: typing.Mapping[int, typing.Mapping[str, typing.Any]], runtime_data: MeshtasticData
 ) -> typing.Iterable[MeshtasticDeviceTracker]:

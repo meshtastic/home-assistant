@@ -26,6 +26,7 @@ from homeassistant.const import (
     PERCENTAGE,
     SIGNAL_STRENGTH_DECIBELS,
     SIGNAL_STRENGTH_DECIBELS_MILLIWATT,
+    EntityCategory,
     UnitOfConductivity,
     UnitOfDensity,
     UnitOfElectricCurrent,
@@ -54,6 +55,9 @@ if TYPE_CHECKING:
 
     from .coordinator import MeshtasticDataUpdateCoordinator
     from .data import MeshtasticConfigEntry, MeshtasticData
+
+
+PARALLEL_UPDATES = 0
 
 
 def _build_sensors(nodes: Mapping[int, Mapping[str, Any]], runtime_data: MeshtasticData) -> Iterable[MeshtasticSensor]:
@@ -130,7 +134,7 @@ def _build_node_sensors(
             coordinator=coordinator,
             entity_description=MeshtasticSensorEntityDescription(
                 key="node_last_heard",
-                icon="mdi:timeline-clock",
+                entity_category=EntityCategory.DIAGNOSTIC,
                 device_class=SensorDeviceClass.TIMESTAMP,
                 value_fn=last_heard,
             ),
@@ -146,7 +150,7 @@ def _build_node_sensors(
             coordinator=coordinator,
             entity_description=MeshtasticSensorEntityDescription(
                 key="node_snr",
-                icon="mdi:signal",
+                entity_category=EntityCategory.DIAGNOSTIC,
                 native_unit_of_measurement=SIGNAL_STRENGTH_DECIBELS,
                 device_class=SensorDeviceClass.SIGNAL_STRENGTH,
                 state_class=SensorStateClass.MEASUREMENT,
@@ -164,7 +168,7 @@ def _build_node_sensors(
             coordinator=coordinator,
             entity_description=MeshtasticSensorEntityDescription(
                 key="node_hops_away",
-                icon="mdi:rabbit",
+                entity_category=EntityCategory.DIAGNOSTIC,
                 state_class=SensorStateClass.MEASUREMENT,
                 value_fn=lambda device: device.coordinator.data[device.node_id].get("hopsAway", None),
             ),
@@ -180,7 +184,7 @@ def _build_node_sensors(
             coordinator=coordinator,
             entity_description=MeshtasticSensorEntityDescription(
                 key="node_role",
-                icon="mdi:card-account-details",
+                entity_category=EntityCategory.DIAGNOSTIC,
                 value_fn=lambda device: device.coordinator.data[device.node_id].get("user", {}).get("role", None),
                 attributes_fn=lambda device: dict(
                     device_role_attributes(device.coordinator.data[device.node_id].get("user", {}).get("role", None))
@@ -197,7 +201,7 @@ def _build_node_sensors(
             coordinator=coordinator,
             entity_description=MeshtasticSensorEntityDescription(
                 key="node_short_name",
-                icon="mdi:card-account-details",
+                entity_category=EntityCategory.DIAGNOSTIC,
                 value_fn=lambda device: device.coordinator.data[device.node_id].get("user", {}).get("shortName", None),
             ),
             gateway=gateway,
@@ -211,7 +215,7 @@ def _build_node_sensors(
             coordinator=coordinator,
             entity_description=MeshtasticSensorEntityDescription(
                 key="node_long_name",
-                icon="mdi:card-account-details",
+                entity_category=EntityCategory.DIAGNOSTIC,
                 value_fn=lambda device: device.coordinator.data[device.node_id].get("user", {}).get("longName", None),
             ),
             gateway=gateway,
@@ -235,7 +239,7 @@ def _build_device_sensors(
             coordinator=coordinator,
             entity_description=MeshtasticSensorEntityDescription(
                 key="device_uptime",
-                icon="mdi:progress-clock",
+                entity_category=EntityCategory.DIAGNOSTIC,
                 native_unit_of_measurement=UnitOfTime.SECONDS,
                 device_class=SensorDeviceClass.DURATION,
                 state_class=SensorStateClass.TOTAL_INCREASING,
@@ -260,7 +264,6 @@ def _build_device_sensors(
             coordinator=coordinator,
             entity_description=MeshtasticSensorEntityDescription(
                 key="device_battery_level",
-                icon="mdi:battery",
                 native_unit_of_measurement=PERCENTAGE,
                 device_class=SensorDeviceClass.BATTERY,
                 state_class=SensorStateClass.MEASUREMENT,
@@ -277,7 +280,6 @@ def _build_device_sensors(
             coordinator=coordinator,
             entity_description=MeshtasticSensorEntityDescription(
                 key="device_voltage",
-                icon="mdi:lightning-bolt",
                 native_unit_of_measurement=UnitOfElectricPotential.VOLT,
                 device_class=SensorDeviceClass.VOLTAGE,
                 state_class=SensorStateClass.MEASUREMENT,
@@ -295,7 +297,7 @@ def _build_device_sensors(
             coordinator=coordinator,
             entity_description=MeshtasticSensorEntityDescription(
                 key="device_channel_utilization",
-                icon="mdi:signal-distance-variant",
+                entity_category=EntityCategory.DIAGNOSTIC,
                 native_unit_of_measurement=PERCENTAGE,
                 state_class=SensorStateClass.MEASUREMENT,
                 value_fn=lambda device: (
@@ -312,7 +314,7 @@ def _build_device_sensors(
             coordinator=coordinator,
             entity_description=MeshtasticSensorEntityDescription(
                 key="device_airtime",
-                icon="mdi:timer",
+                entity_category=EntityCategory.DIAGNOSTIC,
                 native_unit_of_measurement=PERCENTAGE,
                 state_class=SensorStateClass.MEASUREMENT,
                 value_fn=lambda device: (
@@ -342,7 +344,8 @@ def _build_local_stats_sensors(
                 coordinator=coordinator,
                 entity_description=MeshtasticSensorEntityDescription(
                     key="stats_packets_tx",
-                    icon="mdi:call-made",
+                    entity_category=EntityCategory.DIAGNOSTIC,
+                    entity_registry_enabled_default=False,
                     state_class=SensorStateClass.TOTAL_INCREASING,
                     value_fn=lambda device: (
                         device.coordinator.data[device.node_id].get("localStats", {}).get("numPacketsTx", None)
@@ -359,7 +362,8 @@ def _build_local_stats_sensors(
                 coordinator=coordinator,
                 entity_description=MeshtasticSensorEntityDescription(
                     key="stats_packets_rx",
-                    icon="mdi:call-received",
+                    entity_category=EntityCategory.DIAGNOSTIC,
+                    entity_registry_enabled_default=False,
                     state_class=SensorStateClass.TOTAL_INCREASING,
                     value_fn=lambda device: (
                         device.coordinator.data[device.node_id].get("localStats", {}).get("numPacketsRx", None)
@@ -376,7 +380,8 @@ def _build_local_stats_sensors(
                 coordinator=coordinator,
                 entity_description=MeshtasticSensorEntityDescription(
                     key="stats_packets_rx_bad",
-                    icon="mdi:call-missed",
+                    entity_category=EntityCategory.DIAGNOSTIC,
+                    entity_registry_enabled_default=False,
                     state_class=SensorStateClass.TOTAL_INCREASING,
                     value_fn=lambda device: (
                         device.coordinator.data[device.node_id].get("localStats", {}).get("numPacketsRxBad", None)
@@ -393,7 +398,8 @@ def _build_local_stats_sensors(
                 coordinator=coordinator,
                 entity_description=MeshtasticSensorEntityDescription(
                     key="stats_packets_rx_duplicate",
-                    icon="mdi:call-split",
+                    entity_category=EntityCategory.DIAGNOSTIC,
+                    entity_registry_enabled_default=False,
                     state_class=SensorStateClass.TOTAL_INCREASING,
                     value_fn=lambda device: (
                         device.coordinator.data[device.node_id].get("localStats", {}).get("numRxDupe", None)
@@ -410,7 +416,8 @@ def _build_local_stats_sensors(
                 coordinator=coordinator,
                 entity_description=MeshtasticSensorEntityDescription(
                     key="stats_packets_tx_relayed",
-                    icon="mdi:call-missed",
+                    entity_category=EntityCategory.DIAGNOSTIC,
+                    entity_registry_enabled_default=False,
                     state_class=SensorStateClass.TOTAL_INCREASING,
                     value_fn=lambda device: (
                         device.coordinator.data[device.node_id].get("localStats", {}).get("numTxRelay", None)
@@ -427,7 +434,8 @@ def _build_local_stats_sensors(
                 coordinator=coordinator,
                 entity_description=MeshtasticSensorEntityDescription(
                     key="stats_packets_tx_relay_cancelled",
-                    icon="mdi:call-missed",
+                    entity_category=EntityCategory.DIAGNOSTIC,
+                    entity_registry_enabled_default=False,
                     state_class=SensorStateClass.TOTAL_INCREASING,
                     value_fn=lambda device: (
                         device.coordinator.data[device.node_id].get("localStats", {}).get("numTxRelayCanceled", None)
@@ -444,7 +452,7 @@ def _build_local_stats_sensors(
                 coordinator=coordinator,
                 entity_description=MeshtasticSensorEntityDescription(
                     key="stats_nodes_online",
-                    icon="mdi:radio-handheld",
+                    entity_category=EntityCategory.DIAGNOSTIC,
                     state_class=SensorStateClass.TOTAL,
                     value_fn=lambda device: (
                         device.coordinator.data[device.node_id].get("localStats", {}).get("numOnlineNodes", None)
@@ -461,7 +469,7 @@ def _build_local_stats_sensors(
                 coordinator=coordinator,
                 entity_description=MeshtasticSensorEntityDescription(
                     key="stats_nodes_total",
-                    icon="mdi:radio-handheld",
+                    entity_category=EntityCategory.DIAGNOSTIC,
                     state_class=SensorStateClass.TOTAL,
                     value_fn=lambda device: (
                         device.coordinator.data[device.node_id].get("localStats", {}).get("numTotalNodes", None)
@@ -478,7 +486,8 @@ def _build_local_stats_sensors(
                 coordinator=coordinator,
                 entity_description=MeshtasticSensorEntityDescription(
                     key="stats_heap_total_bytes",
-                    icon="mdi:memory",
+                    entity_category=EntityCategory.DIAGNOSTIC,
+                    entity_registry_enabled_default=False,
                     native_unit_of_measurement=UnitOfInformation.BYTES,
                     device_class=SensorDeviceClass.DATA_SIZE,
                     state_class=SensorStateClass.MEASUREMENT,
@@ -497,7 +506,8 @@ def _build_local_stats_sensors(
                 coordinator=coordinator,
                 entity_description=MeshtasticSensorEntityDescription(
                     key="stats_heap_free_bytes",
-                    icon="mdi:memory",
+                    entity_category=EntityCategory.DIAGNOSTIC,
+                    entity_registry_enabled_default=False,
                     native_unit_of_measurement=UnitOfInformation.BYTES,
                     device_class=SensorDeviceClass.DATA_SIZE,
                     state_class=SensorStateClass.MEASUREMENT,
@@ -516,7 +526,7 @@ def _build_local_stats_sensors(
                 coordinator=coordinator,
                 entity_description=MeshtasticSensorEntityDescription(
                     key="stats_noise_floor",
-                    icon="mdi:signal",
+                    entity_category=EntityCategory.DIAGNOSTIC,
                     native_unit_of_measurement=SIGNAL_STRENGTH_DECIBELS_MILLIWATT,
                     device_class=SensorDeviceClass.SIGNAL_STRENGTH,
                     state_class=SensorStateClass.MEASUREMENT,
@@ -563,7 +573,6 @@ def _build_power_metrics_sensors(
                             coordinator=coordinator,
                             entity_description=MeshtasticSensorEntityDescription(
                                 key=f"power_ch{channel}_voltage",
-                                icon="mdi:lightning-bolt",
                                 native_unit_of_measurement=UnitOfElectricPotential.VOLT,
                                 device_class=SensorDeviceClass.VOLTAGE,
                                 state_class=SensorStateClass.MEASUREMENT,
@@ -579,7 +588,6 @@ def _build_power_metrics_sensors(
                             coordinator=coordinator,
                             entity_description=MeshtasticSensorEntityDescription(
                                 key=f"power_ch{channel}_current",
-                                icon="mdi:current-dc",
                                 native_unit_of_measurement=UnitOfElectricCurrent.MILLIAMPERE,
                                 device_class=SensorDeviceClass.CURRENT,
                                 state_class=SensorStateClass.MEASUREMENT,
@@ -628,6 +636,9 @@ def _build_environment_metrics_sensors(
                     entity_description=MeshtasticSensorEntityDescription(
                         key="environment_" + key,
                         translation_key="environment_" + key,
+                        entity_registry_enabled_default=not value_key.startswith(
+                            ("adcVoltageCh", "oneWireTemperatureCh")
+                        ),
                         native_unit_of_measurement=unit_of_measurement,
                         device_class=device_class,
                         state_class=state_class,
@@ -717,6 +728,8 @@ def _build_host_metrics_sensors(
                     entity_description=MeshtasticSensorEntityDescription(
                         key="host_" + key,
                         translation_key="host_" + key,
+                        entity_category=EntityCategory.DIAGNOSTIC,
+                        entity_registry_enabled_default=False,
                         native_unit_of_measurement=unit_of_measurement,
                         device_class=device_class,
                         state_class=state_class,

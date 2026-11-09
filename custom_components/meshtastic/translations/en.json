@@ -654,7 +654,18 @@
         "name": "Long Name"
       }
     },
+    "notify": {
+      "mesh_node": {
+        "name": "Node"
+      },
+      "mesh_channel": {
+        "name": "Channel"
+      }
+    },
     "meshtastic": {
+      "gateway": {
+        "name": "Gateway"
+      },
       "channel": {
         "name": "Channel",
         "state": {
@@ -701,6 +712,38 @@
       "send_message": "Send Direct Message",
       "request_telemetry": "Request Telemetry",
       "request_position": "Request Position"
+    }
+  },
+  "exceptions": {
+    "no_gateway_for_request": {
+      "message": "No gateway could handle the request"
+    },
+    "device_not_found": {
+      "message": "No device found with id {device_id}"
+    },
+    "entity_not_found": {
+      "message": "No entity found with id {entity_id}"
+    },
+    "direct_message_to_self": {
+      "message": "Can't send direct message to oneself"
+    },
+    "service_call_failed": {
+      "message": "Unhandled exception while handling service call"
+    },
+    "no_gateway_available": {
+      "message": "No gateway available"
+    },
+    "channel_send_failed": {
+      "message": "Could not send to channel"
+    },
+    "no_telemetry_response": {
+      "message": "No response for {telemetry_type}"
+    },
+    "request_failed": {
+      "message": "{error}"
+    },
+    "trigger_device_not_found": {
+      "message": "Trigger invalid, device with ID {device_id} not found"
     }
   },
   "common": {

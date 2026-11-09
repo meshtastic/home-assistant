@@ -52,6 +52,9 @@ if TYPE_CHECKING:
     from .data import MeshtasticConfigEntry
 
 
+PARALLEL_UPDATES = 1
+
+
 def _create_node_entity_filter_factory(config_entry: MeshtasticConfigEntry) -> Callable[[int], bool]:
     create_nodes = config_entry.options.get(CONF_OPTION_NOTIFY_PLATFORM, {}).get(
         CONF_OPTION_NOTIFY_PLATFORM_NODES, CONF_OPTION_NOTIFY_PLATFORM_NODES_DEFAULT
@@ -195,7 +198,7 @@ async def async_unload_entry(
 class MeshtasticNodeNotify(NotifyEntity):
     _attr_has_entity_name = True
     _attr_should_poll = False
-    _attr_icon = "mdi:radio-handheld"
+    _attr_translation_key = "mesh_node"
 
     def __init__(
         self,
@@ -233,7 +236,6 @@ class MeshtasticNodeNotify(NotifyEntity):
 
 class MeshtasticChannelNotify(NotifyEntity):
     _attr_should_poll = False
-    _attr_icon = "mdi:forum"
     _attr_translation_key = "mesh_channel"
 
     def __init__(
@@ -270,8 +272,7 @@ class MeshtasticChannelNotify(NotifyEntity):
 
     async def async_send_message(self, message: str, title: str | None = None) -> None:  # noqa: ARG002
         if not self.gateways:
-            msg = "No gateway available"
-            raise ServiceValidationError(msg)
+            raise ServiceValidationError(translation_domain=DOMAIN, translation_key="no_gateway_available")
 
         for gateway_node_id, gateway_node_channel_index in self.gateways.items():
             service_data = {
@@ -287,8 +288,7 @@ class MeshtasticChannelNotify(NotifyEntity):
             else:
                 return
 
-        msg = "Could not send to channel"
-        raise ServiceValidationError(msg)
+        raise ServiceValidationError(translation_domain=DOMAIN, translation_key="channel_send_failed")
 
     @property
     def suggested_object_id(self) -> str | None:
