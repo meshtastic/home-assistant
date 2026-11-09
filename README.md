@@ -57,6 +57,8 @@ For more details, see check the [documentation](#documentation).
 
 ### Configuration is done in the UI
 
+To change how a gateway is reached (a new IP address, serial port or Bluetooth address), open the integration, choose the entry's menu and select **Reconfigure**. Devices, entities and automations are kept. The new connection must reach the same radio: it is matched by public key, or by node number when a key is missing, and a different radio is rejected. A radio accepts one API client at a time, so a new address on the same radio can only be validated once the old connection is gone.
+
 <!---->
 
 # Documentation
@@ -402,6 +404,10 @@ Inside the Meshtastic Web Client:
 
 4. Press "New Connection" - the correct hostname is already populated
 5. Press "Connect"
+
+## Reporting a bug
+
+Attach the [diagnostics](https://www.home-assistant.io/integrations/diagnostics/) file (Settings -> Devices & services -> Meshtastic -> the three dots on the gateway entry -> Download diagnostics) together with debug logs. It holds the gateway firmware and hardware, the node and module config, the channel names and roles, and the data of the selected nodes. Channel keys, node keys, MQTT and Wi-Fi credentials, MAC addresses, hosts and positions are redacted; check the file before you post it.
 
 ## Contributions are welcome!
 
