@@ -39,7 +39,7 @@ test = [
   "protobuf==6.32.0",
 ]
 protobuf = [
-  "grpcio-tools==1.68.1",
+  "grpcio-tools==1.85.1",
   "mypy-protobuf==3.6.0",
 ]
 
