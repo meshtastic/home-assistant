@@ -1,0 +1,24 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "rebaseWhen": "conflicted",
+  "extends": ["config:recommended", ":semanticCommits", ":dependencyDashboard"],
+  "labels": ["dependencies"],
+  "pip_requirements": { "fileMatch": ["(^|/)requirements[\\w.-]*\\.txt$"] },
+  "github-actions": { "pinDigests": true },
+  "git-submodules": { "enabled": true },
+  "packageRules": [
+    {
+      "description": "These pins follow the Home Assistant version in requirements.txt and hacs.json; they move together or not at all",
+      "matchManagers": ["pip_requirements"],
+      "matchPackageNames": [
+        "homeassistant",
+        "pytest-homeassistant-custom-component",
+        "protobuf",
+        "josepy",
+        "bleak"
+      ],
+      "groupName": "Home Assistant pins",
+      "dependencyDashboardApproval": true
+    }
+  ]
+}
