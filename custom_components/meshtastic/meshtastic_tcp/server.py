@@ -161,11 +161,10 @@ class MeshtasticTcpProxy:
                         continue
                     packet_bytes, to_radio = packet
 
-                    # skip disconnect request
-                    if to_radio.disconnect:
+                    # never forward disconnect: firmware closes the shared session on presence, whatever the value
+                    if to_radio.HasField("disconnect"):
                         disconnect_event.set()
-                        await client_connection.disconnect()
-                        continue
+                        return
 
                     _LOGGER.debug(
                         "Forwarding from %s to gateway: %s",

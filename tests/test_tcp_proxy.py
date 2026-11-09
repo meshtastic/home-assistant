@@ -187,6 +187,27 @@ async def test_dead_peer_eof_closes_handler(proxy: server.MeshtasticTcpProxy) ->
     assert writer.closing
 
 
+@pytest.mark.parametrize("value", [True, False])
+async def test_disconnect_is_never_forwarded(proxy: server.MeshtasticTcpProxy, value: bool) -> None:  # noqa: FBT001
+    reader, writer = client()
+    other_reader, other_writer = client()
+    handler = asyncio.create_task(proxy._handle_client(reader, writer))
+    other = asyncio.create_task(proxy._handle_client(other_reader, other_writer))
+
+    to_radio = mesh_pb2.ToRadio(disconnect=value)
+    assert to_radio.HasField("disconnect")
+    send(reader, to_radio)
+    async with asyncio.timeout(2):
+        await handler
+
+    assert writer.closing
+    assert proxy._interface._connection.sent == []
+    assert not other.done()
+    assert not other_writer.closing
+    other_reader.feed_eof()
+    await other
+
+
 def bootstrap(nonce: int) -> list[mesh_pb2.FromRadio]:
     return [
         mesh_pb2.FromRadio(my_info=mesh_pb2.MyNodeInfo(my_node_num=1)),
