@@ -605,10 +605,10 @@ def _build_environment_metrics_sensors(
             add_sensor("irLux", SensorDeviceClass.ILLUMINANCE, LIGHT_LUX)
             add_sensor("uvLux", SensorDeviceClass.ILLUMINANCE, LIGHT_LUX)
 
-            add_sensor("windDirection", SensorDeviceClass.WIND_SPEED, DEGREE)
+            add_sensor("windDirection", None, DEGREE)
             add_sensor("windSpeed", SensorDeviceClass.WIND_SPEED, UnitOfSpeed.METERS_PER_SECOND)
-            add_sensor("wind_gust", SensorDeviceClass.WIND_SPEED, UnitOfSpeed.METERS_PER_SECOND)
-            add_sensor("wind_lull", SensorDeviceClass.WIND_SPEED, UnitOfSpeed.METERS_PER_SECOND)
+            add_sensor("windGust", SensorDeviceClass.WIND_SPEED, UnitOfSpeed.METERS_PER_SECOND)
+            add_sensor("windLull", SensorDeviceClass.WIND_SPEED, UnitOfSpeed.METERS_PER_SECOND)
 
             add_sensor("weight", SensorDeviceClass.WEIGHT, UnitOfMass.KILOGRAMS)
 
