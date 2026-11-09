@@ -9,7 +9,7 @@ from typing import Any, TypeVar
 import google
 
 from .const import LOGGER
-from .protobuf import admin_pb2, mesh_pb2, portnums_pb2, telemetry_pb2
+from .protobuf import admin_pb2, mesh_beacon_pb2, mesh_pb2, portnums_pb2, telemetry_pb2
 
 T = TypeVar("T", None, mesh_pb2.Routing, telemetry_pb2.Telemetry, admin_pb2.AdminMessage, str)
 
@@ -52,6 +52,10 @@ class Packet[T]:
         return self.mesh_packet.via_mqtt if self.mesh_packet is not None else False
 
     @property
+    def xeddsa_signed(self) -> bool:
+        return self.mesh_packet.xeddsa_signed if self.mesh_packet is not None else False
+
+    @property
     def hop_start(self) -> int | None:
         return self.mesh_packet.hop_start if self.mesh_packet is not None else None
 
@@ -76,6 +80,10 @@ class Packet[T]:
             return payload.decode()
         if port_num == portnums_pb2.PortNum.DETECTION_SENSOR_APP:
             return payload.decode()
+        if port_num == portnums_pb2.PortNum.MESH_BEACON_APP:
+            beacon = mesh_beacon_pb2.MeshBeacon()
+            beacon.ParseFromString(payload)
+            return beacon
         if port_num == portnums_pb2.PortNum.TELEMETRY_APP:
             telemetry = telemetry_pb2.Telemetry()
             telemetry.ParseFromString(payload)
