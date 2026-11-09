@@ -403,6 +403,10 @@ Inside the Meshtastic Web Client:
 4. Press "New Connection" - the correct hostname is already populated
 5. Press "Connect"
 
+## Reporting a bug
+
+Attach the [diagnostics](https://www.home-assistant.io/integrations/diagnostics/) file (Settings -> Devices & services -> Meshtastic -> the three dots on the gateway entry -> Download diagnostics) together with debug logs. It holds the gateway firmware and hardware, the node and module config, the channel names and roles, and the data of the selected nodes. Channel keys, node keys, MQTT and Wi-Fi credentials, MAC addresses, hosts and positions are redacted; check the file before you post it.
+
 ## Contributions are welcome!
 
 If you want to contribute to this please read the [Contribution guidelines](CONTRIBUTING.md)

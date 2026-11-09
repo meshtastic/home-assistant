@@ -58,7 +58,7 @@ body:
 - type: textarea
   attributes:
     label: "Home Assistant Diagnostics dump"
-    description: "Drag the diagnostics dump file here. (see https://www.home-assistant.io/integrations/diagnostics/ for info)"
+    description: "Drag the diagnostics file here (Settings -> Devices & services -> Meshtastic -> three dots on the gateway entry -> Download diagnostics). Keys, credentials, hosts and positions are redacted, but check it before posting. See https://www.home-assistant.io/integrations/diagnostics/ for info."
 
 - type: textarea
   attributes:

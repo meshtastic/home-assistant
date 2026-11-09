@@ -222,6 +222,12 @@ class MeshInterface:
 
         return MappingProxyType(node)
 
+    def connected_node_info(self) -> mesh_pb2.MyNodeInfo | None:
+        if not self._connected_node_ready.is_set():
+            return None
+
+        return self._connected_node_info
+
     def connected_node_metadata(self) -> mesh_pb2.DeviceMetadata | None:
         if not self._connected_node_ready.is_set():
             return None
