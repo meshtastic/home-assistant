@@ -28,11 +28,12 @@ class RecordingConnection:
     def __init__(self) -> None:
         self.sent: list[mesh_pb2.ToRadio] = []
         self.has_sent = asyncio.Event()
+        self.accepts = True
 
     async def send_packet(self, to_radio: mesh_pb2.ToRadio) -> bool:
         self.sent.append(to_radio)
         self.has_sent.set()
-        return True
+        return self.accepts
 
 
 def channel(index: int, name: str = "", *, downlink: bool = True, role: int | None = None) -> channel_pb2.Channel:
@@ -168,6 +169,9 @@ class FakeMqttClient:
 
     async def subscribe(self, topic: str, qos: int) -> None:
         assert qos == 1
+        if any(level not in {"+", "#"} and ("+" in level or "#" in level) for level in topic.split("/")):
+            msg = "Invalid subscription filter."  # what paho raises
+            raise ValueError(msg)
         self.subscriptions.append(topic)
         self.subscribed.set()
 
@@ -276,3 +280,23 @@ async def test_queue_refuses_what_the_radio_cannot_take() -> None:
 
     assert queue.get_nowait() is fits
     assert queue.empty()
+
+
+async def test_invalid_topic_filter_is_skipped_and_the_rest_subscribed(caplog: pytest.LogCaptureFixture) -> None:
+    interface, _ = make_interface([channel(0, "Room#1"), channel(1, "Private")])
+    client = FakeMqttClient()
+    interface._mqtt_client = client
+
+    await interface._subscribe_to_downlink_topics()
+
+    assert client.subscriptions == ["msh/US/2/e/Private/+", "msh/US/2/e/PKI/+"]
+    assert "msh/US/2/e/Room#1/+" in caplog.text
+
+
+async def test_message_the_radio_refuses_is_logged(caplog: pytest.LogCaptureFixture) -> None:
+    interface, connection = make_interface([])
+    connection.accepts = False
+
+    await interface._forward_mqtt_message_to_radio(message("msh/US/2/e/Private/!1234abcd", b"\x01"))
+
+    assert "Radio did not accept MQTT message on msh/US/2/e/Private/!1234abcd" in caplog.text

@@ -547,7 +547,11 @@ class MeshInterface:
     async def _subscribe_to_downlink_topics(self) -> None:
         for topic in self._mqtt_downlink_topics():
             self._logger.debug("Subscribing to MQTT topic %s", topic)
-            await self._mqtt_client.subscribe(topic, qos=1)
+            try:
+                await self._mqtt_client.subscribe(topic, qos=1)
+            except ValueError:
+                # a channel name holding "+" or "#" makes an invalid filter; skip it, keep the connection
+                self._logger.warning("Not subscribing to invalid MQTT topic filter %s", topic)
 
     async def _forward_mqtt_downlink_until_stopped(self) -> None:
         """Forward broker messages to the radio until the interface stops or the connection drops."""
@@ -591,9 +595,12 @@ class MeshInterface:
             )
         )
         try:
-            await self._connection.send_packet(to_radio)
+            sent = await self._connection.send_packet(to_radio)
         except Exception:
             self._logger.exception("Error forwarding MQTT message to radio")
+            return
+        if not sent:
+            self._logger.warning("Radio did not accept MQTT message on %s", topic)
 
     async def _handle_mqtt_client_proxy_message(self, message: mesh_pb2.MqttClientProxyMessage) -> None:
         """
