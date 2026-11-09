@@ -680,8 +680,10 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
     async def async_step_init(self, user_input: dict[str, Any] | None = None) -> dict[str, Any]:  # noqa: PLR0912
         errors: dict[str, str] = {}
 
-        if self.config_entry.runtime_data and self.config_entry.runtime_data.client:
-            self.nodes = await self.config_entry.runtime_data.client.async_get_all_nodes()
+        # runtime_data is unset on an entry that never loaded, and None after a failed setup
+        runtime_data = getattr(self.config_entry, "runtime_data", None)
+        if runtime_data and runtime_data.client:
+            self.nodes = await runtime_data.client.async_get_all_nodes()
 
         if self.nodes is None:
             try:

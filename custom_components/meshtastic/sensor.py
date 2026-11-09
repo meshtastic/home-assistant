@@ -268,7 +268,6 @@ def _build_device_sensors(
                 native_unit_of_measurement=PERCENTAGE,
                 device_class=SensorDeviceClass.BATTERY,
                 state_class=SensorStateClass.MEASUREMENT,
-                suggested_display_precision=2,
                 value_fn=battery_level,
             ),
             gateway=gateway,
