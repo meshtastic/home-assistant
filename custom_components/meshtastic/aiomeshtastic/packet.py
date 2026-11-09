@@ -15,7 +15,7 @@ T = TypeVar("T", None, mesh_pb2.Routing, telemetry_pb2.Telemetry, admin_pb2.Admi
 
 
 class Packet[T]:
-    def __init__(self, packet: mesh_pb2.FromRadio) -> None:
+    def __init__(self, packet: mesh_pb2.FromRadio | mesh_pb2.ToRadio) -> None:
         self._packet = packet
         self._logger = LOGGER.getChild(self.__class__.__name__)
 
