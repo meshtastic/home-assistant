@@ -231,12 +231,15 @@ class MeshtasticApiClient:
 
         return transformed
 
-    async def _publish_event_text_message_out(
+    async def _publish_event_text_message_out(  # noqa: PLR0913
         self,
         text: str,
         message_id: int,
         destination_id: int | str = MeshInterface.BROADCAST_ADDR,
         channel_index: int | None = None,
+        *,
+        reply_id: int | None = None,
+        is_reaction: bool = False,
     ) -> None:
         if destination_id == MeshInterface.BROADCAST_NUM or channel_index is not None:
             to_channel = channel_index
@@ -253,6 +256,8 @@ class MeshtasticApiClient:
                 "to": {"node": to_node, "channel": to_channel},
                 "gateway": gateway_id,
                 "message": text,
+                "reply_id": reply_id or None,
+                "is_reaction": is_reaction,
             },
         )
 
@@ -272,7 +277,12 @@ class MeshtasticApiClient:
         async def _on_message_sent(packet: Packet) -> None:
             # publish event so that outgoing messages are recorded to logbook
             await self._publish_event_text_message_out(
-                text, packet.mesh_packet.id, destination_id=destination_id, channel_index=channel_index
+                text,
+                packet.mesh_packet.id,
+                destination_id=destination_id,
+                channel_index=channel_index,
+                reply_id=reply_id,
+                is_reaction=is_reaction,
             )
 
         try:
@@ -354,6 +364,9 @@ class MeshtasticApiClient:
                 "rx_rssi": packet.mesh_packet.rx_rssi,
                 "via_mqtt": packet.mesh_packet.via_mqtt,
                 "xeddsa_signed": packet.mesh_packet.xeddsa_signed,
+                # 0 means not a reply; emoji is a flag marking the text as a reaction to reply_id
+                "reply_id": packet.mesh_packet.decoded.reply_id or None,
+                "is_reaction": bool(packet.mesh_packet.decoded.emoji),
             },
         )
 

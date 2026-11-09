@@ -117,8 +117,8 @@ channel broadcast; the channel index is the gateway's own.
 
 | Event | Fired when | `data` |
 | --- | --- | --- |
-| `meshtastic_api_text_message` | a text message is received | `from`, `to`, `gateway`, `message`, `hop_start`, `hop_limit`, `rx_snr`, `rx_rssi`, `via_mqtt`, `xeddsa_signed` |
-| `meshtastic_api_text_message_out` | the gateway sends a text message | `from` (the gateway), `to`, `gateway`, `message` |
+| `meshtastic_api_text_message` | a text message is received | `from`, `to`, `gateway`, `message`, `hop_start`, `hop_limit`, `rx_snr`, `rx_rssi`, `via_mqtt`, `xeddsa_signed`, `reply_id`, `is_reaction` |
+| `meshtastic_api_text_message_out` | the gateway sends a text message | `from` (the gateway), `to`, `gateway`, `message`, `reply_id`, `is_reaction` |
 | `meshtastic_api_detection_sensor` | a detection sensor packet is received | `from`, `to`, `gateway`, `message` (the sensor text) |
 | `meshtastic_api_mesh_beacon` | a Mesh Beacon is received | `from`, `to`, `gateway`, `beacon`, `hop_start`, `hop_limit`, `rx_snr`, `rx_rssi` |
 | `meshtastic_api_waypoint` | a waypoint is received | `from`, `to`, `gateway`, `waypoint` |
@@ -134,7 +134,8 @@ their default are omitted.
 On text messages, `hop_start` minus `hop_limit` is the number of hops the message took, when the sender
 set `hop_start` (it is 0 otherwise). `rx_snr` and `rx_rssi` are as measured by the gateway, `via_mqtt` is true
 when the message came in over MQTT, and `xeddsa_signed` is true only when firmware verified the sender's
-signature. `beacon` holds `message` and, when offered, `offerChannel`, `offerRegion`, `offerPreset` and
+signature. `reply_id` is the `message_id` the message replies to, or empty, and `is_reaction` is true when
+the message is an emoji reaction to that message. `beacon` holds `message` and, when offered, `offerChannel`, `offerRegion`, `offerPreset` and
 `offerFrequencySlot`.
 
 #### Examples
@@ -264,6 +265,8 @@ trigger:
         rx_rssi: -71
         via_mqtt: false
         xeddsa_signed: true
+        reply_id: null
+        is_reaction: false
       message_id: 2834221771
 ```
 
