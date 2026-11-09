@@ -18,6 +18,12 @@
       "matchManagers": ["pep621"],
       "matchPackageNames": ["pytest-homeassistant-custom-component", "protobuf", "josepy", "bleak"],
       "enabled": false
+    },
+    {
+      "description": "The protobuf generators make the gencode the vendored protobufs need (see CONTRIBUTING.md) and move only with a regeneration",
+      "matchManagers": ["pep621"],
+      "matchPackageNames": ["grpcio-tools", "mypy-protobuf"],
+      "enabled": false
     }
   ]
 }
