@@ -25,7 +25,7 @@ dev = [
   "types-protobuf",
   # runtime requirements of the integration, as Home Assistant installs them from manifest.json
   "bleak~=3.0.2",
-  "serialx==1.8.2",
+  "serialx==1.15.1",
   "aiomqtt>=2.5.1",
 ]
 test = [
