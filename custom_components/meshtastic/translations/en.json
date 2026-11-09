@@ -113,7 +113,7 @@
         }
       },
       "web_client": {
-        "description": "Experimental: You can enable meshtasic web client if you like to interact with your gateway manually as well. Note that meshtastic devices only allow one single connection, so this integration will pose as a meshtasic device and the web client will connect to home assistant rather directly to the device. Connecting directly to the meshtastic device will interrupt the home assistant connection. You can open the web client from the meshtastic sidebar.",
+        "description": "Experimental: serves the Meshtastic web client so you can work with the gateway by hand through Home Assistant's connection to it, since the radio takes one client at a time. Home Assistant admins open it from the Meshtastic sidebar, which issues a token for the gateway; the web client has full admin control of the gateway.",
         "data": {
           "enable": "Enable Web Client"
         }
@@ -165,7 +165,7 @@
           },
           "web_client": {
             "name": "Meshtastic Web Client",
-            "description": "Experimental: You can enable meshtastic web client if you like to interact with your gateway manually as well. IMPORTANT SECURITY CONSIDERATION: Meshtastic protocol is unauthenticated, enabling this option gives everybody control over your gateway that can reach your Home Assistant installation. Note that meshtastic devices only allow one single connection, so this integration will pose as a meshtastic device and the web client will connect to home assistant rather directly to the device. Connecting directly to the meshtastic device will interrupt the home assistant connection. You can open the web client from the meshtastic sidebar.",
+            "description": "Experimental: serves the Meshtastic web client so you can work with the gateway by hand through Home Assistant's connection to it, since the radio takes one client at a time. Home Assistant admins open it from the Meshtastic sidebar, which issues a token for the gateway; the web client has full admin control of the gateway.",
             "data": {
               "enable": "Enable Web Client"
             }

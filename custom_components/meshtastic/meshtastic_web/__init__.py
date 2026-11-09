@@ -5,17 +5,21 @@
 import asyncio
 import contextlib
 import datetime
+import secrets
 from collections import defaultdict
+from dataclasses import dataclass
 from pathlib import Path, PurePosixPath
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, Any, cast
 from urllib.parse import urlencode
 
 import homeassistant.helpers.entity_registry as er
+import voluptuous as vol
 from aiohttp import web
 from google.protobuf import message
+from homeassistant.components import websocket_api
 from homeassistant.components.http import HomeAssistantRequest, HomeAssistantView, StaticPathConfig
 from homeassistant.config_entries import ConfigEntry, ConfigEntryState
-from homeassistant.core import HomeAssistant
+from homeassistant.core import HomeAssistant, callback
 
 from ..aiomeshtastic.connection import ClientApiConnection  # noqa: TID252
 from ..aiomeshtastic.protobuf import mesh_pb2  # noqa: TID252
@@ -33,6 +37,81 @@ if TYPE_CHECKING:
     from ..data import MeshtasticConfigEntry  # noqa: TID252
 
 _LOGGER = LOGGER.getChild(__name__)
+
+# The radio API carries admin authority over the gateway, so it is reachable only under a token an
+# admin obtained over the authenticated websocket. The web client cannot send HA credentials itself.
+TOKEN_IDLE_TIMEOUT = datetime.timedelta(hours=1)
+TOKEN_MAX_AGE = datetime.timedelta(hours=24)
+DATA_WEB_CLIENT_TOKENS = f"{DOMAIN}_web_client_tokens"
+
+
+@dataclass
+class _Grant:
+    config_entry_id: str
+    user_id: str
+    issued: datetime.datetime
+    last_used: datetime.datetime
+
+
+class WebClientTokens:
+    def __init__(self) -> None:
+        self._grants: dict[str, _Grant] = {}
+
+    def issue(self, config_entry_id: str, user_id: str) -> str:
+        now = datetime.datetime.now(tz=datetime.UTC)
+        self._grants = {token: grant for token, grant in self._grants.items() if not self._expired(grant, now)}
+        token = secrets.token_urlsafe(32)
+        self._grants[token] = _Grant(config_entry_id, user_id, now, now)
+        return token
+
+    def check(self, config_entry_id: str, token: str) -> bool:
+        now = datetime.datetime.now(tz=datetime.UTC)
+        grant = self._grants.get(token)
+        if grant is None or not secrets.compare_digest(grant.config_entry_id, config_entry_id):
+            return False
+        if self._expired(grant, now):
+            self._grants.pop(token, None)
+            return False
+        grant.last_used = now
+        return True
+
+    @staticmethod
+    def _expired(grant: _Grant, now: datetime.datetime) -> bool:
+        return now - grant.last_used > TOKEN_IDLE_TIMEOUT or now - grant.issued > TOKEN_MAX_AGE
+
+
+def _web_client_enabled(config_entry: ConfigEntry) -> bool:
+    return config_entry.options.get(CONF_OPTION_WEB_CLIENT, {}).get(
+        CONF_OPTION_WEB_CLIENT_ENABLE, CONF_OPTION_WEB_CLIENT_ENABLE_DEFAULT
+    )
+
+
+@websocket_api.websocket_command({vol.Required("type"): "meshtastic/web_client/open", vol.Required("entity_id"): str})
+@websocket_api.require_admin
+@callback
+def websocket_open_web_client(
+    hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict[str, Any]
+) -> None:
+    """Return a web client URL for a gateway entity, under a token bound to its config entry."""
+    entity = er.async_get(hass).async_get(msg["entity_id"])
+    config_entry = (
+        hass.config_entries.async_get_entry(entity.config_entry_id)
+        if entity is not None and entity.platform == DOMAIN and entity.config_entry_id
+        else None
+    )
+    if config_entry is None:
+        connection.send_error(msg["id"], websocket_api.ERR_NOT_FOUND, "Not a Meshtastic gateway")
+        return
+    if config_entry.state is not ConfigEntryState.LOADED:
+        connection.send_error(msg["id"], "not_ready", f"Gateway is not ready ({config_entry.state.value})")
+        return
+    if not _web_client_enabled(config_entry):
+        connection.send_error(msg["id"], "not_enabled", "The web client is not enabled for this gateway")
+        return
+
+    token = hass.data[DATA_WEB_CLIENT_TOKENS].issue(config_entry.entry_id, connection.user.id)
+    path = f"{URL_BASE}/web/{config_entry.entry_id}/{token}"
+    connection.send_result(msg["id"], {"url": f"{URL_BASE}/web/index.html?" + urlencode({"path": path})})
 
 
 class MeshtasticWebApiContext:
@@ -56,7 +135,9 @@ class MeshtasticWebApiContext:
                     _LOGGER.debug("Removing session %s", session_key)
                     self._remove_session(session_key)
 
-        self._expire_sessions_task = asyncio.create_task(expire_sessions(), name="meshtastic_web_expire_sessions")
+        self._expire_sessions_task = hass.async_create_background_task(
+            expire_sessions(), name="meshtastic_web_expire_sessions"
+        )
 
     def close(self) -> None:
         with contextlib.suppress(asyncio.CancelledError):
@@ -228,12 +309,13 @@ class MeshtasticWebSpaView(HomeAssistantView):
 async def async_setup(hass: HomeAssistant) -> bool:
     try:
         _api_context = MeshtasticWebApiContext(hass)
+        tokens = hass.data.setdefault(DATA_WEB_CLIENT_TOKENS, WebClientTokens())
+        websocket_api.async_register_command(hass, websocket_open_web_client)
 
         hass.http.register_view(MeshtasticWebConfigEntryView(hass))
-        hass.http.register_view(MeshtasticWebApiHotspot())
-        hass.http.register_view(MeshtasticWebApiV1FromRadioView(hass, _api_context))
-        hass.http.register_view(MeshtasticWebApiV1ToRadioView(hass, _api_context))
-        hass.http.register_view(MeshtasticWebJsonReportView(hass, _api_context))
+        hass.http.register_view(MeshtasticWebApiV1FromRadioView(hass, _api_context, tokens))
+        hass.http.register_view(MeshtasticWebApiV1ToRadioView(hass, _api_context, tokens))
+        hass.http.register_view(MeshtasticWebJsonReportView(hass, _api_context, tokens))
         hass.http.register_view(MeshtasticWebSpaView())
         await hass.http.async_register_static_paths(
             [StaticPathConfig(f"{URL_BASE}/web", str(Path(__file__).parent / "static"))]
@@ -300,52 +382,18 @@ class MeshtasticWebConfigEntryView(HomeAssistantView):
         if not entity_id.startswith("gateway_"):
             return _serve_web_client_path(entity_id)
 
-        entity_registry = er.async_get(self._hass)
-        entity_id = f"{DOMAIN}.{entity_id}"
-        entity = entity_registry.async_get(entity_id)
-        if entity is None:
-            return web.HTTPNotFound()
-        path = f"{URL_BASE}/web/{entity.config_entry_id}"
-
-        config_entry = self._hass.config_entries.async_get_entry(entity.config_entry_id)
-        if config_entry.state != ConfigEntryState.LOADED:
-            return web.HTTPBadGateway(
-                body=f"Gateway is not ready (config entry state {config_entry.state.value})",
-                content_type="text/plain",
-                headers={"Cache-Control": "no-cache"},
-            )
-
-        if not config_entry.options.get(CONF_OPTION_WEB_CLIENT, {}).get(
-            CONF_OPTION_WEB_CLIENT_ENABLE, CONF_OPTION_WEB_CLIENT_ENABLE_DEFAULT
-        ):
-            return web.HTTPForbidden(body="Web client not enabled for gateway", headers={"Cache-Control": "no-cache"})
-
-        return web.HTTPTemporaryRedirect(
-            location=f"{URL_BASE}/web/index.html?" + urlencode({"path": path}), headers={"Cache-Control": "no-cache"}
-        )
-
-
-class MeshtasticWebApiHotspot(HomeAssistantView):
-    url = URL_BASE + "/web/{config_entry_id}/hotspot-detect.html"
-    name = "meshtastic:web_api_hotspot"
-    requires_auth = False
-
-    async def get(
-        self,
-        request: HomeAssistantRequest,  # noqa: ARG002
-        config_entry_id: str,  # noqa: ARG002
-    ) -> web.Response:
-        return web.HTTPOk()
+        # Old gateway links: the panel's Open button is the way in, since it can authenticate.
+        return web.HTTPTemporaryRedirect(location=f"/{DOMAIN}", headers={"Cache-Control": "no-cache"})
 
 
 class MeshtasticWebApiV1View(HomeAssistantView):
     requires_auth = False
-    cors_allowed = True
 
-    def __init__(self, hass: HomeAssistant, context: MeshtasticWebApiContext) -> None:
+    def __init__(self, hass: HomeAssistant, context: MeshtasticWebApiContext, tokens: WebClientTokens) -> None:
         self._clients: dict[str, MeshtasticApiClient] = {}
         self._hass = hass
         self._context = context
+        self._tokens = tokens
 
     def get_connection(self, request: HomeAssistantRequest) -> ClientApiConnection:
         return self._context.get_connection(request)
@@ -357,27 +405,29 @@ class MeshtasticWebApiV1View(HomeAssistantView):
             "X-Protobuf-Schema", "https://raw.githubusercontent.com/meshtastic/protobufs/master/meshtastic/mesh.proto"
         )
 
-    def _check_webclient_enabled(self, config_entry_id: str) -> None:
+    def _check_access(self, config_entry_id: str, token: str) -> None:
+        if not self._tokens.check(config_entry_id, token):
+            raise web.HTTPUnauthorized(headers={"Cache-Control": "no-cache"})
+
         config_entry = self._hass.config_entries.async_get_entry(config_entry_id)
+        if config_entry is None:
+            raise web.HTTPNotFound(headers={"Cache-Control": "no-cache"})
         if config_entry.state != ConfigEntryState.LOADED:
             raise web.HTTPBadGateway(
                 body=f"Gateway is not ready (config entry state {config_entry.state.value})",
                 content_type="text/plain",
                 headers={"Cache-Control": "no-cache"},
             )
-
-        if not config_entry.options.get(CONF_OPTION_WEB_CLIENT, {}).get(
-            CONF_OPTION_WEB_CLIENT_ENABLE, CONF_OPTION_WEB_CLIENT_ENABLE_DEFAULT
-        ):
+        if not _web_client_enabled(config_entry):
             raise web.HTTPForbidden(body="Web client not enabled for gateway", headers={"Cache-Control": "no-cache"})
 
 
 class MeshtasticWebApiV1ToRadioView(MeshtasticWebApiV1View):
-    url = URL_BASE + "/web/{config_entry_id}/api/v1/toradio"
+    url = URL_BASE + "/web/{config_entry_id}/{token}/api/v1/toradio"
     name = "meshtastic:web_v1_to_radio"
 
-    async def put(self, request: HomeAssistantRequest, config_entry_id: str) -> web.Response:
-        self._check_webclient_enabled(config_entry_id)
+    async def put(self, request: HomeAssistantRequest, config_entry_id: str, token: str) -> web.Response:
+        self._check_access(config_entry_id, token)
         connection = self.get_connection(request)
         if connection is None:
             await asyncio.sleep(1)
@@ -406,11 +456,11 @@ class MeshtasticWebApiV1ToRadioView(MeshtasticWebApiV1View):
 
 
 class MeshtasticWebApiV1FromRadioView(MeshtasticWebApiV1View):
-    url = URL_BASE + "/web/{config_entry_id}/api/v1/fromradio"
+    url = URL_BASE + "/web/{config_entry_id}/{token}/api/v1/fromradio"
     name = "meshtastic:web_v1_from_radio"
 
-    async def get(self, request: HomeAssistantRequest, config_entry_id: str) -> web.Response:
-        self._check_webclient_enabled(config_entry_id)
+    async def get(self, request: HomeAssistantRequest, config_entry_id: str, token: str) -> web.Response:
+        self._check_access(config_entry_id, token)
         config_id = request.cookies.get("config_id")
         if config_id is None:
             await asyncio.sleep(1)
@@ -443,11 +493,11 @@ class MeshtasticWebApiV1FromRadioView(MeshtasticWebApiV1View):
 
 
 class MeshtasticWebJsonReportView(MeshtasticWebApiV1View):
-    url = URL_BASE + "/web/{config_entry_id}/json/report"
+    url = URL_BASE + "/web/{config_entry_id}/{token}/json/report"
     name = "meshtastic:web_json_report"
 
-    async def get(self, request: HomeAssistantRequest, config_entry_id: str) -> web.Response:
-        self._check_webclient_enabled(config_entry_id)
+    async def get(self, request: HomeAssistantRequest, config_entry_id: str, token: str) -> web.Response:
+        self._check_access(config_entry_id, token)
         config_id = request.cookies.get("config_id")
         if config_id is None:
             response = web.HTTPBadRequest()
