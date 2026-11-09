@@ -271,7 +271,7 @@ async def _setup_meshtastic_device(  # noqa: PLR0913
         identifiers={(DOMAIN, str(node_id))},
         name=node["user"]["longName"],
         model=device_hardware_names.get(node["user"]["hwModel"], None),
-        model_id=node["user"]["hwModel"],
+        model_id=str(node["user"]["hwModel"]),
         serial_number=node["user"]["id"],
         via_device=via_device,
         sw_version=client.metadata.get("firmwareVersion")
