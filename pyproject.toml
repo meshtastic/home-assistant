@@ -21,6 +21,8 @@ dev = [
   "colorlog==6.10.1",
   "homeassistant==2026.8.0",
   "ruff==0.15.15",
+  "mypy",
+  "types-protobuf",
   # runtime requirements of the integration, as Home Assistant installs them from manifest.json
   "bleak~=3.0.2",
   "serialx==1.8.2",
@@ -85,3 +87,10 @@ max-complexity = 25
     "S101", # pytest asserts
     "SLF001", # tests exercise internals with fakes
 ]
+
+[tool.mypy]
+python_version = "3.14"
+files = ["custom_components/meshtastic"]
+explicit_package_bases = true
+mypy_path = "$MYPY_CONFIG_FILE_DIR"
+exclude = ["custom_components/meshtastic/aiomeshtastic/protobuf/"]
