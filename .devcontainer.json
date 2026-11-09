@@ -1,6 +1,6 @@
 {
     "name": "meshtastic/home-assistant",
-    "image": "mcr.microsoft.com/devcontainers/python:3.14",
+    "image": "mcr.microsoft.com/devcontainers/python:3.15",
     "postCreateCommand": "python3 -m pip install --user uv && PATH=\"$HOME/.local/bin:$PATH\" scripts/setup",
     "forwardPorts": [
         8123
