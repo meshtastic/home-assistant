@@ -386,6 +386,9 @@ class MeshInterface:
         self._connected_node_ready.clear()
         self._is_stopped.set()
 
+        # the reboot handler calls stop() from a background task; cancelling it here would skip the start() after
+        self._background_tasks.discard(asyncio.current_task())
+
         await self._close_packet_streams()
         await self._cancel_processing_tasks()
         await self._cancel_background_tasks()
