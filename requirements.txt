@@ -4,6 +4,6 @@ pip>=26.1.2
 ruff==0.15.15
 
 bleak~=3.0.2
-serialx>=1.15.1
+serialx==1.8.2
 
 aiomqtt>=2.5.1
