@@ -120,7 +120,8 @@ async def async_get_config_entry_diagnostics(hass: HomeAssistant, entry: Meshtas
     if runtime is not None:
         client = runtime.client
         diagnostics["integration_version"] = str(runtime.integration.version)
-        diagnostics["gateway"] = {
+        # not "gateway": that key is redacted wherever it appears (NetworkConfig's IPv4 gateway)
+        diagnostics["radio"] = {
             "my_info": client.my_info,
             "metadata": client.metadata,
             "node": client.get_own_node(),
