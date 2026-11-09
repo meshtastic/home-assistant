@@ -22,14 +22,17 @@ from homeassistant.components.sensor import (
 from homeassistant.config import callback
 from homeassistant.const import (
     CONCENTRATION_MICROGRAMS_PER_CUBIC_METER,
+    CONCENTRATION_PARTS_PER_MILLION,
     DEGREE,
     LIGHT_LUX,
     PERCENTAGE,
     SIGNAL_STRENGTH_DECIBELS,
     SIGNAL_STRENGTH_DECIBELS_MILLIWATT,
+    UnitOfConductivity,
     UnitOfElectricCurrent,
     UnitOfElectricPotential,
     UnitOfInformation,
+    UnitOfIrradiance,
     UnitOfLength,
     UnitOfPressure,
     UnitOfSpeed,
@@ -60,6 +63,7 @@ def _build_sensors(nodes: Mapping[int, Mapping[str, Any]], runtime_data: Meshtas
     entities += _build_power_metrics_sensors(nodes, runtime_data)
     entities += _build_environment_metrics_sensors(nodes, runtime_data)
     entities += _build_air_quality_metrics_sensors(nodes, runtime_data)
+    entities += _build_soil_water_metrics_sensors(nodes, runtime_data)
     entities += _build_host_metrics_sensors(nodes, runtime_data)
     return entities
 
@@ -632,6 +636,7 @@ def _build_environment_metrics_sensors(
         device_class: SensorDeviceClass | None,
         unit_of_measurement: str | None = None,
         state_class: SensorStateClass = SensorStateClass.MEASUREMENT,
+        name: str | None = None,
     ) -> None:
         key = "".join(["_" + c.lower() if c.isupper() else c for c in value_key]).lstrip("_")
         if value_key in node_info["environmentMetrics"]:
@@ -639,6 +644,7 @@ def _build_environment_metrics_sensors(
                 MeshtasticSensor(
                     coordinator=coordinator,
                     entity_description=MeshtasticSensorEntityDescription(
+                        name=name,
                         key="environment_" + key,
                         translation_key="environment_" + key,
                         native_unit_of_measurement=unit_of_measurement,
@@ -686,6 +692,25 @@ def _build_environment_metrics_sensors(
 
             add_sensor("soilMoisture", SensorDeviceClass.MOISTURE, PERCENTAGE)
             add_sensor("soilTemperature", SensorDeviceClass.TEMPERATURE, UnitOfTemperature.CELSIUS)
+
+            add_sensor(
+                "lightningDistanceKm", SensorDeviceClass.DISTANCE, UnitOfLength.KILOMETERS, name="Lightning Distance"
+            )
+            add_sensor("lightningStrikeCount1h", None, None, name="Lightning Strikes (1h)")
+
+            for channel in range(8):
+                add_sensor(
+                    f"adcVoltageCh{channel}",
+                    SensorDeviceClass.VOLTAGE,
+                    UnitOfElectricPotential.VOLT,
+                    name=f"ADC Voltage Channel {channel}",
+                )
+                add_sensor(
+                    f"oneWireTemperatureCh{channel}",
+                    SensorDeviceClass.TEMPERATURE,
+                    UnitOfTemperature.CELSIUS,
+                    name=f"One-Wire Temperature Channel {channel}",
+                )
 
     except:  # noqa: E722
         LOGGER.warning("Failed to create environment metric entities", exc_info=True)
@@ -823,5 +848,84 @@ def _build_air_quality_metrics_sensors(
             add_sensor("particles100um", None, CONCENTRATION_MICROGRAMS_PER_CUBIC_METER)
     except:  # noqa: E722
         LOGGER.warning("Failed to create air quality metric entities", exc_info=True)
+
+    return entities
+
+
+def _build_soil_water_metrics_sensors(
+    nodes: Mapping[int, Mapping[str, Any]], runtime_data: MeshtasticData
+) -> Iterable[MeshtasticSensor]:
+    coordinator = runtime_data.coordinator
+    gateway = runtime_data.client.get_own_node()
+    nodes_with_soil_water_metrics = {
+        node_id: node_info for node_id, node_info in nodes.items() if "soilWaterMetrics" in node_info
+    }
+    if not nodes_with_soil_water_metrics:
+        return []
+
+    entities = []
+
+    def soil_water_metrics_value_fn(key: str) -> Callable[[MeshtasticSensor], str | None]:
+        return lambda device: device.coordinator.data[device.node_id].get("soilWaterMetrics", {}).get(key, None)
+
+    def add_sensor_base(  # noqa: PLR0913
+        node_id: int,
+        node_info: dict[str, Any],
+        value_key: str,
+        name: str,
+        device_class: SensorDeviceClass | None,
+        unit_of_measurement: str | None = None,
+        state_class: SensorStateClass = SensorStateClass.MEASUREMENT,
+    ) -> None:
+        key = "".join(["_" + c.lower() if c.isupper() else c for c in value_key]).lstrip("_")
+        if value_key in node_info["soilWaterMetrics"]:
+            entities.append(
+                MeshtasticSensor(
+                    coordinator=coordinator,
+                    entity_description=MeshtasticSensorEntityDescription(
+                        name=name,
+                        key="soil_water_" + key,
+                        translation_key="soil_water_" + key,
+                        native_unit_of_measurement=unit_of_measurement,
+                        device_class=device_class,
+                        state_class=state_class,
+                        value_fn=soil_water_metrics_value_fn(value_key),
+                    ),
+                    gateway=gateway,
+                    node_id=node_id,
+                )
+            )
+
+    try:
+        for node_id, node_info in nodes_with_soil_water_metrics.items():
+            add_sensor = partial(add_sensor_base, node_id, node_info)
+
+            add_sensor("soilPh", "Soil pH", SensorDeviceClass.PH)
+            add_sensor("ph", "Water pH", SensorDeviceClass.PH)
+            add_sensor(
+                "electricalConductivity",
+                "Electrical Conductivity",
+                SensorDeviceClass.CONDUCTIVITY,
+                UnitOfConductivity.MILLISIEMENS_PER_CM,
+            )
+            add_sensor("salinity", "Salinity", None, "mg/L")
+            add_sensor("nitrogen", "Nitrogen", None, "mg/kg")
+            add_sensor("phosphorus", "Phosphorus", None, "mg/kg")
+            add_sensor("potassium", "Potassium", None, "mg/kg")
+            add_sensor("dissolvedOxygen", "Dissolved Oxygen", None, "mg/L")
+            add_sensor("orp", "Oxidation-Reduction Potential", None, UnitOfElectricPotential.MILLIVOLT)
+            add_sensor("chemicalOxygenDemand", "Chemical Oxygen Demand", None, "mg/L")
+            add_sensor("turbidity", "Turbidity", None, "NTU")
+            add_sensor("nitrate", "Nitrate", None, CONCENTRATION_PARTS_PER_MILLION)
+            add_sensor("ammonium", "Ammonium", None, CONCENTRATION_PARTS_PER_MILLION)
+            add_sensor("biochemicalOxygenDemand", "Biochemical Oxygen Demand", None, "mg/L")
+            add_sensor(
+                "solarIrradiance",
+                "Solar Irradiance",
+                SensorDeviceClass.IRRADIANCE,
+                UnitOfIrradiance.WATTS_PER_SQUARE_METER,
+            )
+    except:  # noqa: E722
+        LOGGER.warning("Failed to create soil water metric entities", exc_info=True)
 
     return entities
