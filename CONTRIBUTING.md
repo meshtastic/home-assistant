@@ -1,61 +1,63 @@
 # Contribution guidelines
 
-Contributing to this project should be as easy and transparent as possible, whether it's:
+Bug reports, fixes, discussion and feature proposals all go through GitHub.
 
-- Reporting a bug
-- Discussing the current state of the code
-- Submitting a fix
-- Proposing new features
-
-## Github is used for everything
-
-Github is used to host code, to track issues and feature requests, as well as accept pull requests.
-
-Pull requests are the best way to propose changes to the codebase.
+## Pull requests
 
 1. Fork the repo and create your branch from `main`.
-2. If you've changed something, update the documentation.
-3. Make sure your code lints (using `scripts/lint`).
-4. Test you contribution.
-5. Issue that pull request!
+2. If you've changed something, update the documentation, including the event table in the README.
+3. Make sure your code lints (see below).
+4. Test your contribution.
+5. Open the pull request. Titles follow [Conventional Commits](https://www.conventionalcommits.org/)
+   (`fix: ...`, `feat: ...`, `chore: ...`), and pull requests are squash-merged.
 
-## Any contributions you make will be under the MIT Software License
+## Bug reports
 
-In short, when you submit code changes, your submissions are understood to be under the same [MIT License](http://choosealicense.com/licenses/mit/) that covers the project. Feel free to contact the maintainers if that's a concern.
+Report a bug by [opening a new issue](../../issues/new/choose). A useful report has:
 
-## Report bugs using Github's [issues](../../issues)
+- a short summary and background,
+- specific steps to reproduce, with sample automation YAML where it helps,
+- what you expected and what happened instead,
+- the integration, Home Assistant and firmware versions, and debug logs.
 
-GitHub issues are used to track public bugs.
-Report a bug by [opening a new issue](../../issues/new/choose); it's that easy!
+## Code style
 
-## Write bug reports with detail, background, and sample code
+[Ruff](https://docs.astral.sh/ruff/) is the formatter and linter, pinned to 0.15.15 in `requirements.txt`.
+`scripts/setup` installs the requirements and `scripts/lint` formats and fixes what it can. CI runs
+`ruff check .` and `ruff format --check .` on every pull request, next to the HACS and hassfest
+validations.
 
-**Great Bug Reports** tend to have:
+## Tests
 
-- A quick summary and/or background
-- Steps to reproduce
-  - Be specific!
-  - Give sample code if you can.
-- What you expected would happen
-- What actually happens
-- Notes (possibly including why you think this might be happening, or stuff you tried that didn't work)
+`tests/` holds pytest tests for the TCP proxy and the channel handling, using
+`pytest-homeassistant-custom-component` from `requirements.test.txt`. CI does not run them, so run them
+before you open a pull request that touches that code:
 
-People *love* thorough bug reports. I'm not even kidding.
+```sh
+python3 -m pip install -r requirements.txt -r requirements.test.txt
+python3 -m pytest tests
+```
 
-## Use a Consistent Coding Style
+The repo also ships a VS Code dev container that starts a standalone Home Assistant with
+[`config/configuration.yaml`](./config/configuration.yaml) (`scripts/develop`), which is the quickest way
+to try a change against a real radio.
 
-Use [Ruff](https://docs.astral.sh/ruff/) to make sure the code follows the style.
+## Protobufs
 
-## Test your code modification
+The generated protobuf code under `custom_components/meshtastic/aiomeshtastic/protobuf/` comes from the
+`protobufs` submodule. To move to a new version, check out its tag in the submodule and run
+`scripts/generate_protobufs`. The script needs:
 
-This custom component is based on [integration_blueprint template](https://github.com/ludeeus/integration_blueprint).
+- `protoc` with Python gencode that matches the `protobuf` pin in `requirements.test.txt`, for example
+  from `grpcio-tools` 1.68 (`python -m grpc_tools.protoc`),
+- `protoc-gen-mypy` from `mypy-protobuf` 3.6 (newer releases need protobuf 6),
+- GNU sed, as `sed` or `gsed`.
 
-It comes with development environment in a container, easy to launch
-if you use Visual Studio Code. With this container you will have a stand alone
-Home Assistant instance running and already configured with the included
-[`configuration.yaml`](./config/configuration.yaml)
-file.
+Commit the submodule pointer together with the regenerated files.
 
 ## License
 
-By contributing, you agree that your contributions will be licensed under its MIT License.
+Each source file carries an SPDX header naming its license, mostly MIT, with the texts in `LICENSES/`.
+The repository as a whole is distributed under the GPL-3.0 in the root [`LICENSE`](LICENSE), like the
+rest of the Meshtastic organization. Pull requests need the Meshtastic
+Contributor License Agreement signed; the CLA assistant check on the pull request links to it.
