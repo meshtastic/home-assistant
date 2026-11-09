@@ -226,13 +226,15 @@ async def test_dropped_connection_reconnects_and_forwards(monkeypatch: pytest.Mo
     interface._is_running.set()
 
     task = asyncio.create_task(interface._maintain_mqtt_connection())
-    while not FakeMqttClient.instances:
-        await real_sleep(0)
+    async with asyncio.timeout(1):
+        while not FakeMqttClient.instances:
+            await real_sleep(0)
     first = FakeMqttClient.instances[0]
     await asyncio.wait_for(first.subscribed.wait(), timeout=1)
     first.queue.put_nowait(MqttError("Disconnected during message iteration"))
-    while len(FakeMqttClient.instances) < 2:
-        await real_sleep(0)
+    async with asyncio.timeout(1):
+        while len(FakeMqttClient.instances) < 2:
+            await real_sleep(0)
     second = FakeMqttClient.instances[1]
     await asyncio.wait_for(second.subscribed.wait(), timeout=1)
     second.queue.put_nowait(message("msh/US/2/e/Private/!1234abcd", b"\x02"))
@@ -260,4 +262,17 @@ async def test_client_bounds_its_incoming_queue(monkeypatch: pytest.MonkeyPatch)
     monkeypatch.setattr(interface, "_add_background_task", capture)
     await interface._init_mqtt_client()
 
-    assert interface._mqtt_config["max_queued_incoming_messages"] == interface_module._MQTT_MAX_QUEUED_INCOMING_MESSAGES
+    assert interface._mqtt_config["max_queued_incoming_messages"] == 100
+    assert interface._mqtt_config["queue_type"] is interface_module._MqttDownlinkQueue
+
+
+async def test_queue_refuses_what_the_radio_cannot_take() -> None:
+    queue = interface_module._MqttDownlinkQueue(maxsize=1)
+    for _ in range(3):
+        queue.put_nowait(message("msh/US/2/e/Private/!1234abcd", b"x" * 436))
+        queue.put_nowait(message("msh/US/2/e/Private/!1234abcd", b""))
+    fits = message("msh/US/2/e/Private/!1234abcd", b"\x01")
+    queue.put_nowait(fits)
+
+    assert queue.get_nowait() is fits
+    assert queue.empty()

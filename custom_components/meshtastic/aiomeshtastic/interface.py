@@ -62,6 +62,30 @@ _MQTT_PROXY_DATA_MAX_SIZE = 435
 # broker messages waiting for the radio; a slow link (Bluetooth) drops the excess instead of growing without bound
 _MQTT_MAX_QUEUED_INCOMING_MESSAGES = 100
 
+
+def _fits_mqtt_proxy_message(message: "aiomqtt.Message") -> bool:
+    """Return whether the radio can take a broker message as a ``MqttClientProxyMessage``."""
+    payload = message.payload
+    return (
+        isinstance(payload, bytes | bytearray)
+        and 0 < len(payload) <= _MQTT_PROXY_DATA_MAX_SIZE
+        and len(message.topic.value.encode("utf-8")) <= _MQTT_PROXY_TOPIC_MAX_SIZE
+    )
+
+
+class _MqttDownlinkQueue(asyncio.Queue):
+    """
+    aiomqtt's incoming queue, refusing messages the radio cannot take.
+
+    Filtering on the way in means they never hold memory or a place in the bounded queue, so a burst
+    of them cannot crowd out a downlink that fits.
+    """
+
+    def put_nowait(self, item: "aiomqtt.Message") -> None:
+        if _fits_mqtt_proxy_message(item):
+            super().put_nowait(item)
+
+
 # preset names firmware does not derive by title-casing the enum (DisplayFormatters::getModemPresetDisplayName)
 _MQTT_PRESET_CHANNEL_IDS = {"LONG_MODERATE": "LongMod"}
 
@@ -448,6 +472,7 @@ class MeshInterface:
             "tls_context": get_default_context() if use_tls else None,
             "identifier": client_id,
             "max_queued_incoming_messages": _MQTT_MAX_QUEUED_INCOMING_MESSAGES,
+            "queue_type": _MqttDownlinkQueue,
         }
 
         # Start connection task
@@ -556,11 +581,8 @@ class MeshInterface:
         """
         topic = message.topic.value
         payload = message.payload
-        if not isinstance(payload, bytes | bytearray) or not payload:
-            self._logger.debug("Ignoring MQTT message without binary payload on %s", topic)
-            return
-        if len(topic.encode("utf-8")) > _MQTT_PROXY_TOPIC_MAX_SIZE or len(payload) > _MQTT_PROXY_DATA_MAX_SIZE:
-            self._logger.debug("Ignoring MQTT message too large for the radio on %s", topic)
+        if not _fits_mqtt_proxy_message(message):
+            self._logger.debug("Ignoring MQTT message the radio cannot take on %s", topic)
             return
 
         to_radio = mesh_pb2.ToRadio(
