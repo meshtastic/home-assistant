@@ -1,0 +1,198 @@
+# SPDX-FileCopyrightText: 2026 Richard Powell
+#
+# SPDX-License-Identifier: MIT
+
+import asyncio
+from typing import ClassVar, Self
+
+import aiomqtt
+import pytest
+from aiomqtt import MqttError
+
+from custom_components.meshtastic.aiomeshtastic import MeshInterface
+from custom_components.meshtastic.aiomeshtastic import interface as interface_module
+from custom_components.meshtastic.aiomeshtastic.protobuf import channel_pb2, config_pb2, mesh_pb2
+
+Role = channel_pb2.Channel.Role
+Preset = config_pb2.Config.LoRaConfig.ModemPreset
+
+
+class RecordingConnection:
+    def __init__(self) -> None:
+        self.sent: list[mesh_pb2.ToRadio] = []
+        self.has_sent = asyncio.Event()
+
+    async def send_packet(self, to_radio: mesh_pb2.ToRadio) -> bool:
+        self.sent.append(to_radio)
+        self.has_sent.set()
+        return True
+
+
+def channel(index: int, name: str = "", *, downlink: bool = True, role: int | None = None) -> channel_pb2.Channel:
+    if role is None:
+        role = Role.PRIMARY if index == 0 else Role.SECONDARY
+    return channel_pb2.Channel(
+        index=index, role=role, settings=channel_pb2.ChannelSettings(name=name, downlink_enabled=downlink)
+    )
+
+
+def make_interface(
+    channels: list[channel_pb2.Channel],
+    *,
+    root: str = "msh/US",
+    preset: int = Preset.LONG_FAST,
+    use_preset: bool = True,
+) -> tuple[MeshInterface, RecordingConnection]:
+    connection = RecordingConnection()
+    interface = MeshInterface(connection=connection, enable_mqtt_proxy=True)
+    interface._connected_node_channels = channels
+    interface._connected_node_module_config.mqtt.root = root
+    interface._connected_node_local_config.lora.use_preset = use_preset
+    interface._connected_node_local_config.lora.modem_preset = preset
+    return interface, connection
+
+
+def message(topic: str, payload: object, *, retain: bool = False) -> aiomqtt.Message:
+    return aiomqtt.Message(topic, payload, qos=1, retain=retain, mid=1, properties=None)
+
+
+def test_topics_mirror_firmware_subscriptions() -> None:
+    interface, _ = make_interface(
+        [
+            channel(0),  # unnamed primary: named after the preset
+            channel(1, "Private"),
+            channel(2, "NoDownlink", downlink=False),
+            channel(3, "Disabled", role=Role.DISABLED),
+            channel(4, "Private"),  # same id as channel 1, subscribed once
+        ]
+    )
+
+    assert interface._mqtt_downlink_topics() == [
+        "msh/US/2/e/LongFast/+",
+        "msh/US/2/e/Private/+",
+        "msh/US/2/e/PKI/+",
+    ]
+
+
+def test_no_downlink_channel_means_no_subscription() -> None:
+    interface, _ = make_interface([channel(0, downlink=False), channel(1, "Private", downlink=False)])
+
+    assert interface._mqtt_downlink_topics() == []
+
+
+@pytest.mark.parametrize(
+    ("preset", "use_preset", "expected"),
+    [
+        (Preset.MEDIUM_FAST, True, "MediumFast"),
+        (Preset.SHORT_TURBO, True, "ShortTurbo"),
+        (Preset.LONG_MODERATE, True, "LongMod"),
+        (Preset.LONG_FAST, False, "Custom"),
+    ],
+)
+def test_unnamed_channel_uses_firmware_channel_id(preset: int, use_preset: bool, expected: str) -> None:  # noqa: FBT001
+    interface, _ = make_interface([channel(0)], preset=preset, use_preset=use_preset)
+
+    assert interface._mqtt_channel_id(interface._connected_node_channels[0]) == expected
+
+
+def test_empty_root_falls_back_to_msh() -> None:
+    interface, _ = make_interface([channel(0, "Private")], root="")
+
+    assert interface._mqtt_downlink_topics() == ["msh/2/e/Private/+", "msh/2/e/PKI/+"]
+
+
+async def test_message_is_handed_to_radio_unchanged() -> None:
+    interface, connection = make_interface([])
+
+    await interface._forward_mqtt_message_to_radio(message("msh/US/2/e/Private/!1234abcd", b"\x01\x02", retain=True))
+
+    assert connection.sent == [
+        mesh_pb2.ToRadio(
+            mqttClientProxyMessage=mesh_pb2.MqttClientProxyMessage(
+                topic="msh/US/2/e/Private/!1234abcd", data=b"\x01\x02", retained=True
+            )
+        )
+    ]
+
+
+@pytest.mark.parametrize(
+    ("topic", "payload"),
+    [
+        ("msh/US/2/e/Private/!1234abcd", b""),
+        ("msh/US/2/e/Private/!1234abcd", None),
+        ("msh/US/2/e/Private/!1234abcd", b"x" * 436),
+        ("msh/US/2/e/" + "x" * 60 + "/!1234abcd", b"\x01"),
+    ],
+)
+async def test_messages_firmware_cannot_take_are_dropped(topic: str, payload: object) -> None:
+    interface, connection = make_interface([])
+
+    await interface._forward_mqtt_message_to_radio(message(topic, payload))
+
+    assert connection.sent == []
+
+
+class FakeMqttClient:
+    instances: ClassVar[list["FakeMqttClient"]] = []
+
+    def __init__(self, **_kwargs: object) -> None:
+        self.subscriptions: list[str] = []
+        self.subscribed = asyncio.Event()
+        self.queue: asyncio.Queue[aiomqtt.Message | Exception] = asyncio.Queue()
+        FakeMqttClient.instances.append(self)
+
+    async def __aenter__(self) -> Self:
+        return self
+
+    async def __aexit__(self, *_args: object) -> None:
+        return None
+
+    async def subscribe(self, topic: str, qos: int) -> None:
+        assert qos == 1
+        self.subscriptions.append(topic)
+        self.subscribed.set()
+
+    @property
+    def messages(self) -> Self:
+        return self
+
+    def __aiter__(self) -> Self:
+        return self
+
+    async def __anext__(self) -> aiomqtt.Message:
+        item = await self.queue.get()
+        if isinstance(item, Exception):
+            raise item
+        return item
+
+
+async def test_connection_subscribes_forwards_and_stops(monkeypatch: pytest.MonkeyPatch) -> None:
+    FakeMqttClient.instances = []
+    monkeypatch.setattr(interface_module.aiomqtt, "Client", FakeMqttClient)
+    interface, connection = make_interface([channel(0, "Private")])
+    interface._mqtt_config = {}
+    interface._is_running.set()
+
+    task = asyncio.create_task(interface._maintain_mqtt_connection())
+    await asyncio.sleep(0)
+    client = FakeMqttClient.instances[0]
+    await asyncio.wait_for(client.subscribed.wait(), timeout=1)
+    client.queue.put_nowait(message("msh/US/2/e/Private/!1234abcd", b"\x01"))
+    await asyncio.wait_for(connection.has_sent.wait(), timeout=1)
+    interface._is_stopped.set()
+    await asyncio.wait_for(task, timeout=1)
+
+    assert client.subscriptions == ["msh/US/2/e/Private/+", "msh/US/2/e/PKI/+"]
+    assert connection.sent[0].mqttClientProxyMessage.data == b"\x01"
+    assert not interface._mqtt_connected
+    assert len(FakeMqttClient.instances) == 1
+
+
+async def test_dropped_stream_raises_so_the_connection_is_retried() -> None:
+    interface, _ = make_interface([])
+    client = FakeMqttClient()
+    interface._mqtt_client = client
+    client.queue.put_nowait(MqttError("Disconnected during message iteration"))
+
+    with pytest.raises(MqttError, match="Disconnected"):
+        await interface._forward_mqtt_downlink_until_stopped()

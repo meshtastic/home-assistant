@@ -54,6 +54,13 @@ from .protobuf import (
 )
 from .protobuf.mesh_pb2 import MeshPacket
 
+# nanopb limits on MqttClientProxyMessage (mesh.options); firmware cannot decode anything larger
+_MQTT_PROXY_TOPIC_MAX_SIZE = 60
+_MQTT_PROXY_DATA_MAX_SIZE = 435
+
+# preset names firmware does not derive by title-casing the enum (DisplayFormatters::getModemPresetDisplayName)
+_MQTT_PRESET_CHANNEL_IDS = {"LONG_MODERATE": "LongMod"}
+
 
 class MeshInterfaceError(MeshtasticError):
     def __init__(self, message: str) -> None:
@@ -442,7 +449,7 @@ class MeshInterface:
         self._mqtt_connection_task = self._add_background_task(self._maintain_mqtt_connection(), name="mqtt-connection")
 
     async def _maintain_mqtt_connection(self) -> None:
-        """Maintains the MQTT connection and handles reconnections."""
+        """Maintains the MQTT connection, forwards downlink to the radio and handles reconnections."""
         while self.is_running:
             try:
                 self._logger.debug("Connecting to MQTT broker")
@@ -454,8 +461,8 @@ class MeshInterface:
                     self._mqtt_connected = True
                     self._logger.debug("Connected to MQTT broker")
 
-                    # Wait until the interface is stopped
-                    await self._is_stopped.wait()
+                    await self._subscribe_to_downlink_topics()
+                    await self._forward_mqtt_downlink_until_stopped()
 
                 # Interface stopped, don't reconnect
                 break
@@ -471,6 +478,95 @@ class MeshInterface:
                 await asyncio.sleep(5)
             except asyncio.CancelledError:
                 break
+
+    def _mqtt_channel_id(self, channel: channel_pb2.Channel) -> str:
+        """
+        Return the channel id firmware uses in MQTT topics (``Channels::getGlobalId``).
+
+        An unnamed channel is named after the modem preset, or "Custom" when no preset is used.
+        """
+        if channel.settings.name:
+            return channel.settings.name
+        lora = self._connected_node_local_config.lora
+        if not lora.use_preset:
+            return "Custom"
+        try:
+            preset = config_pb2.Config.LoRaConfig.ModemPreset.Name(lora.modem_preset)
+        except ValueError:
+            return "Invalid"
+        return _MQTT_PRESET_CHANNEL_IDS.get(preset) or "".join(part.capitalize() for part in preset.split("_"))
+
+    def _mqtt_downlink_topics(self) -> list[str]:
+        """
+        Return the topics firmware subscribes to itself when it reaches the broker directly.
+
+        Mirrors ``MQTT::sendSubscriptions``: one topic per channel with downlink enabled, plus the
+        PKI topic when any channel has downlink. In client proxy mode firmware subscribes to nothing,
+        so the client has to.
+        """
+        root = self._connected_node_module_config.mqtt.root or "msh"
+        channel_ids = dict.fromkeys(
+            self._mqtt_channel_id(channel)
+            for channel in self._connected_node_channels or []
+            if channel.role != channel_pb2.Channel.Role.DISABLED and channel.settings.downlink_enabled
+        )
+        if not channel_ids:
+            return []
+        return [f"{root}/2/e/{channel_id}/+" for channel_id in channel_ids] + [f"{root}/2/e/PKI/+"]
+
+    async def _subscribe_to_downlink_topics(self) -> None:
+        for topic in self._mqtt_downlink_topics():
+            self._logger.debug("Subscribing to MQTT topic %s", topic)
+            await self._mqtt_client.subscribe(topic, qos=1)
+
+    async def _forward_mqtt_downlink_until_stopped(self) -> None:
+        """Forward broker messages to the radio until the interface stops or the connection drops."""
+        forward_task = asyncio.create_task(self._forward_mqtt_downlink())
+        stopped_task = asyncio.create_task(self._is_stopped.wait())
+        try:
+            await asyncio.wait({forward_task, stopped_task}, return_when=asyncio.FIRST_COMPLETED)
+        finally:
+            forward_task.cancel()
+            stopped_task.cancel()
+        if self._is_stopped.is_set():
+            if forward_task.done() and not forward_task.cancelled():
+                forward_task.exception()  # retrieved, so asyncio does not log it as lost
+            return
+        # raises the MqttError that ended the message stream, so the caller reconnects
+        forward_task.result()
+        msg = "MQTT message stream ended"
+        raise MqttError(msg)
+
+    async def _forward_mqtt_downlink(self) -> None:
+        async for message in self._mqtt_client.messages:
+            await self._forward_mqtt_message_to_radio(message)
+
+    async def _forward_mqtt_message_to_radio(self, message: "aiomqtt.Message") -> None:
+        """
+        Hand a broker message to the radio as a ``MqttClientProxyMessage``.
+
+        Firmware decides what to do with it: it drops envelopes for channels without downlink enabled
+        and turns our own gateway's packets into implicit ACKs, so nothing is filtered here beyond what
+        the protobuf can carry.
+        """
+        topic = message.topic.value
+        payload = message.payload
+        if not isinstance(payload, bytes | bytearray) or not payload:
+            self._logger.debug("Ignoring MQTT message without binary payload on %s", topic)
+            return
+        if len(topic.encode("utf-8")) > _MQTT_PROXY_TOPIC_MAX_SIZE or len(payload) > _MQTT_PROXY_DATA_MAX_SIZE:
+            self._logger.debug("Ignoring MQTT message too large for the radio on %s", topic)
+            return
+
+        to_radio = mesh_pb2.ToRadio(
+            mqttClientProxyMessage=mesh_pb2.MqttClientProxyMessage(
+                topic=topic, data=bytes(payload), retained=message.retain
+            )
+        )
+        try:
+            await self._connection.send_packet(to_radio)
+        except Exception:
+            self._logger.exception("Error forwarding MQTT message to radio")
 
     async def _handle_mqtt_client_proxy_message(self, message: mesh_pb2.MqttClientProxyMessage) -> None:
         """
