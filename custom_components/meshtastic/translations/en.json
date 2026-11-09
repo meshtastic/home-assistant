@@ -58,7 +58,42 @@
           "serial_port": "Path to serial port, e.g. /dev/ttyUSB0"
         }
       },
-      "reconfigure": {},
+      "reconfigure": {
+        "description": "Change how Home Assistant reaches this gateway. Devices, entities and automations are kept. The new connection must reach the same radio.",
+        "menu_options": {
+          "reconfigure_tcp": "TCP/IP",
+          "reconfigure_bluetooth": "Bluetooth",
+          "reconfigure_serial": "Serial"
+        }
+      },
+      "reconfigure_tcp": {
+        "description": "Connect via TCP/IP",
+        "data": {
+          "tcp_host": "Host",
+          "tcp_port": "Port"
+        },
+        "data_description": {
+          "tcp_host": "IP Address or Hostname"
+        }
+      },
+      "reconfigure_bluetooth": {
+        "description": "Connect Device via Bluetooth.\n**IMPORTANT**: PIN is not supported, please remove it first.",
+        "data": {
+          "bluetooth_address": "Bluetooth Address"
+        },
+        "data_description": {
+          "bluetooth_address": "Device address in form of 00:11:22:33:FF:EE"
+        }
+      },
+      "reconfigure_serial": {
+        "description": "Connect via Serial",
+        "data": {
+          "serial_port": "Serial Port"
+        },
+        "data_description": {
+          "serial_port": "Path to serial port, e.g. /dev/ttyUSB0"
+        }
+      },
       "node": {
         "description": "Configure which nodes should be imported",
         "data": {
@@ -101,7 +136,9 @@
       "port_in_use": "Port already in use"
     },
     "abort": {
-      "already_configured": "Meshtastic device is already configured"
+      "already_configured": "Meshtastic device is already configured",
+      "different_device": "The device at this address is a different radio than the one this entry was set up for. Add it as a new entry instead.",
+      "reconfigure_successful": "The connection was updated."
     }
   },
   "options": {

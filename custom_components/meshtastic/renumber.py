@@ -34,6 +34,14 @@ def node_public_key(node: Mapping[str, Any] | None) -> str | None:
     return node.get("user", {}).get("publicKey") or None
 
 
+def is_same_gateway(known_num: int | None, known_key: str | None, node: Mapping[str, Any]) -> bool:
+    # the key survives a firmware 2.8 renumber, so it outranks the node number when both sides have one
+    new_key = node_public_key(node)
+    if known_key and new_key:
+        return known_key == new_key
+    return known_num is not None and node.get("num") == known_num
+
+
 def find_renumbered_nodes(
     known_keys: Mapping[int, str | None], nodes: Mapping[int, Mapping[str, Any]]
 ) -> dict[int, int]:

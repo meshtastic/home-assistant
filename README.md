@@ -57,6 +57,8 @@ For more details, see check the [documentation](#documentation).
 
 ### Configuration is done in the UI
 
+To change how a gateway is reached (a new IP address, serial port or Bluetooth address), open the integration, choose the entry's menu and select **Reconfigure**. Devices, entities and automations are kept. The new connection must reach the same radio: it is matched by public key, or by node number when a key is missing, and a different radio is rejected. A radio accepts one API client at a time, so a new address on the same radio can only be validated once the old connection is gone.
+
 <!---->
 
 # Documentation
