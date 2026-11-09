@@ -37,6 +37,7 @@ from .const import (
     ATTR_SERVICE_DATA_ACK,
     ATTR_SERVICE_DATA_CHANNEL,
     ATTR_SERVICE_DATA_FROM,
+    ATTR_SERVICE_DATA_IS_REACTION,
     ATTR_SERVICE_DATA_REPLY_ID,
     ATTR_SERVICE_DATA_TO,
     ATTR_SERVICE_REQUEST_TELEMETRY_DATA_TYPE,
@@ -63,6 +64,7 @@ SERVICE_SEND_TEXT_SCHEMA = vol.Schema(
         vol.Optional(ATTR_SERVICE_DATA_CHANNEL): cv.string,
         vol.Required(ATTR_SERVICE_DATA_ACK, default=False): cv.boolean,
         vol.Optional(ATTR_SERVICE_DATA_REPLY_ID): cv.positive_int,
+        vol.Optional(ATTR_SERVICE_DATA_IS_REACTION, default=False): cv.boolean,
     }
 )
 
@@ -72,6 +74,7 @@ SERVICE_SEND_DIRECT_MESSAGE_SCHEMA = vol.Schema(
         vol.Required(ATTR_SERVICE_SEND_DIRECT_MESSAGE_DATA_MESSAGE): cv.string,
         vol.Required(ATTR_SERVICE_DATA_ACK, default=True): cv.boolean,
         vol.Optional(ATTR_SERVICE_DATA_REPLY_ID): cv.positive_int,
+        vol.Optional(ATTR_SERVICE_DATA_IS_REACTION, default=False): cv.boolean,
     }
 )
 
@@ -81,6 +84,7 @@ SERVICE_BROADCAST_CHANNEL_MESSAGE_SCHEMA = vol.Schema(
         vol.Required(ATTR_SERVICE_BROADCAST_CHANNEL_MESSAGE_DATA_MESSAGE): cv.string,
         vol.Required(ATTR_SERVICE_DATA_ACK, default=True): cv.boolean,
         vol.Optional(ATTR_SERVICE_DATA_REPLY_ID): cv.positive_int,
+        vol.Optional(ATTR_SERVICE_DATA_IS_REACTION, default=False): cv.boolean,
     }
 )
 
@@ -293,6 +297,7 @@ async def _setup_service_send_direct_message_handler(
             destination_id=to_node_id,
             want_ack=call.data[ATTR_SERVICE_DATA_ACK],
             reply_id=call.data.get(ATTR_SERVICE_DATA_REPLY_ID, None),
+            is_reaction=call.data.get(ATTR_SERVICE_DATA_IS_REACTION, False),
         )
         return None
 
@@ -329,6 +334,7 @@ async def _setup_service_broadcast_channel_message_handler(
             channel_index=channel_index,
             want_ack=call.data[ATTR_SERVICE_DATA_ACK],
             reply_id=call.data.get(ATTR_SERVICE_DATA_REPLY_ID, None),
+            is_reaction=call.data.get(ATTR_SERVICE_DATA_IS_REACTION, False),
         )
         return None
 
@@ -373,6 +379,7 @@ async def _setup_service_send_text_handler(
             channel_index=channel_index,
             want_ack=call.data[ATTR_SERVICE_DATA_ACK],
             reply_id=call.data.get(ATTR_SERVICE_DATA_REPLY_ID, None),
+            is_reaction=call.data.get(ATTR_SERVICE_DATA_IS_REACTION, False),
         )
 
     _service_handlers[entry.entry_id][SERVICE_SEND_TEXT] = await _build_default_handler(hass, client, handler)
