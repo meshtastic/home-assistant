@@ -6,7 +6,7 @@ import asyncio
 import contextlib
 import datetime
 from collections import defaultdict
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from typing import TYPE_CHECKING, cast
 from urllib.parse import urlencode
 
@@ -205,6 +205,26 @@ class MeshtasticWebApiContext:
         return list(self._meshtastic_queues[config_entry_id].values())
 
 
+class MeshtasticWebSpaView(HomeAssistantView):
+    """
+    Serve the bundled client for its own multi-segment routes.
+
+    Registered after the API views so they keep precedence, and before the
+    static path, which raises rather than falling through on a miss.
+    """
+
+    url = URL_BASE + "/web/{path:.+/.+}"
+    name = "meshtastic:web_spa"
+    requires_auth = False
+
+    async def get(
+        self,
+        request: HomeAssistantRequest,  # noqa: ARG002
+        path: str,
+    ) -> web.Response:
+        return _serve_web_client_path(path)
+
+
 async def async_setup(hass: HomeAssistant) -> bool:
     try:
         _api_context = MeshtasticWebApiContext(hass)
@@ -214,6 +234,7 @@ async def async_setup(hass: HomeAssistant) -> bool:
         hass.http.register_view(MeshtasticWebApiV1FromRadioView(hass, _api_context))
         hass.http.register_view(MeshtasticWebApiV1ToRadioView(hass, _api_context))
         hass.http.register_view(MeshtasticWebJsonReportView(hass, _api_context))
+        hass.http.register_view(MeshtasticWebSpaView())
         await hass.http.async_register_static_paths(
             [StaticPathConfig(f"{URL_BASE}/web", str(Path(__file__).parent / "static"))]
         )
@@ -240,6 +261,30 @@ CROSS_ORIGIN_ISOLATION_HEADERS = {
 }
 
 
+def _serve_web_client_path(relative_path: str) -> web.Response:
+    """
+    Serve a bundled file, or index.html for a client-side route.
+
+    The client is a single page app: navigating to /nodes or
+    /messages/broadcast/0 puts a real path in the URL, but there is no such
+    file, so a reload or a service worker fetch would 404. Anything that is
+    not a file and does not look like one is handed to index.html for the
+    router to resolve. Something that does look like a file still 404s, so a
+    genuinely missing asset is not masked by a page of HTML.
+    """
+    static_root = (Path(__file__).parent / "static").resolve()
+    headers = {"Cache-Control": "no-cache", **CROSS_ORIGIN_ISOLATION_HEADERS}
+
+    candidate = (static_root / relative_path).resolve()
+    if static_root in candidate.parents and candidate.is_file():
+        return web.FileResponse(candidate, headers=headers)
+
+    if "." in PurePosixPath(relative_path).name:
+        return web.HTTPNotFound()
+
+    return web.FileResponse(static_root / "index.html", headers=headers)
+
+
 class MeshtasticWebConfigEntryView(HomeAssistantView):
     url = URL_BASE + "/web/{entity_id}"
     name = "meshtastic:web_api_index"
@@ -257,10 +302,7 @@ class MeshtasticWebConfigEntryView(HomeAssistantView):
         entity_id: str,
     ) -> web.Response:
         if not entity_id.startswith("gateway_"):
-            return web.FileResponse(
-                Path(__file__).parent / "static" / entity_id,
-                headers={"Cache-Control": "no-cache", **CROSS_ORIGIN_ISOLATION_HEADERS},
-            )
+            return _serve_web_client_path(entity_id)
 
         entity_registry = er.async_get(self._hass)
         entity_id = f"{DOMAIN}.{entity_id}"
