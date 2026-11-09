@@ -1,0 +1,47 @@
+name: "Web client"
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "meshtastic/web release tag to bundle, for example v2.7.2"
+        required: true
+        type: "string"
+
+permissions: {}
+
+jobs:
+  build:
+    name: "Build the bundled web client"
+    runs-on: "ubuntu-latest"
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: "Checkout the repository"
+        uses: "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1" # v7.0.1
+
+      - name: "Build the web client"
+        shell: "bash"
+        env:
+          VERSION: ${{ inputs.version }}
+        run: scripts/build_web_client "$VERSION"
+
+      - name: "Open a pull request"
+        shell: "bash"
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ inputs.version }}
+        run: |
+          branch="chore/web-client-${VERSION}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch --create "$branch"
+          git add custom_components/meshtastic/meshtastic_web
+          git commit --message "chore: build the bundled web client from meshtastic/web ${VERSION}"
+          git push --force origin "$branch"
+          gh pr create \
+            --base main \
+            --head "$branch" \
+            --title "chore: build the bundled web client from meshtastic/web ${VERSION}" \
+            --body "Built by \`scripts/build_web_client\` from meshtastic/web ${VERSION} with the patches in \`scripts/web-client/patches\`."

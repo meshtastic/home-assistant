@@ -1,0 +1,38 @@
+{
+  "maplibre": {
+    "GeolocateControl.FindMyLocation": "Намиране на местоположението ми",
+    "NavigationControl.ZoomIn": "Увеличаване",
+    "NavigationControl.ZoomOut": "Намаляване",
+    "CooperativeGesturesHandler.WindowsHelpText": "Use Ctrl + scroll to zoom the map",
+    "CooperativeGesturesHandler.MacHelpText": "Use ⌘ + scroll to zoom the map",
+    "CooperativeGesturesHandler.MobileHelpText": "Използвайте два пръста, за да местите картата"
+  },
+  "layerTool": {
+    "nodeMarkers": "Показване на възли",
+    "directNeighbors": "Показване на директни връзки",
+    "remoteNeighbors": "Показване на отдалечени връзки",
+    "positionPrecision": "Show position precision",
+    "traceroutes": "Show traceroutes",
+    "waypoints": "Show waypoints"
+  },
+  "mapMenu": {
+    "locateAria": "Locate my node",
+    "layersAria": "Промяна на стила на картата"
+  },
+  "waypointDetail": {
+    "edit": "Редактирай",
+    "description": "Описание:",
+    "createdBy": "Редактирано от:",
+    "createdDate": "Създадено:",
+    "updated": "Актуализирано:",
+    "expires": "Изтича:",
+    "distance": "Разстояние:",
+    "bearing": "Absolute bearing:",
+    "lockedTo": "Заключено от:",
+    "latitude": "Географска ширина:",
+    "longitude": "Географска дължина:"
+  },
+  "myNode": {
+    "tooltip": "Това устройство"
+  }
+}

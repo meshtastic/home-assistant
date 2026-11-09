@@ -1,0 +1,66 @@
+diff --git a/apps/web/index.html b/apps/web/index.html
+index 4d5b33b..9e490e9 100644
+--- a/apps/web/index.html
++++ b/apps/web/index.html
+@@ -5,16 +5,17 @@
+     <%- cookieYesScript %>
+     <!-- End of CookieYes banner -->
+     <meta charset="utf-8" />
+-    <link rel="icon" type="image/svg+xml" href="/icon.svg" />
++    <link rel="icon" type="image/svg+xml" href="/logo.svg" />
+     <link rel="icon" href="/favicon.ico" />
+     <link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180" />
+ 
+     <link rel="manifest" href="site.webmanifest" />
+-    <link rel="mask-icon" href="logo_black.svg" color="#67ea94" />
++    <link rel="mask-icon" href="/logo.svg" color="#67ea94" />
+     <link rel="stylesheet" href="src/index.css" crossorigin="anonymous" />
+     <meta name="theme-color" content="#67ea94" />
+     <meta name="viewport" content="width=device-width, initial-scale=1" />
+     <meta name="description" content="Meshtastic Web Client" />
++    <meta name="referrer" content="strict-origin-when-cross-origin" />
+     <title><%- title %></title>
+   </head>
+   <body>
+diff --git a/apps/web/src/routes.tsx b/apps/web/src/routes.tsx
+index 565f83f..e1103ab 100644
+--- a/apps/web/src/routes.tsx
++++ b/apps/web/src/routes.tsx
+@@ -8,6 +8,7 @@ import ConfigPage from "@pages/Settings/index.tsx";
+ import {
+   createRootRouteWithContext,
+   createRoute,
++  createHashHistory,
+   createRouter,
+   redirect,
+ } from "@tanstack/react-router";
+@@ -170,6 +171,7 @@ export const routeTree = rootRoute.addChildren([
+ 
+ const router = createRouter({
+   routeTree,
++  history: createHashHistory(),
+   context: {
+     stores: {
+       app: {} as ReturnType<typeof useAppStore>,
+diff --git a/apps/web/vite.config.ts b/apps/web/vite.config.ts
+index 2ce0c94..e79222b 100644
+--- a/apps/web/vite.config.ts
++++ b/apps/web/vite.config.ts
+@@ -6,7 +6,6 @@ import basicSsl from "@vitejs/plugin-basic-ssl";
+ import react from "@vitejs/plugin-react";
+ import { defineConfig, loadEnv } from "vite";
+ import { createHtmlPlugin } from "vite-plugin-html";
+-import { VitePWA } from "vite-plugin-pwa";
+ 
+ let hash = "";
+ let version = "v0.0.0";
+@@ -52,9 +51,6 @@ export default defineConfig(({ mode }) => {
+           },
+         },
+       }),
+-      VitePWA({
+-        selfDestroying: true,
+-      }),
+     ],
+     optimizeDeps: {
+       include: ["react/jsx-runtime"],

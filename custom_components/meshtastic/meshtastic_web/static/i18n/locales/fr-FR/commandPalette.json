@@ -1,0 +1,51 @@
+{
+  "emptyState": "Aucun résultat trouvé.",
+  "page": {
+    "title": "Menu des commandes"
+  },
+  "pinGroup": {
+    "label": "Attacher le groupe de commandes"
+  },
+  "unpinGroup": {
+    "label": "Détacher le groupe de commandes"
+  },
+  "goto": {
+    "label": "Aller à",
+    "command": {
+      "messages": "Messages",
+      "map": "Carte",
+      "config": "Config",
+      "nodes": "Noeuds"
+    }
+  },
+  "manage": {
+    "label": "Gérer",
+    "command": {
+      "switchNode": "Changer de nœud ",
+      "connectNewNode": "Connecter un nouveau noeud"
+    }
+  },
+  "contextual": {
+    "label": "Contextuel",
+    "command": {
+      "qrCode": "Code QR",
+      "qrGenerator": "Générateur",
+      "qrImport": "Importer",
+      "scheduleShutdown": "Planifier l'arrêt",
+      "scheduleReboot": "Redémarrer l'appareil",
+      "resetNodeDb": "Réinitialiser la DB des nœuds",
+      "dfuMode": "Passer en mode DFU",
+      "factoryResetDevice": "Réinitialisation d'usine de l'appareil",
+      "factoryResetConfig": "Réinitialisation d'usine de la config",
+      "disconnect": "Déconnecter"
+    }
+  },
+  "debug": {
+    "label": "Debug",
+    "command": {
+      "reconfigure": "Reconfigurer",
+      "clearAllStoredMessages": "Effacer tous les messages stockés",
+      "clearAllStores": "Clear All Local Storage"
+    }
+  }
+}

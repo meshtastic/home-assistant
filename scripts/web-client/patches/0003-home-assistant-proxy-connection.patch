@@ -1,0 +1,108 @@
+diff --git a/apps/web/src/components/HomeAssistantAutoConnect.tsx b/apps/web/src/components/HomeAssistantAutoConnect.tsx
+new file mode 100644
+index 0000000..afe2eec
+--- /dev/null
++++ b/apps/web/src/components/HomeAssistantAutoConnect.tsx
+@@ -0,0 +1,37 @@
++import {
++  getProxyUrlFromQuery,
++  HA_CONNECTION_NAME,
++  isProxyConnection,
++} from "@core/connections/haAutoConnect.ts";
++import { useDeviceStore } from "@core/stores";
++import { useConnections } from "@pages/Connections/useConnections.ts";
++import { useEffect } from "react";
++
++let started = false;
++
++/** Connects to the Home Assistant proxy named by `?path=` once per page load. */
++export function HomeAssistantAutoConnect() {
++  const { connect, addConnectionAndConnect } = useConnections();
++
++  useEffect(() => {
++    const url = getProxyUrlFromQuery();
++    if (!url || started) return;
++    started = true;
++
++    const { savedConnections, updateSavedConnection } =
++      useDeviceStore.getState();
++    const existing = savedConnections.find((c) => isProxyConnection(c, url));
++    if (existing) {
++      updateSavedConnection(existing.id, { isDefault: true });
++      void connect(existing.id);
++      return;
++    }
++    void addConnectionAndConnect({
++      type: "http",
++      name: HA_CONNECTION_NAME,
++      url,
++    }).then((conn) => updateSavedConnection(conn.id, { isDefault: true }));
++  }, [connect, addConnectionAndConnect]);
++
++  return null;
++}
+diff --git a/apps/web/src/core/connections/haAutoConnect.ts b/apps/web/src/core/connections/haAutoConnect.ts
+new file mode 100644
+index 0000000..fff4d92
+--- /dev/null
++++ b/apps/web/src/core/connections/haAutoConnect.ts
+@@ -0,0 +1,23 @@
++import type { Connection } from "@core/stores/deviceStore/types.ts";
++
++const HA_CONNECTION_NAME = "Home Assistant";
++
++/**
++ * The Home Assistant integration serves this app with `?path=<proxy path>`.
++ * Returns the absolute URL of that proxy, or undefined when the app was
++ * opened without it.
++ */
++export function getProxyUrlFromQuery(): string | undefined {
++  const path = new URLSearchParams(globalThis.location.search).get("path");
++  if (!path?.startsWith("/") || path.startsWith("//")) return undefined;
++  return `${globalThis.location.origin}${path.replace(/\/+$/, "")}`;
++}
++
++export function isProxyConnection(
++  conn: Connection,
++  url: string,
++): conn is Connection & { type: "http"; url: string } {
++  return conn.type === "http" && conn.url === url;
++}
++
++export { HA_CONNECTION_NAME };
+diff --git a/apps/web/src/core/connections/transports.ts b/apps/web/src/core/connections/transports.ts
+index 9dfc815..eca06ca 100644
+--- a/apps/web/src/core/connections/transports.ts
++++ b/apps/web/src/core/connections/transports.ts
+@@ -74,7 +74,10 @@ async function openHttp(
+   }
+   const url = new URL(conn.url);
+   const isTLS = url.protocol === "https:";
+-  const transport = await TransportHTTP.create(url.host, isTLS);
++  const transport = await TransportHTTP.create(
++    url.host + url.pathname.replace(/\/+$/, ""),
++    isTLS,
++  );
+   return { transport };
+ }
+ 
+diff --git a/apps/web/src/index.tsx b/apps/web/src/index.tsx
+index e296ab4..06361b2 100644
+--- a/apps/web/src/index.tsx
++++ b/apps/web/src/index.tsx
+@@ -9,6 +9,7 @@ import { Suspense } from "react";
+ import { createRoot } from "react-dom/client";
+ import "./i18n-config.ts";
+ import { router } from "@app/routes.tsx";
++import { HomeAssistantAutoConnect } from "@components/HomeAssistantAutoConnect.tsx";
+ import { meshRegistry } from "@core/meshRegistry.ts";
+ import { useAppStore } from "@core/stores";
+ import { MeshRegistryProvider } from "@meshtastic/sdk-react";
+@@ -43,6 +44,7 @@ function IndexPage() {
+       <Suspense fallback={null}>
+         <MeshRegistryProvider registry={meshRegistry}>
+           <RouterProvider router={router} context={context} />
++          <HomeAssistantAutoConnect />
+         </MeshRegistryProvider>
+       </Suspense>
+     </React.StrictMode>

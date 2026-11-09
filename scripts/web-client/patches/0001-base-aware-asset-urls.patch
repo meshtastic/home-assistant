@@ -1,0 +1,102 @@
+diff --git a/apps/web/public/site.webmanifest b/apps/web/public/site.webmanifest
+index dc9509b..e8cfcce 100644
+--- a/apps/web/public/site.webmanifest
++++ b/apps/web/public/site.webmanifest
+@@ -5,7 +5,7 @@
+   "description": "Meshtastic Web App",
+   "icons": [
+     {
+-      "src": "/logo.svg",
++      "src": "logo.svg",
+       "sizes": "any",
+       "type": "image/svg+xml"
+     }
+diff --git a/apps/web/src/components/Dialog/ClearAllStoresDialog/ClearAllStoresDialog.tsx b/apps/web/src/components/Dialog/ClearAllStoresDialog/ClearAllStoresDialog.tsx
+index 731e0e8..2002a93 100644
+--- a/apps/web/src/components/Dialog/ClearAllStoresDialog/ClearAllStoresDialog.tsx
++++ b/apps/web/src/components/Dialog/ClearAllStoresDialog/ClearAllStoresDialog.tsx
+@@ -17,7 +17,7 @@ export const ClearAllStoresDialog = ({
+     clearAllStores();
+ 
+     // Reload the app to ensure all state is cleared
+-    window.location.href = "/";
++    window.location.reload();
+   };
+ 
+   return (
+diff --git a/apps/web/src/components/Dialog/FactoryResetDeviceDialog/FactoryResetDeviceDialog.tsx b/apps/web/src/components/Dialog/FactoryResetDeviceDialog/FactoryResetDeviceDialog.tsx
+index e89850d..db7dbed 100644
+--- a/apps/web/src/components/Dialog/FactoryResetDeviceDialog/FactoryResetDeviceDialog.tsx
++++ b/apps/web/src/components/Dialog/FactoryResetDeviceDialog/FactoryResetDeviceDialog.tsx
+@@ -28,7 +28,7 @@ export const FactoryResetDeviceDialog = ({
+     useDeviceStore.getState().removeDevice(id);
+ 
+     // Reload the app to ensure all ephemeral state is cleared
+-    window.location.href = "/";
++    window.location.reload();
+   };
+ 
+   return (
+diff --git a/apps/web/src/components/Sidebar.tsx b/apps/web/src/components/Sidebar.tsx
+index dd0d407..4bdfb3c 100644
+--- a/apps/web/src/components/Sidebar.tsx
++++ b/apps/web/src/components/Sidebar.tsx
+@@ -156,7 +156,7 @@ export const Sidebar = ({ children }: SidebarProps) => {
+         )}
+       >
+         <img
+-          src="/logo.svg"
++          src={`${import.meta.env.BASE_URL}logo.svg`}
+           alt={t("app.logo")}
+           className="size-10 flex-shrink-0 rounded-xl"
+         />
+diff --git a/apps/web/src/components/UI/ErrorPage.tsx b/apps/web/src/components/UI/ErrorPage.tsx
+index b860e46..6ec46fb 100644
+--- a/apps/web/src/components/UI/ErrorPage.tsx
++++ b/apps/web/src/components/UI/ErrorPage.tsx
+@@ -49,14 +49,16 @@ export function ErrorPage({ error }: { error: Error }) {
+           <P>
+             <Trans
+               i18nKey="errorPage.connectionsLink"
+-              components={[<Link key="connections" href="/" />]}
++              components={[
++                <Link key="connections" href={import.meta.env.BASE_URL} />,
++              ]}
+             />
+           </P>
+         </div>
+ 
+         <div className="hidden md:block md:max-w-64 lg:max-w-80 w-full aspect-suqare">
+           <img
+-            src="/chirpy.svg"
++            src={`${import.meta.env.BASE_URL}chirpy.svg`}
+             alt="Chirpy the Meshtastic error"
+             className="max-w-full h-auto"
+           />
+diff --git a/apps/web/src/components/generic/DeviceImage.tsx b/apps/web/src/components/generic/DeviceImage.tsx
+index ef96a42..3b079f2 100644
+--- a/apps/web/src/components/generic/DeviceImage.tsx
++++ b/apps/web/src/components/generic/DeviceImage.tsx
+@@ -47,7 +47,8 @@ const hardwareModelToFilename: { [key: string]: string } = {
+ };
+ 
+ export const DeviceImage = ({ deviceType, className }: DeviceImageProps) => {
+-  const getPath = (device: string) => `/devices/${device}`;
++  const getPath = (device: string) =>
++    `${import.meta.env.BASE_URL}devices/${device}`;
+   const device = hardwareModelToFilename[deviceType] || "unknown.svg";
+   return <img className={className} src={getPath(device)} alt={device} />;
+ };
+diff --git a/apps/web/src/i18n-config.ts b/apps/web/src/i18n-config.ts
+index ff259bf..7d31c0a 100644
+--- a/apps/web/src/i18n-config.ts
++++ b/apps/web/src/i18n-config.ts
+@@ -30,7 +30,7 @@ i18next
+   .init({
+     backend: {
+       // With this setup, {{lng}} will correctly resolve to 'en-US', 'fi-FI', etc.
+-      loadPath: "/i18n/locales/{{lng}}/{{ns}}.json",
++      loadPath: `${import.meta.env.BASE_URL}i18n/locales/{{lng}}/{{ns}}.json`,
+     },
+     react: {
+       useSuspense: true,
