@@ -3,41 +3,46 @@
 isort:skip_file
 """
 
-import builtins
-import collections.abc
-import google.protobuf.descriptor
-import google.protobuf.internal.containers
-import google.protobuf.internal.enum_type_wrapper
-import google.protobuf.message
-from . import device_ui_pb2
+from collections import abc as _abc
+from google.protobuf import descriptor as _descriptor
+from google.protobuf import message as _message
+from google.protobuf.internal import containers as _containers
+from google.protobuf.internal import enum_type_wrapper as _enum_type_wrapper
+from meshtastic.aiomeshtastic.protobuf import device_ui_pb2 as _device_ui_pb2
+import builtins as _builtins
 import sys
-import typing
+import typing as _typing
 
-if sys.version_info >= (3, 10):
-    import typing as typing_extensions
+if sys.version_info >= (3, 11):
+    from typing import TypeAlias as _TypeAlias, Never as _Never
 else:
-    import typing_extensions
+    from typing_extensions import TypeAlias as _TypeAlias, Never as _Never
 
-DESCRIPTOR: google.protobuf.descriptor.FileDescriptor
+if sys.version_info >= (3, 13):
+    from warnings import deprecated as _deprecated
+else:
+    from typing_extensions import deprecated as _deprecated
 
-@typing.final
-class Config(google.protobuf.message.Message):
-    DESCRIPTOR: google.protobuf.descriptor.Descriptor
+DESCRIPTOR: _descriptor.FileDescriptor
 
-    @typing.final
-    class DeviceConfig(google.protobuf.message.Message):
+@_typing.final
+class Config(_message.Message):
+    DESCRIPTOR: _descriptor.Descriptor
+
+    @_typing.final
+    class DeviceConfig(_message.Message):
         """
         Configuration
         """
 
-        DESCRIPTOR: google.protobuf.descriptor.Descriptor
+        DESCRIPTOR: _descriptor.Descriptor
 
         class _Role:
-            ValueType = typing.NewType("ValueType", builtins.int)
-            V: typing_extensions.TypeAlias = ValueType
+            ValueType = _typing.NewType("ValueType", _builtins.int)
+            V: _TypeAlias = ValueType  # noqa: Y015
 
-        class _RoleEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[Config.DeviceConfig._Role.ValueType], builtins.type):
-            DESCRIPTOR: google.protobuf.descriptor.EnumDescriptor
+        class _RoleEnumTypeWrapper(_enum_type_wrapper._EnumTypeWrapper[Config.DeviceConfig._Role.ValueType], _builtins.type):
+            DESCRIPTOR: _descriptor.EnumDescriptor
             CLIENT: Config.DeviceConfig._Role.ValueType  # 0
             """
             Description: App connected or stand alone messaging device.
@@ -54,17 +59,22 @@ class Config(google.protobuf.message.Message):
               The wifi radio and the oled screen will be put to sleep.
               This mode may still potentially have higher power usage due to it's preference in message rebroadcasting on the mesh.
             """
-            ROUTER_CLIENT: Config.DeviceConfig._Role.ValueType  # 3
-            """
-            Description: Combination of both ROUTER and CLIENT. Not for mobile devices.
-            Deprecated in v2.3.15 because improper usage is impacting public meshes: Use ROUTER or CLIENT instead.
-            """
-            REPEATER: Config.DeviceConfig._Role.ValueType  # 4
-            """
-            Description: Infrastructure node for extending network coverage by relaying messages with minimal overhead. Not visible in Nodes list.
-            Technical Details: Mesh packets will simply be rebroadcasted over this node. Nodes configured with this role will not originate NodeInfo, Position, Telemetry
-              or any other packet type. They will simply rebroadcast any mesh packets on the same frequency, channel num, spread factor, and coding rate.
-            """
+            @_builtins.property
+            @_deprecated("""This enum value has been marked as deprecated using proto enum value options.""")
+            def ROUTER_CLIENT(self) -> Config.DeviceConfig._Role.ValueType:   # 3
+                """
+                Description: Combination of both ROUTER and CLIENT. Not for mobile devices.
+                Deprecated in v2.3.15 because improper usage is impacting public meshes: Use ROUTER or CLIENT instead.
+                """
+            @_builtins.property
+            @_deprecated("""This enum value has been marked as deprecated using proto enum value options.""")
+            def REPEATER(self) -> Config.DeviceConfig._Role.ValueType:   # 4
+                """
+                Description: Infrastructure node for extending network coverage by relaying messages with minimal overhead. Not visible in Nodes list.
+                Technical Details: Mesh packets will simply be rebroadcasted over this node. Nodes configured with this role will not originate NodeInfo, Position, Telemetry
+                  or any other packet type. They will simply rebroadcast any mesh packets on the same frequency, channel num, spread factor, and coding rate.
+                Deprecated in v2.7.11 because it creates "holes" in the mesh rebroadcast chain.
+                """
             TRACKER: Config.DeviceConfig._Role.ValueType  # 5
             """
             Description: Broadcasts GPS position packets as priority.
@@ -116,6 +126,13 @@ class Config(google.protobuf.message.Message):
                but should not be given priority over other routers in order to avoid unnecessaraily
                consuming hops.
             """
+            CLIENT_BASE: Config.DeviceConfig._Role.ValueType  # 12
+            """
+            Description: Treats packets from or to favorited nodes as ROUTER_LATE, and all other packets as CLIENT.
+            Technical Details: Used for stronger attic/roof nodes to distribute messages more widely
+               from weaker, indoor, or less-well-positioned nodes. Recommended for users with multiple nodes
+               where one CLIENT_BASE acts as a more powerful base station, such as an attic/roof node.
+            """
 
         class Role(_Role, metaclass=_RoleEnumTypeWrapper):
             """
@@ -148,6 +165,7 @@ class Config(google.protobuf.message.Message):
         Description: Infrastructure node for extending network coverage by relaying messages with minimal overhead. Not visible in Nodes list.
         Technical Details: Mesh packets will simply be rebroadcasted over this node. Nodes configured with this role will not originate NodeInfo, Position, Telemetry
           or any other packet type. They will simply rebroadcast any mesh packets on the same frequency, channel num, spread factor, and coding rate.
+        Deprecated in v2.7.11 because it creates "holes" in the mesh rebroadcast chain.
         """
         TRACKER: Config.DeviceConfig.Role.ValueType  # 5
         """
@@ -200,13 +218,20 @@ class Config(google.protobuf.message.Message):
            but should not be given priority over other routers in order to avoid unnecessaraily
            consuming hops.
         """
+        CLIENT_BASE: Config.DeviceConfig.Role.ValueType  # 12
+        """
+        Description: Treats packets from or to favorited nodes as ROUTER_LATE, and all other packets as CLIENT.
+        Technical Details: Used for stronger attic/roof nodes to distribute messages more widely
+           from weaker, indoor, or less-well-positioned nodes. Recommended for users with multiple nodes
+           where one CLIENT_BASE acts as a more powerful base station, such as an attic/roof node.
+        """
 
         class _RebroadcastMode:
-            ValueType = typing.NewType("ValueType", builtins.int)
-            V: typing_extensions.TypeAlias = ValueType
+            ValueType = _typing.NewType("ValueType", _builtins.int)
+            V: _TypeAlias = ValueType  # noqa: Y015
 
-        class _RebroadcastModeEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[Config.DeviceConfig._RebroadcastMode.ValueType], builtins.type):
-            DESCRIPTOR: google.protobuf.descriptor.EnumDescriptor
+        class _RebroadcastModeEnumTypeWrapper(_enum_type_wrapper._EnumTypeWrapper[Config.DeviceConfig._RebroadcastMode.ValueType], _builtins.type):
+            DESCRIPTOR: _descriptor.EnumDescriptor
             ALL: Config.DeviceConfig._RebroadcastMode.ValueType  # 0
             """
             Default behavior.
@@ -273,11 +298,11 @@ class Config(google.protobuf.message.Message):
         """
 
         class _BuzzerMode:
-            ValueType = typing.NewType("ValueType", builtins.int)
-            V: typing_extensions.TypeAlias = ValueType
+            ValueType = _typing.NewType("ValueType", _builtins.int)
+            V: _TypeAlias = ValueType  # noqa: Y015
 
-        class _BuzzerModeEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[Config.DeviceConfig._BuzzerMode.ValueType], builtins.type):
-            DESCRIPTOR: google.protobuf.descriptor.EnumDescriptor
+        class _BuzzerModeEnumTypeWrapper(_enum_type_wrapper._EnumTypeWrapper[Config.DeviceConfig._BuzzerMode.ValueType], _builtins.type):
+            DESCRIPTOR: _descriptor.EnumDescriptor
             ALL_ENABLED: Config.DeviceConfig._BuzzerMode.ValueType  # 0
             """
             Default behavior.
@@ -339,69 +364,92 @@ class Config(google.protobuf.message.Message):
         External notification config determines the specifics of the notification behavior.
         """
 
-        ROLE_FIELD_NUMBER: builtins.int
-        SERIAL_ENABLED_FIELD_NUMBER: builtins.int
-        BUTTON_GPIO_FIELD_NUMBER: builtins.int
-        BUZZER_GPIO_FIELD_NUMBER: builtins.int
-        REBROADCAST_MODE_FIELD_NUMBER: builtins.int
-        NODE_INFO_BROADCAST_SECS_FIELD_NUMBER: builtins.int
-        DOUBLE_TAP_AS_BUTTON_PRESS_FIELD_NUMBER: builtins.int
-        IS_MANAGED_FIELD_NUMBER: builtins.int
-        DISABLE_TRIPLE_CLICK_FIELD_NUMBER: builtins.int
-        TZDEF_FIELD_NUMBER: builtins.int
-        LED_HEARTBEAT_DISABLED_FIELD_NUMBER: builtins.int
-        BUZZER_MODE_FIELD_NUMBER: builtins.int
-        role: global___Config.DeviceConfig.Role.ValueType
+        ROLE_FIELD_NUMBER: _builtins.int
+        SERIAL_ENABLED_FIELD_NUMBER: _builtins.int
+        BUTTON_GPIO_FIELD_NUMBER: _builtins.int
+        BUZZER_GPIO_FIELD_NUMBER: _builtins.int
+        REBROADCAST_MODE_FIELD_NUMBER: _builtins.int
+        NODE_INFO_BROADCAST_SECS_FIELD_NUMBER: _builtins.int
+        DOUBLE_TAP_AS_BUTTON_PRESS_FIELD_NUMBER: _builtins.int
+        IS_MANAGED_FIELD_NUMBER: _builtins.int
+        DISABLE_TRIPLE_CLICK_FIELD_NUMBER: _builtins.int
+        TZDEF_FIELD_NUMBER: _builtins.int
+        LED_HEARTBEAT_DISABLED_FIELD_NUMBER: _builtins.int
+        BUZZER_MODE_FIELD_NUMBER: _builtins.int
+        role: Global___Config.DeviceConfig.Role.ValueType
         """
         Sets the role of node
         """
-        serial_enabled: builtins.bool
-        """
-        Disabling this will disable the SerialConsole by not initilizing the StreamAPI
-        Moved to SecurityConfig
-        """
-        button_gpio: builtins.int
+        @_builtins.property
+        @_deprecated("""This field has been marked as deprecated using proto field options.""")
+        def serial_enabled(self) -> _builtins.bool:
+            """
+            Disabling this will disable the SerialConsole by not initilizing the StreamAPI
+            Moved to SecurityConfig
+            """
+
+        @serial_enabled.setter
+        @_deprecated("""This field has been marked as deprecated using proto field options.""")
+        def serial_enabled(self, value: _builtins.bool) -> None:
+            """
+            Disabling this will disable the SerialConsole by not initilizing the StreamAPI
+            Moved to SecurityConfig
+            """
+
+        button_gpio: _builtins.int
         """
         For boards without a hard wired button, this is the pin number that will be used
         Boards that have more than one button can swap the function with this one. defaults to BUTTON_PIN if defined.
         """
-        buzzer_gpio: builtins.int
+        buzzer_gpio: _builtins.int
         """
         For boards without a PWM buzzer, this is the pin number that will be used
         Defaults to PIN_BUZZER if defined.
         """
-        rebroadcast_mode: global___Config.DeviceConfig.RebroadcastMode.ValueType
+        rebroadcast_mode: Global___Config.DeviceConfig.RebroadcastMode.ValueType
         """
         Sets the role of node
         """
-        node_info_broadcast_secs: builtins.int
+        node_info_broadcast_secs: _builtins.int
         """
         Send our nodeinfo this often
         Defaults to 900 Seconds (15 minutes)
         """
-        double_tap_as_button_press: builtins.bool
+        double_tap_as_button_press: _builtins.bool
         """
         Treat double tap interrupt on supported accelerometers as a button press if set to true
         """
-        is_managed: builtins.bool
-        """
-        If true, device is considered to be "managed" by a mesh administrator
-        Clients should then limit available configuration and administrative options inside the user interface
-        Moved to SecurityConfig
-        """
-        disable_triple_click: builtins.bool
+        @_builtins.property
+        @_deprecated("""This field has been marked as deprecated using proto field options.""")
+        def is_managed(self) -> _builtins.bool:
+            """
+            If true, device is considered to be "managed" by a mesh administrator
+            Clients should then limit available configuration and administrative options inside the user interface
+            Moved to SecurityConfig
+            """
+
+        @is_managed.setter
+        @_deprecated("""This field has been marked as deprecated using proto field options.""")
+        def is_managed(self, value: _builtins.bool) -> None:
+            """
+            If true, device is considered to be "managed" by a mesh administrator
+            Clients should then limit available configuration and administrative options inside the user interface
+            Moved to SecurityConfig
+            """
+
+        disable_triple_click: _builtins.bool
         """
         Disables the triple-press of user button to enable or disable GPS
         """
-        tzdef: builtins.str
+        tzdef: _builtins.str
         """
         POSIX Timezone definition string from https://github.com/nayarsystems/posix_tz_db/blob/master/zones.csv.
         """
-        led_heartbeat_disabled: builtins.bool
+        led_heartbeat_disabled: _builtins.bool
         """
         If true, disable the default blinking LED (LED_PIN) behavior on the device
         """
-        buzzer_mode: global___Config.DeviceConfig.BuzzerMode.ValueType
+        buzzer_mode: Global___Config.DeviceConfig.BuzzerMode.ValueType
         """
         Controls buzzer behavior for audio feedback
         Defaults to ENABLED
@@ -409,35 +457,39 @@ class Config(google.protobuf.message.Message):
         def __init__(
             self,
             *,
-            role: global___Config.DeviceConfig.Role.ValueType = ...,
-            serial_enabled: builtins.bool = ...,
-            button_gpio: builtins.int = ...,
-            buzzer_gpio: builtins.int = ...,
-            rebroadcast_mode: global___Config.DeviceConfig.RebroadcastMode.ValueType = ...,
-            node_info_broadcast_secs: builtins.int = ...,
-            double_tap_as_button_press: builtins.bool = ...,
-            is_managed: builtins.bool = ...,
-            disable_triple_click: builtins.bool = ...,
-            tzdef: builtins.str = ...,
-            led_heartbeat_disabled: builtins.bool = ...,
-            buzzer_mode: global___Config.DeviceConfig.BuzzerMode.ValueType = ...,
+            role: Global___Config.DeviceConfig.Role.ValueType = ...,
+            serial_enabled: _builtins.bool = ...,
+            button_gpio: _builtins.int = ...,
+            buzzer_gpio: _builtins.int = ...,
+            rebroadcast_mode: Global___Config.DeviceConfig.RebroadcastMode.ValueType = ...,
+            node_info_broadcast_secs: _builtins.int = ...,
+            double_tap_as_button_press: _builtins.bool = ...,
+            is_managed: _builtins.bool = ...,
+            disable_triple_click: _builtins.bool = ...,
+            tzdef: _builtins.str = ...,
+            led_heartbeat_disabled: _builtins.bool = ...,
+            buzzer_mode: Global___Config.DeviceConfig.BuzzerMode.ValueType = ...,
         ) -> None: ...
-        def ClearField(self, field_name: typing.Literal["button_gpio", b"button_gpio", "buzzer_gpio", b"buzzer_gpio", "buzzer_mode", b"buzzer_mode", "disable_triple_click", b"disable_triple_click", "double_tap_as_button_press", b"double_tap_as_button_press", "is_managed", b"is_managed", "led_heartbeat_disabled", b"led_heartbeat_disabled", "node_info_broadcast_secs", b"node_info_broadcast_secs", "rebroadcast_mode", b"rebroadcast_mode", "role", b"role", "serial_enabled", b"serial_enabled", "tzdef", b"tzdef"]) -> None: ...
+        _HasFieldArgType: _TypeAlias = _Never  # noqa: Y015
+        def HasField(self, field_name: _HasFieldArgType) -> _builtins.bool: ...
+        _ClearFieldArgType: _TypeAlias = _typing.Literal["button_gpio", b"button_gpio", "buzzer_gpio", b"buzzer_gpio", "buzzer_mode", b"buzzer_mode", "disable_triple_click", b"disable_triple_click", "double_tap_as_button_press", b"double_tap_as_button_press", "is_managed", b"is_managed", "led_heartbeat_disabled", b"led_heartbeat_disabled", "node_info_broadcast_secs", b"node_info_broadcast_secs", "rebroadcast_mode", b"rebroadcast_mode", "role", b"role", "serial_enabled", b"serial_enabled", "tzdef", b"tzdef"]  # noqa: Y015
+        def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
+        def WhichOneof(self, oneof_group: _Never) -> None: ...
 
-    @typing.final
-    class PositionConfig(google.protobuf.message.Message):
+    @_typing.final
+    class PositionConfig(_message.Message):
         """
         Position Config
         """
 
-        DESCRIPTOR: google.protobuf.descriptor.Descriptor
+        DESCRIPTOR: _descriptor.Descriptor
 
         class _PositionFlags:
-            ValueType = typing.NewType("ValueType", builtins.int)
-            V: typing_extensions.TypeAlias = ValueType
+            ValueType = _typing.NewType("ValueType", _builtins.int)
+            V: _TypeAlias = ValueType  # noqa: Y015
 
-        class _PositionFlagsEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[Config.PositionConfig._PositionFlags.ValueType], builtins.type):
-            DESCRIPTOR: google.protobuf.descriptor.EnumDescriptor
+        class _PositionFlagsEnumTypeWrapper(_enum_type_wrapper._EnumTypeWrapper[Config.PositionConfig._PositionFlags.ValueType], _builtins.type):
+            DESCRIPTOR: _descriptor.EnumDescriptor
             UNSET: Config.PositionConfig._PositionFlags.ValueType  # 0
             """
             Required for compilation
@@ -547,11 +599,11 @@ class Config(google.protobuf.message.Message):
         """
 
         class _GpsMode:
-            ValueType = typing.NewType("ValueType", builtins.int)
-            V: typing_extensions.TypeAlias = ValueType
+            ValueType = _typing.NewType("ValueType", _builtins.int)
+            V: _TypeAlias = ValueType  # noqa: Y015
 
-        class _GpsModeEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[Config.PositionConfig._GpsMode.ValueType], builtins.type):
-            DESCRIPTOR: google.protobuf.descriptor.EnumDescriptor
+        class _GpsModeEnumTypeWrapper(_enum_type_wrapper._EnumTypeWrapper[Config.PositionConfig._GpsMode.ValueType], _builtins.type):
+            DESCRIPTOR: _descriptor.EnumDescriptor
             DISABLED: Config.PositionConfig._GpsMode.ValueType  # 0
             """
             GPS is present but disabled
@@ -579,158 +631,182 @@ class Config(google.protobuf.message.Message):
         GPS is not present on the device
         """
 
-        POSITION_BROADCAST_SECS_FIELD_NUMBER: builtins.int
-        POSITION_BROADCAST_SMART_ENABLED_FIELD_NUMBER: builtins.int
-        FIXED_POSITION_FIELD_NUMBER: builtins.int
-        GPS_ENABLED_FIELD_NUMBER: builtins.int
-        GPS_UPDATE_INTERVAL_FIELD_NUMBER: builtins.int
-        GPS_ATTEMPT_TIME_FIELD_NUMBER: builtins.int
-        POSITION_FLAGS_FIELD_NUMBER: builtins.int
-        RX_GPIO_FIELD_NUMBER: builtins.int
-        TX_GPIO_FIELD_NUMBER: builtins.int
-        BROADCAST_SMART_MINIMUM_DISTANCE_FIELD_NUMBER: builtins.int
-        BROADCAST_SMART_MINIMUM_INTERVAL_SECS_FIELD_NUMBER: builtins.int
-        GPS_EN_GPIO_FIELD_NUMBER: builtins.int
-        GPS_MODE_FIELD_NUMBER: builtins.int
-        position_broadcast_secs: builtins.int
+        POSITION_BROADCAST_SECS_FIELD_NUMBER: _builtins.int
+        POSITION_BROADCAST_SMART_ENABLED_FIELD_NUMBER: _builtins.int
+        FIXED_POSITION_FIELD_NUMBER: _builtins.int
+        GPS_ENABLED_FIELD_NUMBER: _builtins.int
+        GPS_UPDATE_INTERVAL_FIELD_NUMBER: _builtins.int
+        GPS_ATTEMPT_TIME_FIELD_NUMBER: _builtins.int
+        POSITION_FLAGS_FIELD_NUMBER: _builtins.int
+        RX_GPIO_FIELD_NUMBER: _builtins.int
+        TX_GPIO_FIELD_NUMBER: _builtins.int
+        BROADCAST_SMART_MINIMUM_DISTANCE_FIELD_NUMBER: _builtins.int
+        BROADCAST_SMART_MINIMUM_INTERVAL_SECS_FIELD_NUMBER: _builtins.int
+        GPS_EN_GPIO_FIELD_NUMBER: _builtins.int
+        GPS_MODE_FIELD_NUMBER: _builtins.int
+        position_broadcast_secs: _builtins.int
         """
         We should send our position this often (but only if it has changed significantly)
         Defaults to 15 minutes
         """
-        position_broadcast_smart_enabled: builtins.bool
+        position_broadcast_smart_enabled: _builtins.bool
         """
         Adaptive position braoadcast, which is now the default.
         """
-        fixed_position: builtins.bool
+        fixed_position: _builtins.bool
         """
         If set, this node is at a fixed position.
         We will generate GPS position updates at the regular interval, but use whatever the last lat/lon/alt we have for the node.
         The lat/lon/alt can be set by an internal GPS or with the help of the app.
         """
-        gps_enabled: builtins.bool
-        """
-        Is GPS enabled for this node?
-        """
-        gps_update_interval: builtins.int
+        @_builtins.property
+        @_deprecated("""This field has been marked as deprecated using proto field options.""")
+        def gps_enabled(self) -> _builtins.bool:
+            """
+            Is GPS enabled for this node?
+            """
+
+        @gps_enabled.setter
+        @_deprecated("""This field has been marked as deprecated using proto field options.""")
+        def gps_enabled(self, value: _builtins.bool) -> None:
+            """
+            Is GPS enabled for this node?
+            """
+
+        gps_update_interval: _builtins.int
         """
         How often should we try to get GPS position (in seconds)
         or zero for the default of once every 30 seconds
         or a very large value (maxint) to update only once at boot.
         """
-        gps_attempt_time: builtins.int
-        """
-        Deprecated in favor of using smart / regular broadcast intervals as implicit attempt time
-        """
-        position_flags: builtins.int
+        @_builtins.property
+        @_deprecated("""This field has been marked as deprecated using proto field options.""")
+        def gps_attempt_time(self) -> _builtins.int:
+            """
+            Deprecated in favor of using smart / regular broadcast intervals as implicit attempt time
+            """
+
+        @gps_attempt_time.setter
+        @_deprecated("""This field has been marked as deprecated using proto field options.""")
+        def gps_attempt_time(self, value: _builtins.int) -> None:
+            """
+            Deprecated in favor of using smart / regular broadcast intervals as implicit attempt time
+            """
+
+        position_flags: _builtins.int
         """
         Bit field of boolean configuration options for POSITION messages
         (bitwise OR of PositionFlags)
         """
-        rx_gpio: builtins.int
+        rx_gpio: _builtins.int
         """
         (Re)define GPS_RX_PIN for your board.
         """
-        tx_gpio: builtins.int
+        tx_gpio: _builtins.int
         """
         (Re)define GPS_TX_PIN for your board.
         """
-        broadcast_smart_minimum_distance: builtins.int
+        broadcast_smart_minimum_distance: _builtins.int
         """
         The minimum distance in meters traveled (since the last send) before we can send a position to the mesh if position_broadcast_smart_enabled
         """
-        broadcast_smart_minimum_interval_secs: builtins.int
+        broadcast_smart_minimum_interval_secs: _builtins.int
         """
         The minimum number of seconds (since the last send) before we can send a position to the mesh if position_broadcast_smart_enabled
         """
-        gps_en_gpio: builtins.int
+        gps_en_gpio: _builtins.int
         """
         (Re)define PIN_GPS_EN for your board.
         """
-        gps_mode: global___Config.PositionConfig.GpsMode.ValueType
+        gps_mode: Global___Config.PositionConfig.GpsMode.ValueType
         """
         Set where GPS is enabled, disabled, or not present
         """
         def __init__(
             self,
             *,
-            position_broadcast_secs: builtins.int = ...,
-            position_broadcast_smart_enabled: builtins.bool = ...,
-            fixed_position: builtins.bool = ...,
-            gps_enabled: builtins.bool = ...,
-            gps_update_interval: builtins.int = ...,
-            gps_attempt_time: builtins.int = ...,
-            position_flags: builtins.int = ...,
-            rx_gpio: builtins.int = ...,
-            tx_gpio: builtins.int = ...,
-            broadcast_smart_minimum_distance: builtins.int = ...,
-            broadcast_smart_minimum_interval_secs: builtins.int = ...,
-            gps_en_gpio: builtins.int = ...,
-            gps_mode: global___Config.PositionConfig.GpsMode.ValueType = ...,
+            position_broadcast_secs: _builtins.int = ...,
+            position_broadcast_smart_enabled: _builtins.bool = ...,
+            fixed_position: _builtins.bool = ...,
+            gps_enabled: _builtins.bool = ...,
+            gps_update_interval: _builtins.int = ...,
+            gps_attempt_time: _builtins.int = ...,
+            position_flags: _builtins.int = ...,
+            rx_gpio: _builtins.int = ...,
+            tx_gpio: _builtins.int = ...,
+            broadcast_smart_minimum_distance: _builtins.int = ...,
+            broadcast_smart_minimum_interval_secs: _builtins.int = ...,
+            gps_en_gpio: _builtins.int = ...,
+            gps_mode: Global___Config.PositionConfig.GpsMode.ValueType = ...,
         ) -> None: ...
-        def ClearField(self, field_name: typing.Literal["broadcast_smart_minimum_distance", b"broadcast_smart_minimum_distance", "broadcast_smart_minimum_interval_secs", b"broadcast_smart_minimum_interval_secs", "fixed_position", b"fixed_position", "gps_attempt_time", b"gps_attempt_time", "gps_en_gpio", b"gps_en_gpio", "gps_enabled", b"gps_enabled", "gps_mode", b"gps_mode", "gps_update_interval", b"gps_update_interval", "position_broadcast_secs", b"position_broadcast_secs", "position_broadcast_smart_enabled", b"position_broadcast_smart_enabled", "position_flags", b"position_flags", "rx_gpio", b"rx_gpio", "tx_gpio", b"tx_gpio"]) -> None: ...
+        _HasFieldArgType: _TypeAlias = _Never  # noqa: Y015
+        def HasField(self, field_name: _HasFieldArgType) -> _builtins.bool: ...
+        _ClearFieldArgType: _TypeAlias = _typing.Literal["broadcast_smart_minimum_distance", b"broadcast_smart_minimum_distance", "broadcast_smart_minimum_interval_secs", b"broadcast_smart_minimum_interval_secs", "fixed_position", b"fixed_position", "gps_attempt_time", b"gps_attempt_time", "gps_en_gpio", b"gps_en_gpio", "gps_enabled", b"gps_enabled", "gps_mode", b"gps_mode", "gps_update_interval", b"gps_update_interval", "position_broadcast_secs", b"position_broadcast_secs", "position_broadcast_smart_enabled", b"position_broadcast_smart_enabled", "position_flags", b"position_flags", "rx_gpio", b"rx_gpio", "tx_gpio", b"tx_gpio"]  # noqa: Y015
+        def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
+        def WhichOneof(self, oneof_group: _Never) -> None: ...
 
-    @typing.final
-    class PowerConfig(google.protobuf.message.Message):
+    @_typing.final
+    class PowerConfig(_message.Message):
         """
         Power Config\\
         See [Power Config](/docs/settings/config/power) for additional power config details.
         """
 
-        DESCRIPTOR: google.protobuf.descriptor.Descriptor
+        DESCRIPTOR: _descriptor.Descriptor
 
-        IS_POWER_SAVING_FIELD_NUMBER: builtins.int
-        ON_BATTERY_SHUTDOWN_AFTER_SECS_FIELD_NUMBER: builtins.int
-        ADC_MULTIPLIER_OVERRIDE_FIELD_NUMBER: builtins.int
-        WAIT_BLUETOOTH_SECS_FIELD_NUMBER: builtins.int
-        SDS_SECS_FIELD_NUMBER: builtins.int
-        LS_SECS_FIELD_NUMBER: builtins.int
-        MIN_WAKE_SECS_FIELD_NUMBER: builtins.int
-        DEVICE_BATTERY_INA_ADDRESS_FIELD_NUMBER: builtins.int
-        POWERMON_ENABLES_FIELD_NUMBER: builtins.int
-        is_power_saving: builtins.bool
+        IS_POWER_SAVING_FIELD_NUMBER: _builtins.int
+        ON_BATTERY_SHUTDOWN_AFTER_SECS_FIELD_NUMBER: _builtins.int
+        ADC_MULTIPLIER_OVERRIDE_FIELD_NUMBER: _builtins.int
+        WAIT_BLUETOOTH_SECS_FIELD_NUMBER: _builtins.int
+        SDS_SECS_FIELD_NUMBER: _builtins.int
+        LS_SECS_FIELD_NUMBER: _builtins.int
+        MIN_WAKE_SECS_FIELD_NUMBER: _builtins.int
+        DEVICE_BATTERY_INA_ADDRESS_FIELD_NUMBER: _builtins.int
+        POWERMON_ENABLES_FIELD_NUMBER: _builtins.int
+        is_power_saving: _builtins.bool
         """
         Description: Will sleep everything as much as possible, for the tracker and sensor role this will also include the lora radio.
         Don't use this setting if you want to use your device with the phone apps or are using a device without a user button.
         Technical Details: Works for ESP32 devices and NRF52 devices in the Sensor or Tracker roles
         """
-        on_battery_shutdown_after_secs: builtins.int
+        on_battery_shutdown_after_secs: _builtins.int
         """
          Description: If non-zero, the device will fully power off this many seconds after external power is removed.
         """
-        adc_multiplier_override: builtins.float
+        adc_multiplier_override: _builtins.float
         """
         Ratio of voltage divider for battery pin eg. 3.20 (R1=100k, R2=220k)
         Overrides the ADC_MULTIPLIER defined in variant for battery voltage calculation.
         https://meshtastic.org/docs/configuration/radio/power/#adc-multiplier-override
         Should be set to floating point value between 2 and 6
         """
-        wait_bluetooth_secs: builtins.int
+        wait_bluetooth_secs: _builtins.int
         """
          Description: The number of seconds for to wait before turning off BLE in No Bluetooth states
          Technical Details: ESP32 Only 0 for default of 1 minute
         """
-        sds_secs: builtins.int
+        sds_secs: _builtins.int
         """
         Super Deep Sleep Seconds
         While in Light Sleep if mesh_sds_timeout_secs is exceeded we will lower into super deep sleep
         for this value (default 1 year) or a button press
         0 for default of one year
         """
-        ls_secs: builtins.int
+        ls_secs: _builtins.int
         """
         Description: In light sleep the CPU is suspended, LoRa radio is on, BLE is off an GPS is on
         Technical Details: ESP32 Only 0 for default of 300
         """
-        min_wake_secs: builtins.int
+        min_wake_secs: _builtins.int
         """
         Description: While in light sleep when we receive packets on the LoRa radio we will wake and handle them and stay awake in no BLE mode for this value
         Technical Details: ESP32 Only 0 for default of 10 seconds
         """
-        device_battery_ina_address: builtins.int
+        device_battery_ina_address: _builtins.int
         """
         I2C address of INA_2XX to use for reading device battery voltage
         """
-        powermon_enables: builtins.int
+        powermon_enables: _builtins.int
         """
         If non-zero, we want powermon log outputs.  With the particular (bitfield) sources enabled.
         Note: we picked an ID of 32 so that lower more efficient IDs can be used for more frequently used options.
@@ -738,32 +814,36 @@ class Config(google.protobuf.message.Message):
         def __init__(
             self,
             *,
-            is_power_saving: builtins.bool = ...,
-            on_battery_shutdown_after_secs: builtins.int = ...,
-            adc_multiplier_override: builtins.float = ...,
-            wait_bluetooth_secs: builtins.int = ...,
-            sds_secs: builtins.int = ...,
-            ls_secs: builtins.int = ...,
-            min_wake_secs: builtins.int = ...,
-            device_battery_ina_address: builtins.int = ...,
-            powermon_enables: builtins.int = ...,
+            is_power_saving: _builtins.bool = ...,
+            on_battery_shutdown_after_secs: _builtins.int = ...,
+            adc_multiplier_override: _builtins.float = ...,
+            wait_bluetooth_secs: _builtins.int = ...,
+            sds_secs: _builtins.int = ...,
+            ls_secs: _builtins.int = ...,
+            min_wake_secs: _builtins.int = ...,
+            device_battery_ina_address: _builtins.int = ...,
+            powermon_enables: _builtins.int = ...,
         ) -> None: ...
-        def ClearField(self, field_name: typing.Literal["adc_multiplier_override", b"adc_multiplier_override", "device_battery_ina_address", b"device_battery_ina_address", "is_power_saving", b"is_power_saving", "ls_secs", b"ls_secs", "min_wake_secs", b"min_wake_secs", "on_battery_shutdown_after_secs", b"on_battery_shutdown_after_secs", "powermon_enables", b"powermon_enables", "sds_secs", b"sds_secs", "wait_bluetooth_secs", b"wait_bluetooth_secs"]) -> None: ...
+        _HasFieldArgType: _TypeAlias = _Never  # noqa: Y015
+        def HasField(self, field_name: _HasFieldArgType) -> _builtins.bool: ...
+        _ClearFieldArgType: _TypeAlias = _typing.Literal["adc_multiplier_override", b"adc_multiplier_override", "device_battery_ina_address", b"device_battery_ina_address", "is_power_saving", b"is_power_saving", "ls_secs", b"ls_secs", "min_wake_secs", b"min_wake_secs", "on_battery_shutdown_after_secs", b"on_battery_shutdown_after_secs", "powermon_enables", b"powermon_enables", "sds_secs", b"sds_secs", "wait_bluetooth_secs", b"wait_bluetooth_secs"]  # noqa: Y015
+        def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
+        def WhichOneof(self, oneof_group: _Never) -> None: ...
 
-    @typing.final
-    class NetworkConfig(google.protobuf.message.Message):
+    @_typing.final
+    class NetworkConfig(_message.Message):
         """
         Network Config
         """
 
-        DESCRIPTOR: google.protobuf.descriptor.Descriptor
+        DESCRIPTOR: _descriptor.Descriptor
 
         class _AddressMode:
-            ValueType = typing.NewType("ValueType", builtins.int)
-            V: typing_extensions.TypeAlias = ValueType
+            ValueType = _typing.NewType("ValueType", _builtins.int)
+            V: _TypeAlias = ValueType  # noqa: Y015
 
-        class _AddressModeEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[Config.NetworkConfig._AddressMode.ValueType], builtins.type):
-            DESCRIPTOR: google.protobuf.descriptor.EnumDescriptor
+        class _AddressModeEnumTypeWrapper(_enum_type_wrapper._EnumTypeWrapper[Config.NetworkConfig._AddressMode.ValueType], _builtins.type):
+            DESCRIPTOR: _descriptor.EnumDescriptor
             DHCP: Config.NetworkConfig._AddressMode.ValueType  # 0
             """
             obtain ip address via DHCP
@@ -784,11 +864,11 @@ class Config(google.protobuf.message.Message):
         """
 
         class _ProtocolFlags:
-            ValueType = typing.NewType("ValueType", builtins.int)
-            V: typing_extensions.TypeAlias = ValueType
+            ValueType = _typing.NewType("ValueType", _builtins.int)
+            V: _TypeAlias = ValueType  # noqa: Y015
 
-        class _ProtocolFlagsEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[Config.NetworkConfig._ProtocolFlags.ValueType], builtins.type):
-            DESCRIPTOR: google.protobuf.descriptor.EnumDescriptor
+        class _ProtocolFlagsEnumTypeWrapper(_enum_type_wrapper._EnumTypeWrapper[Config.NetworkConfig._ProtocolFlags.ValueType], _builtins.type):
+            DESCRIPTOR: _descriptor.EnumDescriptor
             NO_BROADCAST: Config.NetworkConfig._ProtocolFlags.ValueType  # 0
             """
             Do not broadcast packets over any network protocol
@@ -812,89 +892,93 @@ class Config(google.protobuf.message.Message):
         Enable broadcasting packets via UDP over the local network
         """
 
-        @typing.final
-        class IpV4Config(google.protobuf.message.Message):
-            DESCRIPTOR: google.protobuf.descriptor.Descriptor
+        @_typing.final
+        class IpV4Config(_message.Message):
+            DESCRIPTOR: _descriptor.Descriptor
 
-            IP_FIELD_NUMBER: builtins.int
-            GATEWAY_FIELD_NUMBER: builtins.int
-            SUBNET_FIELD_NUMBER: builtins.int
-            DNS_FIELD_NUMBER: builtins.int
-            ip: builtins.int
+            IP_FIELD_NUMBER: _builtins.int
+            GATEWAY_FIELD_NUMBER: _builtins.int
+            SUBNET_FIELD_NUMBER: _builtins.int
+            DNS_FIELD_NUMBER: _builtins.int
+            ip: _builtins.int
             """
             Static IP address
             """
-            gateway: builtins.int
+            gateway: _builtins.int
             """
             Static gateway address
             """
-            subnet: builtins.int
+            subnet: _builtins.int
             """
             Static subnet mask
             """
-            dns: builtins.int
+            dns: _builtins.int
             """
             Static DNS server address
             """
             def __init__(
                 self,
                 *,
-                ip: builtins.int = ...,
-                gateway: builtins.int = ...,
-                subnet: builtins.int = ...,
-                dns: builtins.int = ...,
+                ip: _builtins.int = ...,
+                gateway: _builtins.int = ...,
+                subnet: _builtins.int = ...,
+                dns: _builtins.int = ...,
             ) -> None: ...
-            def ClearField(self, field_name: typing.Literal["dns", b"dns", "gateway", b"gateway", "ip", b"ip", "subnet", b"subnet"]) -> None: ...
+            _HasFieldArgType: _TypeAlias = _Never  # noqa: Y015
+            def HasField(self, field_name: _HasFieldArgType) -> _builtins.bool: ...
+            _ClearFieldArgType: _TypeAlias = _typing.Literal["dns", b"dns", "gateway", b"gateway", "ip", b"ip", "subnet", b"subnet"]  # noqa: Y015
+            def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
+            def WhichOneof(self, oneof_group: _Never) -> None: ...
 
-        WIFI_ENABLED_FIELD_NUMBER: builtins.int
-        WIFI_SSID_FIELD_NUMBER: builtins.int
-        WIFI_PSK_FIELD_NUMBER: builtins.int
-        NTP_SERVER_FIELD_NUMBER: builtins.int
-        ETH_ENABLED_FIELD_NUMBER: builtins.int
-        ADDRESS_MODE_FIELD_NUMBER: builtins.int
-        IPV4_CONFIG_FIELD_NUMBER: builtins.int
-        RSYSLOG_SERVER_FIELD_NUMBER: builtins.int
-        ENABLED_PROTOCOLS_FIELD_NUMBER: builtins.int
-        IPV6_ENABLED_FIELD_NUMBER: builtins.int
-        wifi_enabled: builtins.bool
+        WIFI_ENABLED_FIELD_NUMBER: _builtins.int
+        WIFI_SSID_FIELD_NUMBER: _builtins.int
+        WIFI_PSK_FIELD_NUMBER: _builtins.int
+        NTP_SERVER_FIELD_NUMBER: _builtins.int
+        ETH_ENABLED_FIELD_NUMBER: _builtins.int
+        ADDRESS_MODE_FIELD_NUMBER: _builtins.int
+        IPV4_CONFIG_FIELD_NUMBER: _builtins.int
+        RSYSLOG_SERVER_FIELD_NUMBER: _builtins.int
+        ENABLED_PROTOCOLS_FIELD_NUMBER: _builtins.int
+        IPV6_ENABLED_FIELD_NUMBER: _builtins.int
+        wifi_enabled: _builtins.bool
         """
         Enable WiFi (disables Bluetooth)
         """
-        wifi_ssid: builtins.str
+        wifi_ssid: _builtins.str
         """
         If set, this node will try to join the specified wifi network and
         acquire an address via DHCP
         """
-        wifi_psk: builtins.str
+        wifi_psk: _builtins.str
         """
         If set, will be use to authenticate to the named wifi
         """
-        ntp_server: builtins.str
+        ntp_server: _builtins.str
         """
         NTP server to use if WiFi is conneced, defaults to `meshtastic.pool.ntp.org`
         """
-        eth_enabled: builtins.bool
+        eth_enabled: _builtins.bool
         """
         Enable Ethernet
         """
-        address_mode: global___Config.NetworkConfig.AddressMode.ValueType
+        address_mode: Global___Config.NetworkConfig.AddressMode.ValueType
         """
         acquire an address via DHCP or assign static
         """
-        rsyslog_server: builtins.str
+        rsyslog_server: _builtins.str
         """
         rsyslog Server and Port
         """
-        enabled_protocols: builtins.int
+        enabled_protocols: _builtins.int
         """
         Flags for enabling/disabling network protocols
         """
-        ipv6_enabled: builtins.bool
+        ipv6_enabled: _builtins.bool
         """
         Enable/Disable ipv6 support
         """
-        @property
-        def ipv4_config(self) -> global___Config.NetworkConfig.IpV4Config:
+        @_builtins.property
+        def ipv4_config(self) -> Global___Config.NetworkConfig.IpV4Config:
             """
             struct to keep static address
             """
@@ -902,109 +986,52 @@ class Config(google.protobuf.message.Message):
         def __init__(
             self,
             *,
-            wifi_enabled: builtins.bool = ...,
-            wifi_ssid: builtins.str = ...,
-            wifi_psk: builtins.str = ...,
-            ntp_server: builtins.str = ...,
-            eth_enabled: builtins.bool = ...,
-            address_mode: global___Config.NetworkConfig.AddressMode.ValueType = ...,
-            ipv4_config: global___Config.NetworkConfig.IpV4Config | None = ...,
-            rsyslog_server: builtins.str = ...,
-            enabled_protocols: builtins.int = ...,
-            ipv6_enabled: builtins.bool = ...,
+            wifi_enabled: _builtins.bool = ...,
+            wifi_ssid: _builtins.str = ...,
+            wifi_psk: _builtins.str = ...,
+            ntp_server: _builtins.str = ...,
+            eth_enabled: _builtins.bool = ...,
+            address_mode: Global___Config.NetworkConfig.AddressMode.ValueType = ...,
+            ipv4_config: Global___Config.NetworkConfig.IpV4Config | None = ...,
+            rsyslog_server: _builtins.str = ...,
+            enabled_protocols: _builtins.int = ...,
+            ipv6_enabled: _builtins.bool = ...,
         ) -> None: ...
-        def HasField(self, field_name: typing.Literal["ipv4_config", b"ipv4_config"]) -> builtins.bool: ...
-        def ClearField(self, field_name: typing.Literal["address_mode", b"address_mode", "enabled_protocols", b"enabled_protocols", "eth_enabled", b"eth_enabled", "ipv4_config", b"ipv4_config", "ipv6_enabled", b"ipv6_enabled", "ntp_server", b"ntp_server", "rsyslog_server", b"rsyslog_server", "wifi_enabled", b"wifi_enabled", "wifi_psk", b"wifi_psk", "wifi_ssid", b"wifi_ssid"]) -> None: ...
+        _HasFieldArgType: _TypeAlias = _typing.Literal["ipv4_config", b"ipv4_config"]  # noqa: Y015
+        def HasField(self, field_name: _HasFieldArgType) -> _builtins.bool: ...
+        _ClearFieldArgType: _TypeAlias = _typing.Literal["address_mode", b"address_mode", "enabled_protocols", b"enabled_protocols", "eth_enabled", b"eth_enabled", "ipv4_config", b"ipv4_config", "ipv6_enabled", b"ipv6_enabled", "ntp_server", b"ntp_server", "rsyslog_server", b"rsyslog_server", "wifi_enabled", b"wifi_enabled", "wifi_psk", b"wifi_psk", "wifi_ssid", b"wifi_ssid"]  # noqa: Y015
+        def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
+        def WhichOneof(self, oneof_group: _Never) -> None: ...
 
-    @typing.final
-    class DisplayConfig(google.protobuf.message.Message):
+    @_typing.final
+    class DisplayConfig(_message.Message):
         """
         Display Config
         """
 
-        DESCRIPTOR: google.protobuf.descriptor.Descriptor
+        DESCRIPTOR: _descriptor.Descriptor
 
-        class _GpsCoordinateFormat:
-            ValueType = typing.NewType("ValueType", builtins.int)
-            V: typing_extensions.TypeAlias = ValueType
+        class _DeprecatedGpsCoordinateFormat:
+            ValueType = _typing.NewType("ValueType", _builtins.int)
+            V: _TypeAlias = ValueType  # noqa: Y015
 
-        class _GpsCoordinateFormatEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[Config.DisplayConfig._GpsCoordinateFormat.ValueType], builtins.type):
-            DESCRIPTOR: google.protobuf.descriptor.EnumDescriptor
-            DEC: Config.DisplayConfig._GpsCoordinateFormat.ValueType  # 0
+        class _DeprecatedGpsCoordinateFormatEnumTypeWrapper(_enum_type_wrapper._EnumTypeWrapper[Config.DisplayConfig._DeprecatedGpsCoordinateFormat.ValueType], _builtins.type):
+            DESCRIPTOR: _descriptor.EnumDescriptor
+            UNUSED: Config.DisplayConfig._DeprecatedGpsCoordinateFormat.ValueType  # 0
+
+        class DeprecatedGpsCoordinateFormat(_DeprecatedGpsCoordinateFormat, metaclass=_DeprecatedGpsCoordinateFormatEnumTypeWrapper):
             """
-            GPS coordinates are displayed in the normal decimal degrees format:
-            DD.DDDDDD DDD.DDDDDD
-            """
-            DMS: Config.DisplayConfig._GpsCoordinateFormat.ValueType  # 1
-            """
-            GPS coordinates are displayed in the degrees minutes seconds format:
-            DD°MM'SS"C DDD°MM'SS"C, where C is the compass point representing the locations quadrant
-            """
-            UTM: Config.DisplayConfig._GpsCoordinateFormat.ValueType  # 2
-            """
-            Universal Transverse Mercator format:
-            ZZB EEEEEE NNNNNNN, where Z is zone, B is band, E is easting, N is northing
-            """
-            MGRS: Config.DisplayConfig._GpsCoordinateFormat.ValueType  # 3
-            """
-            Military Grid Reference System format:
-            ZZB CD EEEEE NNNNN, where Z is zone, B is band, C is the east 100k square, D is the north 100k square,
-            E is easting, N is northing
-            """
-            OLC: Config.DisplayConfig._GpsCoordinateFormat.ValueType  # 4
-            """
-            Open Location Code (aka Plus Codes).
-            """
-            OSGR: Config.DisplayConfig._GpsCoordinateFormat.ValueType  # 5
-            """
-            Ordnance Survey Grid Reference (the National Grid System of the UK).
-            Format: AB EEEEE NNNNN, where A is the east 100k square, B is the north 100k square,
-            E is the easting, N is the northing
+            Deprecated in 2.7.4: Unused
             """
 
-        class GpsCoordinateFormat(_GpsCoordinateFormat, metaclass=_GpsCoordinateFormatEnumTypeWrapper):
-            """
-            How the GPS coordinates are displayed on the OLED screen.
-            """
-
-        DEC: Config.DisplayConfig.GpsCoordinateFormat.ValueType  # 0
-        """
-        GPS coordinates are displayed in the normal decimal degrees format:
-        DD.DDDDDD DDD.DDDDDD
-        """
-        DMS: Config.DisplayConfig.GpsCoordinateFormat.ValueType  # 1
-        """
-        GPS coordinates are displayed in the degrees minutes seconds format:
-        DD°MM'SS"C DDD°MM'SS"C, where C is the compass point representing the locations quadrant
-        """
-        UTM: Config.DisplayConfig.GpsCoordinateFormat.ValueType  # 2
-        """
-        Universal Transverse Mercator format:
-        ZZB EEEEEE NNNNNNN, where Z is zone, B is band, E is easting, N is northing
-        """
-        MGRS: Config.DisplayConfig.GpsCoordinateFormat.ValueType  # 3
-        """
-        Military Grid Reference System format:
-        ZZB CD EEEEE NNNNN, where Z is zone, B is band, C is the east 100k square, D is the north 100k square,
-        E is easting, N is northing
-        """
-        OLC: Config.DisplayConfig.GpsCoordinateFormat.ValueType  # 4
-        """
-        Open Location Code (aka Plus Codes).
-        """
-        OSGR: Config.DisplayConfig.GpsCoordinateFormat.ValueType  # 5
-        """
-        Ordnance Survey Grid Reference (the National Grid System of the UK).
-        Format: AB EEEEE NNNNN, where A is the east 100k square, B is the north 100k square,
-        E is the easting, N is the northing
-        """
+        UNUSED: Config.DisplayConfig.DeprecatedGpsCoordinateFormat.ValueType  # 0
 
         class _DisplayUnits:
-            ValueType = typing.NewType("ValueType", builtins.int)
-            V: typing_extensions.TypeAlias = ValueType
+            ValueType = _typing.NewType("ValueType", _builtins.int)
+            V: _TypeAlias = ValueType  # noqa: Y015
 
-        class _DisplayUnitsEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[Config.DisplayConfig._DisplayUnits.ValueType], builtins.type):
-            DESCRIPTOR: google.protobuf.descriptor.EnumDescriptor
+        class _DisplayUnitsEnumTypeWrapper(_enum_type_wrapper._EnumTypeWrapper[Config.DisplayConfig._DisplayUnits.ValueType], _builtins.type):
+            DESCRIPTOR: _descriptor.EnumDescriptor
             METRIC: Config.DisplayConfig._DisplayUnits.ValueType  # 0
             """
             Metric (Default)
@@ -1029,11 +1056,11 @@ class Config(google.protobuf.message.Message):
         """
 
         class _OledType:
-            ValueType = typing.NewType("ValueType", builtins.int)
-            V: typing_extensions.TypeAlias = ValueType
+            ValueType = _typing.NewType("ValueType", _builtins.int)
+            V: _TypeAlias = ValueType  # noqa: Y015
 
-        class _OledTypeEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[Config.DisplayConfig._OledType.ValueType], builtins.type):
-            DESCRIPTOR: google.protobuf.descriptor.EnumDescriptor
+        class _OledTypeEnumTypeWrapper(_enum_type_wrapper._EnumTypeWrapper[Config.DisplayConfig._OledType.ValueType], _builtins.type):
+            DESCRIPTOR: _descriptor.EnumDescriptor
             OLED_AUTO: Config.DisplayConfig._OledType.ValueType  # 0
             """
             Default / Autodetect
@@ -1048,11 +1075,15 @@ class Config(google.protobuf.message.Message):
             """
             OLED_SH1107: Config.DisplayConfig._OledType.ValueType  # 3
             """
+            Can not be auto detected but set by proto. Used for 128x64 screens
+            """
+            OLED_SH1107_128_128: Config.DisplayConfig._OledType.ValueType  # 4
+            """
             Can not be auto detected but set by proto. Used for 128x128 screens
             """
-            OLED_SH1107_128_64: Config.DisplayConfig._OledType.ValueType  # 4
+            OLED_SH1107_ROTATED: Config.DisplayConfig._OledType.ValueType  # 5
             """
-            Can not be auto detected but set by proto. Used for 128x64 screens
+            Can not be auto detected but set by proto. Used for 64x128 rotated screens
             """
 
         class OledType(_OledType, metaclass=_OledTypeEnumTypeWrapper):
@@ -1074,19 +1105,23 @@ class Config(google.protobuf.message.Message):
         """
         OLED_SH1107: Config.DisplayConfig.OledType.ValueType  # 3
         """
+        Can not be auto detected but set by proto. Used for 128x64 screens
+        """
+        OLED_SH1107_128_128: Config.DisplayConfig.OledType.ValueType  # 4
+        """
         Can not be auto detected but set by proto. Used for 128x128 screens
         """
-        OLED_SH1107_128_64: Config.DisplayConfig.OledType.ValueType  # 4
+        OLED_SH1107_ROTATED: Config.DisplayConfig.OledType.ValueType  # 5
         """
-        Can not be auto detected but set by proto. Used for 128x64 screens
+        Can not be auto detected but set by proto. Used for 64x128 rotated screens
         """
 
         class _DisplayMode:
-            ValueType = typing.NewType("ValueType", builtins.int)
-            V: typing_extensions.TypeAlias = ValueType
+            ValueType = _typing.NewType("ValueType", _builtins.int)
+            V: _TypeAlias = ValueType  # noqa: Y015
 
-        class _DisplayModeEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[Config.DisplayConfig._DisplayMode.ValueType], builtins.type):
-            DESCRIPTOR: google.protobuf.descriptor.EnumDescriptor
+        class _DisplayModeEnumTypeWrapper(_enum_type_wrapper._EnumTypeWrapper[Config.DisplayConfig._DisplayMode.ValueType], _builtins.type):
+            DESCRIPTOR: _descriptor.EnumDescriptor
             DEFAULT: Config.DisplayConfig._DisplayMode.ValueType  # 0
             """
             Default. The old style for the 128x64 OLED screen
@@ -1123,11 +1158,11 @@ class Config(google.protobuf.message.Message):
         """
 
         class _CompassOrientation:
-            ValueType = typing.NewType("ValueType", builtins.int)
-            V: typing_extensions.TypeAlias = ValueType
+            ValueType = _typing.NewType("ValueType", _builtins.int)
+            V: _TypeAlias = ValueType  # noqa: Y015
 
-        class _CompassOrientationEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[Config.DisplayConfig._CompassOrientation.ValueType], builtins.type):
-            DESCRIPTOR: google.protobuf.descriptor.EnumDescriptor
+        class _CompassOrientationEnumTypeWrapper(_enum_type_wrapper._EnumTypeWrapper[Config.DisplayConfig._CompassOrientation.ValueType], _builtins.type):
+            DESCRIPTOR: _descriptor.EnumDescriptor
             DEGREES_0: Config.DisplayConfig._CompassOrientation.ValueType  # 0
             """
             The compass and the display are in the same orientation.
@@ -1195,103 +1230,142 @@ class Config(google.protobuf.message.Message):
         Rotate the compass by 270 degrees and invert.
         """
 
-        SCREEN_ON_SECS_FIELD_NUMBER: builtins.int
-        GPS_FORMAT_FIELD_NUMBER: builtins.int
-        AUTO_SCREEN_CAROUSEL_SECS_FIELD_NUMBER: builtins.int
-        COMPASS_NORTH_TOP_FIELD_NUMBER: builtins.int
-        FLIP_SCREEN_FIELD_NUMBER: builtins.int
-        UNITS_FIELD_NUMBER: builtins.int
-        OLED_FIELD_NUMBER: builtins.int
-        DISPLAYMODE_FIELD_NUMBER: builtins.int
-        HEADING_BOLD_FIELD_NUMBER: builtins.int
-        WAKE_ON_TAP_OR_MOTION_FIELD_NUMBER: builtins.int
-        COMPASS_ORIENTATION_FIELD_NUMBER: builtins.int
-        USE_12H_CLOCK_FIELD_NUMBER: builtins.int
-        screen_on_secs: builtins.int
+        SCREEN_ON_SECS_FIELD_NUMBER: _builtins.int
+        GPS_FORMAT_FIELD_NUMBER: _builtins.int
+        AUTO_SCREEN_CAROUSEL_SECS_FIELD_NUMBER: _builtins.int
+        COMPASS_NORTH_TOP_FIELD_NUMBER: _builtins.int
+        FLIP_SCREEN_FIELD_NUMBER: _builtins.int
+        UNITS_FIELD_NUMBER: _builtins.int
+        OLED_FIELD_NUMBER: _builtins.int
+        DISPLAYMODE_FIELD_NUMBER: _builtins.int
+        HEADING_BOLD_FIELD_NUMBER: _builtins.int
+        WAKE_ON_TAP_OR_MOTION_FIELD_NUMBER: _builtins.int
+        COMPASS_ORIENTATION_FIELD_NUMBER: _builtins.int
+        USE_12H_CLOCK_FIELD_NUMBER: _builtins.int
+        USE_LONG_NODE_NAME_FIELD_NUMBER: _builtins.int
+        ENABLE_MESSAGE_BUBBLES_FIELD_NUMBER: _builtins.int
+        screen_on_secs: _builtins.int
         """
         Number of seconds the screen stays on after pressing the user button or receiving a message
         0 for default of one minute MAXUINT for always on
         """
-        gps_format: global___Config.DisplayConfig.GpsCoordinateFormat.ValueType
-        """
-        Deprecated in 2.7.4: Unused
-        How the GPS coordinates are formatted on the OLED screen.
-        """
-        auto_screen_carousel_secs: builtins.int
+        @_builtins.property
+        @_deprecated("""This field has been marked as deprecated using proto field options.""")
+        def gps_format(self) -> Global___Config.DisplayConfig.DeprecatedGpsCoordinateFormat.ValueType:
+            """
+            Deprecated in 2.7.4: Unused
+            How the GPS coordinates are formatted on the OLED screen.
+            """
+
+        @gps_format.setter
+        @_deprecated("""This field has been marked as deprecated using proto field options.""")
+        def gps_format(self, value: Global___Config.DisplayConfig.DeprecatedGpsCoordinateFormat.ValueType) -> None:
+            """
+            Deprecated in 2.7.4: Unused
+            How the GPS coordinates are formatted on the OLED screen.
+            """
+
+        auto_screen_carousel_secs: _builtins.int
         """
         Automatically toggles to the next page on the screen like a carousel, based the specified interval in seconds.
         Potentially useful for devices without user buttons.
         """
-        compass_north_top: builtins.bool
-        """
-        If this is set, the displayed compass will always point north. if unset, the old behaviour
-        (top of display is heading direction) is used.
-        """
-        flip_screen: builtins.bool
+        @_builtins.property
+        @_deprecated("""This field has been marked as deprecated using proto field options.""")
+        def compass_north_top(self) -> _builtins.bool:
+            """
+            If this is set, the displayed compass will always point north. if unset, the old behaviour
+            (top of display is heading direction) is used.
+            """
+
+        @compass_north_top.setter
+        @_deprecated("""This field has been marked as deprecated using proto field options.""")
+        def compass_north_top(self, value: _builtins.bool) -> None:
+            """
+            If this is set, the displayed compass will always point north. if unset, the old behaviour
+            (top of display is heading direction) is used.
+            """
+
+        flip_screen: _builtins.bool
         """
         Flip screen vertically, for cases that mount the screen upside down
         """
-        units: global___Config.DisplayConfig.DisplayUnits.ValueType
+        units: Global___Config.DisplayConfig.DisplayUnits.ValueType
         """
         Perferred display units
         """
-        oled: global___Config.DisplayConfig.OledType.ValueType
+        oled: Global___Config.DisplayConfig.OledType.ValueType
         """
         Override auto-detect in screen
         """
-        displaymode: global___Config.DisplayConfig.DisplayMode.ValueType
+        displaymode: Global___Config.DisplayConfig.DisplayMode.ValueType
         """
         Display Mode
         """
-        heading_bold: builtins.bool
+        heading_bold: _builtins.bool
         """
         Print first line in pseudo-bold? FALSE is original style, TRUE is bold
         """
-        wake_on_tap_or_motion: builtins.bool
+        wake_on_tap_or_motion: _builtins.bool
         """
         Should we wake the screen up on accelerometer detected motion or tap
         """
-        compass_orientation: global___Config.DisplayConfig.CompassOrientation.ValueType
+        compass_orientation: Global___Config.DisplayConfig.CompassOrientation.ValueType
         """
         Indicates how to rotate or invert the compass output to accurate display on the display.
         """
-        use_12h_clock: builtins.bool
+        use_12h_clock: _builtins.bool
         """
         If false (default), the device will display the time in 24-hour format on screen.
         If true, the device will display the time in 12-hour format on screen.
         """
+        use_long_node_name: _builtins.bool
+        """
+        If false (default), the device will use short names for various display screens.
+        If true, node names will show in long format
+        """
+        enable_message_bubbles: _builtins.bool
+        """
+        If true, the device will display message bubbles on screen.
+        """
         def __init__(
             self,
             *,
-            screen_on_secs: builtins.int = ...,
-            gps_format: global___Config.DisplayConfig.GpsCoordinateFormat.ValueType = ...,
-            auto_screen_carousel_secs: builtins.int = ...,
-            compass_north_top: builtins.bool = ...,
-            flip_screen: builtins.bool = ...,
-            units: global___Config.DisplayConfig.DisplayUnits.ValueType = ...,
-            oled: global___Config.DisplayConfig.OledType.ValueType = ...,
-            displaymode: global___Config.DisplayConfig.DisplayMode.ValueType = ...,
-            heading_bold: builtins.bool = ...,
-            wake_on_tap_or_motion: builtins.bool = ...,
-            compass_orientation: global___Config.DisplayConfig.CompassOrientation.ValueType = ...,
-            use_12h_clock: builtins.bool = ...,
+            screen_on_secs: _builtins.int = ...,
+            gps_format: Global___Config.DisplayConfig.DeprecatedGpsCoordinateFormat.ValueType = ...,
+            auto_screen_carousel_secs: _builtins.int = ...,
+            compass_north_top: _builtins.bool = ...,
+            flip_screen: _builtins.bool = ...,
+            units: Global___Config.DisplayConfig.DisplayUnits.ValueType = ...,
+            oled: Global___Config.DisplayConfig.OledType.ValueType = ...,
+            displaymode: Global___Config.DisplayConfig.DisplayMode.ValueType = ...,
+            heading_bold: _builtins.bool = ...,
+            wake_on_tap_or_motion: _builtins.bool = ...,
+            compass_orientation: Global___Config.DisplayConfig.CompassOrientation.ValueType = ...,
+            use_12h_clock: _builtins.bool = ...,
+            use_long_node_name: _builtins.bool = ...,
+            enable_message_bubbles: _builtins.bool = ...,
         ) -> None: ...
-        def ClearField(self, field_name: typing.Literal["auto_screen_carousel_secs", b"auto_screen_carousel_secs", "compass_north_top", b"compass_north_top", "compass_orientation", b"compass_orientation", "displaymode", b"displaymode", "flip_screen", b"flip_screen", "gps_format", b"gps_format", "heading_bold", b"heading_bold", "oled", b"oled", "screen_on_secs", b"screen_on_secs", "units", b"units", "use_12h_clock", b"use_12h_clock", "wake_on_tap_or_motion", b"wake_on_tap_or_motion"]) -> None: ...
+        _HasFieldArgType: _TypeAlias = _Never  # noqa: Y015
+        def HasField(self, field_name: _HasFieldArgType) -> _builtins.bool: ...
+        _ClearFieldArgType: _TypeAlias = _typing.Literal["auto_screen_carousel_secs", b"auto_screen_carousel_secs", "compass_north_top", b"compass_north_top", "compass_orientation", b"compass_orientation", "displaymode", b"displaymode", "enable_message_bubbles", b"enable_message_bubbles", "flip_screen", b"flip_screen", "gps_format", b"gps_format", "heading_bold", b"heading_bold", "oled", b"oled", "screen_on_secs", b"screen_on_secs", "units", b"units", "use_12h_clock", b"use_12h_clock", "use_long_node_name", b"use_long_node_name", "wake_on_tap_or_motion", b"wake_on_tap_or_motion"]  # noqa: Y015
+        def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
+        def WhichOneof(self, oneof_group: _Never) -> None: ...
 
-    @typing.final
-    class LoRaConfig(google.protobuf.message.Message):
+    @_typing.final
+    class LoRaConfig(_message.Message):
         """
         Lora Config
         """
 
-        DESCRIPTOR: google.protobuf.descriptor.Descriptor
+        DESCRIPTOR: _descriptor.Descriptor
 
         class _RegionCode:
-            ValueType = typing.NewType("ValueType", builtins.int)
-            V: typing_extensions.TypeAlias = ValueType
+            ValueType = _typing.NewType("ValueType", _builtins.int)
+            V: _TypeAlias = ValueType  # noqa: Y015
 
-        class _RegionCodeEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[Config.LoRaConfig._RegionCode.ValueType], builtins.type):
-            DESCRIPTOR: google.protobuf.descriptor.EnumDescriptor
+        class _RegionCodeEnumTypeWrapper(_enum_type_wrapper._EnumTypeWrapper[Config.LoRaConfig._RegionCode.ValueType], _builtins.type):
+            DESCRIPTOR: _descriptor.EnumDescriptor
             UNSET: Config.LoRaConfig._RegionCode.ValueType  # 0
             """
             Region is not set
@@ -1399,6 +1473,31 @@ class Config(google.protobuf.message.Message):
             BR_902: Config.LoRaConfig._RegionCode.ValueType  # 26
             """
             Brazil 902MHz
+            """
+            ITU1_2M: Config.LoRaConfig._RegionCode.ValueType  # 27
+            """
+            ITU Region 1 Amateur Radio 2m band (144-146 MHz)
+            """
+            ITU2_2M: Config.LoRaConfig._RegionCode.ValueType  # 28
+            """
+            ITU Region 2 Amateur Radio 2m band (144-148 MHz)
+            """
+            EU_866: Config.LoRaConfig._RegionCode.ValueType  # 29
+            """
+            EU 866MHz band (Band no. 47b of 2006/771/EC and subsequent amendments) for Non-specific short-range devices (SRD)
+            """
+            EU_874: Config.LoRaConfig._RegionCode.ValueType  # 30
+            """
+            EU 874MHz and 917MHz bands (Band no. 1 and 4 of 2022/172/EC and subsequent amendments) for Non-specific short-range devices (SRD)
+            """
+            EU_917: Config.LoRaConfig._RegionCode.ValueType  # 31
+            EU_N_868: Config.LoRaConfig._RegionCode.ValueType  # 32
+            """
+            EU 868MHz band, with narrow presets
+            """
+            ITU3_2M: Config.LoRaConfig._RegionCode.ValueType  # 33
+            """
+            ITU Region 3 Amateur Radio 2m band (144-148 MHz)
             """
 
         class RegionCode(_RegionCode, metaclass=_RegionCodeEnumTypeWrapper): ...
@@ -1510,26 +1609,56 @@ class Config(google.protobuf.message.Message):
         """
         Brazil 902MHz
         """
+        ITU1_2M: Config.LoRaConfig.RegionCode.ValueType  # 27
+        """
+        ITU Region 1 Amateur Radio 2m band (144-146 MHz)
+        """
+        ITU2_2M: Config.LoRaConfig.RegionCode.ValueType  # 28
+        """
+        ITU Region 2 Amateur Radio 2m band (144-148 MHz)
+        """
+        EU_866: Config.LoRaConfig.RegionCode.ValueType  # 29
+        """
+        EU 866MHz band (Band no. 47b of 2006/771/EC and subsequent amendments) for Non-specific short-range devices (SRD)
+        """
+        EU_874: Config.LoRaConfig.RegionCode.ValueType  # 30
+        """
+        EU 874MHz and 917MHz bands (Band no. 1 and 4 of 2022/172/EC and subsequent amendments) for Non-specific short-range devices (SRD)
+        """
+        EU_917: Config.LoRaConfig.RegionCode.ValueType  # 31
+        EU_N_868: Config.LoRaConfig.RegionCode.ValueType  # 32
+        """
+        EU 868MHz band, with narrow presets
+        """
+        ITU3_2M: Config.LoRaConfig.RegionCode.ValueType  # 33
+        """
+        ITU Region 3 Amateur Radio 2m band (144-148 MHz)
+        """
 
         class _ModemPreset:
-            ValueType = typing.NewType("ValueType", builtins.int)
-            V: typing_extensions.TypeAlias = ValueType
+            ValueType = _typing.NewType("ValueType", _builtins.int)
+            V: _TypeAlias = ValueType  # noqa: Y015
 
-        class _ModemPresetEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[Config.LoRaConfig._ModemPreset.ValueType], builtins.type):
-            DESCRIPTOR: google.protobuf.descriptor.EnumDescriptor
+        class _ModemPresetEnumTypeWrapper(_enum_type_wrapper._EnumTypeWrapper[Config.LoRaConfig._ModemPreset.ValueType], _builtins.type):
+            DESCRIPTOR: _descriptor.EnumDescriptor
             LONG_FAST: Config.LoRaConfig._ModemPreset.ValueType  # 0
             """
             Long Range - Fast
             """
-            LONG_SLOW: Config.LoRaConfig._ModemPreset.ValueType  # 1
-            """
-            Long Range - Slow
-            """
-            VERY_LONG_SLOW: Config.LoRaConfig._ModemPreset.ValueType  # 2
-            """
-            Very Long Range - Slow
-            Deprecated in 2.5: Works only with txco and is unusably slow
-            """
+            @_builtins.property
+            @_deprecated("""This enum value has been marked as deprecated using proto enum value options.""")
+            def LONG_SLOW(self) -> Config.LoRaConfig._ModemPreset.ValueType:   # 1
+                """
+                Long Range - Slow
+                Deprecated in 2.7: Unpopular slow preset.
+                """
+            @_builtins.property
+            @_deprecated("""This enum value has been marked as deprecated using proto enum value options.""")
+            def VERY_LONG_SLOW(self) -> Config.LoRaConfig._ModemPreset.ValueType:   # 2
+                """
+                Very Long Range - Slow
+                Deprecated in 2.5: Works only with txco and is unusably slow
+                """
             MEDIUM_SLOW: Config.LoRaConfig._ModemPreset.ValueType  # 3
             """
             Medium Range - Slow
@@ -1556,6 +1685,36 @@ class Config(google.protobuf.message.Message):
             This is the fastest preset and the only one with 500kHz bandwidth.
             It is not legal to use in all regions due to this wider bandwidth.
             """
+            LONG_TURBO: Config.LoRaConfig._ModemPreset.ValueType  # 9
+            """
+            Long Range - Turbo
+            This preset performs similarly to LongFast, but with 500Khz bandwidth.
+            """
+            LITE_FAST: Config.LoRaConfig._ModemPreset.ValueType  # 10
+            """
+            Lite Fast
+            Medium range preset optimized for EU 866MHz SRD band with 125kHz bandwidth.
+            Comparable link budget to MEDIUM_FAST but compliant with Band no. 47b of 2006/771/EC.
+            """
+            LITE_SLOW: Config.LoRaConfig._ModemPreset.ValueType  # 11
+            """
+            Lite Slow
+            Medium-to-moderate range preset optimized for EU 866MHz SRD band with 125kHz bandwidth.
+            Comparable link budget to LONG_FAST but compliant with Band no. 47b of 2006/771/EC.
+            """
+            NARROW_FAST: Config.LoRaConfig._ModemPreset.ValueType  # 12
+            """
+            Narrow Fast
+            Medium-to-moderate range preset optimized for EU 868MHz band with 62.5kHz bandwidth.
+            Comparable link budget to SHORT_SLOW, but with half the data rate.
+            Intended to avoid interference with other devices.
+            """
+            NARROW_SLOW: Config.LoRaConfig._ModemPreset.ValueType  # 13
+            """
+            Narrow Slow
+            Moderate range preset optimized for EU 868MHz band with 62.5kHz bandwidth.
+            Comparable link budget and data rate to LONG_FAST.
+            """
 
         class ModemPreset(_ModemPreset, metaclass=_ModemPresetEnumTypeWrapper):
             """
@@ -1570,6 +1729,7 @@ class Config(google.protobuf.message.Message):
         LONG_SLOW: Config.LoRaConfig.ModemPreset.ValueType  # 1
         """
         Long Range - Slow
+        Deprecated in 2.7: Unpopular slow preset.
         """
         VERY_LONG_SLOW: Config.LoRaConfig.ModemPreset.ValueType  # 2
         """
@@ -1602,31 +1762,96 @@ class Config(google.protobuf.message.Message):
         This is the fastest preset and the only one with 500kHz bandwidth.
         It is not legal to use in all regions due to this wider bandwidth.
         """
+        LONG_TURBO: Config.LoRaConfig.ModemPreset.ValueType  # 9
+        """
+        Long Range - Turbo
+        This preset performs similarly to LongFast, but with 500Khz bandwidth.
+        """
+        LITE_FAST: Config.LoRaConfig.ModemPreset.ValueType  # 10
+        """
+        Lite Fast
+        Medium range preset optimized for EU 866MHz SRD band with 125kHz bandwidth.
+        Comparable link budget to MEDIUM_FAST but compliant with Band no. 47b of 2006/771/EC.
+        """
+        LITE_SLOW: Config.LoRaConfig.ModemPreset.ValueType  # 11
+        """
+        Lite Slow
+        Medium-to-moderate range preset optimized for EU 866MHz SRD band with 125kHz bandwidth.
+        Comparable link budget to LONG_FAST but compliant with Band no. 47b of 2006/771/EC.
+        """
+        NARROW_FAST: Config.LoRaConfig.ModemPreset.ValueType  # 12
+        """
+        Narrow Fast
+        Medium-to-moderate range preset optimized for EU 868MHz band with 62.5kHz bandwidth.
+        Comparable link budget to SHORT_SLOW, but with half the data rate.
+        Intended to avoid interference with other devices.
+        """
+        NARROW_SLOW: Config.LoRaConfig.ModemPreset.ValueType  # 13
+        """
+        Narrow Slow
+        Moderate range preset optimized for EU 868MHz band with 62.5kHz bandwidth.
+        Comparable link budget and data rate to LONG_FAST.
+        """
 
-        USE_PRESET_FIELD_NUMBER: builtins.int
-        MODEM_PRESET_FIELD_NUMBER: builtins.int
-        BANDWIDTH_FIELD_NUMBER: builtins.int
-        SPREAD_FACTOR_FIELD_NUMBER: builtins.int
-        CODING_RATE_FIELD_NUMBER: builtins.int
-        FREQUENCY_OFFSET_FIELD_NUMBER: builtins.int
-        REGION_FIELD_NUMBER: builtins.int
-        HOP_LIMIT_FIELD_NUMBER: builtins.int
-        TX_ENABLED_FIELD_NUMBER: builtins.int
-        TX_POWER_FIELD_NUMBER: builtins.int
-        CHANNEL_NUM_FIELD_NUMBER: builtins.int
-        OVERRIDE_DUTY_CYCLE_FIELD_NUMBER: builtins.int
-        SX126X_RX_BOOSTED_GAIN_FIELD_NUMBER: builtins.int
-        OVERRIDE_FREQUENCY_FIELD_NUMBER: builtins.int
-        PA_FAN_DISABLED_FIELD_NUMBER: builtins.int
-        IGNORE_INCOMING_FIELD_NUMBER: builtins.int
-        IGNORE_MQTT_FIELD_NUMBER: builtins.int
-        CONFIG_OK_TO_MQTT_FIELD_NUMBER: builtins.int
-        use_preset: builtins.bool
+        class _FEM_LNA_Mode:
+            ValueType = _typing.NewType("ValueType", _builtins.int)
+            V: _TypeAlias = ValueType  # noqa: Y015
+
+        class _FEM_LNA_ModeEnumTypeWrapper(_enum_type_wrapper._EnumTypeWrapper[Config.LoRaConfig._FEM_LNA_Mode.ValueType], _builtins.type):
+            DESCRIPTOR: _descriptor.EnumDescriptor
+            DISABLED: Config.LoRaConfig._FEM_LNA_Mode.ValueType  # 0
+            """
+            FEM_LNA is present but disabled
+            """
+            ENABLED: Config.LoRaConfig._FEM_LNA_Mode.ValueType  # 1
+            """
+            FEM_LNA is present and enabled
+            """
+            NOT_PRESENT: Config.LoRaConfig._FEM_LNA_Mode.ValueType  # 2
+            """
+            FEM_LNA is not present on the device
+            """
+
+        class FEM_LNA_Mode(_FEM_LNA_Mode, metaclass=_FEM_LNA_ModeEnumTypeWrapper): ...
+        DISABLED: Config.LoRaConfig.FEM_LNA_Mode.ValueType  # 0
+        """
+        FEM_LNA is present but disabled
+        """
+        ENABLED: Config.LoRaConfig.FEM_LNA_Mode.ValueType  # 1
+        """
+        FEM_LNA is present and enabled
+        """
+        NOT_PRESENT: Config.LoRaConfig.FEM_LNA_Mode.ValueType  # 2
+        """
+        FEM_LNA is not present on the device
+        """
+
+        USE_PRESET_FIELD_NUMBER: _builtins.int
+        MODEM_PRESET_FIELD_NUMBER: _builtins.int
+        BANDWIDTH_FIELD_NUMBER: _builtins.int
+        SPREAD_FACTOR_FIELD_NUMBER: _builtins.int
+        CODING_RATE_FIELD_NUMBER: _builtins.int
+        FREQUENCY_OFFSET_FIELD_NUMBER: _builtins.int
+        REGION_FIELD_NUMBER: _builtins.int
+        HOP_LIMIT_FIELD_NUMBER: _builtins.int
+        TX_ENABLED_FIELD_NUMBER: _builtins.int
+        TX_POWER_FIELD_NUMBER: _builtins.int
+        CHANNEL_NUM_FIELD_NUMBER: _builtins.int
+        OVERRIDE_DUTY_CYCLE_FIELD_NUMBER: _builtins.int
+        SX126X_RX_BOOSTED_GAIN_FIELD_NUMBER: _builtins.int
+        OVERRIDE_FREQUENCY_FIELD_NUMBER: _builtins.int
+        PA_FAN_DISABLED_FIELD_NUMBER: _builtins.int
+        IGNORE_INCOMING_FIELD_NUMBER: _builtins.int
+        IGNORE_MQTT_FIELD_NUMBER: _builtins.int
+        CONFIG_OK_TO_MQTT_FIELD_NUMBER: _builtins.int
+        FEM_LNA_MODE_FIELD_NUMBER: _builtins.int
+        SERIAL_HAL_ONLY_FIELD_NUMBER: _builtins.int
+        use_preset: _builtins.bool
         """
         When enabled, the `modem_preset` fields will be adhered to, else the `bandwidth`/`spread_factor`/`coding_rate`
         will be taked from their respective manually defined fields
         """
-        modem_preset: global___Config.LoRaConfig.ModemPreset.ValueType
+        modem_preset: Global___Config.LoRaConfig.ModemPreset.ValueType
         """
         Either modem_config or bandwidth/spreading/coding will be specified - NOT BOTH.
         As a heuristic: If bandwidth is specified, do not use modem_config.
@@ -1634,51 +1859,51 @@ class Config(google.protobuf.message.Message):
         This value is replaced by bandwidth/spread_factor/coding_rate.
         If you'd like to experiment with other options add them to MeshRadio.cpp in the device code.
         """
-        bandwidth: builtins.int
+        bandwidth: _builtins.int
         """
         Bandwidth in MHz
         Certain bandwidth numbers are 'special' and will be converted to the
         appropriate floating point value: 31 -> 31.25MHz
         """
-        spread_factor: builtins.int
+        spread_factor: _builtins.int
         """
         A number from 7 to 12.
         Indicates number of chirps per symbol as 1<<spread_factor.
         """
-        coding_rate: builtins.int
+        coding_rate: _builtins.int
         """
         The denominator of the coding rate.
         ie for 4/5, the value is 5. 4/8 the value is 8.
         """
-        frequency_offset: builtins.float
+        frequency_offset: _builtins.float
         """
         This parameter is for advanced users with advanced test equipment, we do not recommend most users use it.
         A frequency offset that is added to to the calculated band center frequency.
         Used to correct for crystal calibration errors.
         """
-        region: global___Config.LoRaConfig.RegionCode.ValueType
+        region: Global___Config.LoRaConfig.RegionCode.ValueType
         """
         The region code for the radio (US, CN, EU433, etc...)
         """
-        hop_limit: builtins.int
+        hop_limit: _builtins.int
         """
         Maximum number of hops. This can't be greater than 7.
         Default of 3
         Attempting to set a value > 7 results in the default
         """
-        tx_enabled: builtins.bool
+        tx_enabled: _builtins.bool
         """
         Disable TX from the LoRa radio. Useful for hot-swapping antennas and other tests.
         Defaults to false
         """
-        tx_power: builtins.int
+        tx_power: _builtins.int
         """
         If zero, then use default max legal continuous power (ie. something that won't
         burn out the radio hardware)
         In most cases you should use zero here.
         Units are in dBm.
         """
-        channel_num: builtins.int
+        channel_num: _builtins.int
         """
         This controls the actual hardware frequency the radio transmits on.
         Most users should never need to be exposed to this field/concept.
@@ -1688,17 +1913,17 @@ class Config(google.protobuf.message.Message):
         If using the hash algorithm the channel number will be: hash(channel_name) %
         NUM_CHANNELS (Where num channels depends on the regulatory region).
         """
-        override_duty_cycle: builtins.bool
+        override_duty_cycle: _builtins.bool
         """
         If true, duty cycle limits will be exceeded and thus you're possibly not following
         the local regulations if you're not a HAM.
         Has no effect if the duty cycle of the used region is 100%.
         """
-        sx126x_rx_boosted_gain: builtins.bool
+        sx126x_rx_boosted_gain: _builtins.bool
         """
         If true, sets RX boosted gain mode on SX126X based radios
         """
-        override_frequency: builtins.float
+        override_frequency: _builtins.float
         """
         This parameter is for advanced users and licensed HAM radio operators.
         Ignore Channel Calculation and use this frequency instead. The frequency_offset
@@ -1706,20 +1931,28 @@ class Config(google.protobuf.message.Message):
         Please respect your local laws and regulations. If you are a HAM, make sure you
         enable HAM mode and turn off encryption.
         """
-        pa_fan_disabled: builtins.bool
+        pa_fan_disabled: _builtins.bool
         """
         If true, disable the build-in PA FAN using pin define in RF95_FAN_EN.
         """
-        ignore_mqtt: builtins.bool
+        ignore_mqtt: _builtins.bool
         """
         If true, the device will not process any packets received via LoRa that passed via MQTT anywhere on the path towards it.
         """
-        config_ok_to_mqtt: builtins.bool
+        config_ok_to_mqtt: _builtins.bool
         """
         Sets the ok_to_mqtt bit on outgoing packets
         """
-        @property
-        def ignore_incoming(self) -> google.protobuf.internal.containers.RepeatedScalarFieldContainer[builtins.int]:
+        fem_lna_mode: Global___Config.LoRaConfig.FEM_LNA_Mode.ValueType
+        """
+        Set where LORA FEM is enabled, disabled, or not present
+        """
+        serial_hal_only: _builtins.bool
+        """
+        Don't use radiolib to initialize the radio, instead listen for a serialHal connection
+        """
+        @_builtins.property
+        def ignore_incoming(self) -> _containers.RepeatedScalarFieldContainer[_builtins.int]:
             """
             For testing it is useful sometimes to force a node to never listen to
             particular other nodes (simulating radio out of range). All nodenums listed
@@ -1729,37 +1962,43 @@ class Config(google.protobuf.message.Message):
         def __init__(
             self,
             *,
-            use_preset: builtins.bool = ...,
-            modem_preset: global___Config.LoRaConfig.ModemPreset.ValueType = ...,
-            bandwidth: builtins.int = ...,
-            spread_factor: builtins.int = ...,
-            coding_rate: builtins.int = ...,
-            frequency_offset: builtins.float = ...,
-            region: global___Config.LoRaConfig.RegionCode.ValueType = ...,
-            hop_limit: builtins.int = ...,
-            tx_enabled: builtins.bool = ...,
-            tx_power: builtins.int = ...,
-            channel_num: builtins.int = ...,
-            override_duty_cycle: builtins.bool = ...,
-            sx126x_rx_boosted_gain: builtins.bool = ...,
-            override_frequency: builtins.float = ...,
-            pa_fan_disabled: builtins.bool = ...,
-            ignore_incoming: collections.abc.Iterable[builtins.int] | None = ...,
-            ignore_mqtt: builtins.bool = ...,
-            config_ok_to_mqtt: builtins.bool = ...,
+            use_preset: _builtins.bool = ...,
+            modem_preset: Global___Config.LoRaConfig.ModemPreset.ValueType = ...,
+            bandwidth: _builtins.int = ...,
+            spread_factor: _builtins.int = ...,
+            coding_rate: _builtins.int = ...,
+            frequency_offset: _builtins.float = ...,
+            region: Global___Config.LoRaConfig.RegionCode.ValueType = ...,
+            hop_limit: _builtins.int = ...,
+            tx_enabled: _builtins.bool = ...,
+            tx_power: _builtins.int = ...,
+            channel_num: _builtins.int = ...,
+            override_duty_cycle: _builtins.bool = ...,
+            sx126x_rx_boosted_gain: _builtins.bool = ...,
+            override_frequency: _builtins.float = ...,
+            pa_fan_disabled: _builtins.bool = ...,
+            ignore_incoming: _abc.Iterable[_builtins.int] | None = ...,
+            ignore_mqtt: _builtins.bool = ...,
+            config_ok_to_mqtt: _builtins.bool = ...,
+            fem_lna_mode: Global___Config.LoRaConfig.FEM_LNA_Mode.ValueType = ...,
+            serial_hal_only: _builtins.bool = ...,
         ) -> None: ...
-        def ClearField(self, field_name: typing.Literal["bandwidth", b"bandwidth", "channel_num", b"channel_num", "coding_rate", b"coding_rate", "config_ok_to_mqtt", b"config_ok_to_mqtt", "frequency_offset", b"frequency_offset", "hop_limit", b"hop_limit", "ignore_incoming", b"ignore_incoming", "ignore_mqtt", b"ignore_mqtt", "modem_preset", b"modem_preset", "override_duty_cycle", b"override_duty_cycle", "override_frequency", b"override_frequency", "pa_fan_disabled", b"pa_fan_disabled", "region", b"region", "spread_factor", b"spread_factor", "sx126x_rx_boosted_gain", b"sx126x_rx_boosted_gain", "tx_enabled", b"tx_enabled", "tx_power", b"tx_power", "use_preset", b"use_preset"]) -> None: ...
+        _HasFieldArgType: _TypeAlias = _Never  # noqa: Y015
+        def HasField(self, field_name: _HasFieldArgType) -> _builtins.bool: ...
+        _ClearFieldArgType: _TypeAlias = _typing.Literal["bandwidth", b"bandwidth", "channel_num", b"channel_num", "coding_rate", b"coding_rate", "config_ok_to_mqtt", b"config_ok_to_mqtt", "fem_lna_mode", b"fem_lna_mode", "frequency_offset", b"frequency_offset", "hop_limit", b"hop_limit", "ignore_incoming", b"ignore_incoming", "ignore_mqtt", b"ignore_mqtt", "modem_preset", b"modem_preset", "override_duty_cycle", b"override_duty_cycle", "override_frequency", b"override_frequency", "pa_fan_disabled", b"pa_fan_disabled", "region", b"region", "serial_hal_only", b"serial_hal_only", "spread_factor", b"spread_factor", "sx126x_rx_boosted_gain", b"sx126x_rx_boosted_gain", "tx_enabled", b"tx_enabled", "tx_power", b"tx_power", "use_preset", b"use_preset"]  # noqa: Y015
+        def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
+        def WhichOneof(self, oneof_group: _Never) -> None: ...
 
-    @typing.final
-    class BluetoothConfig(google.protobuf.message.Message):
-        DESCRIPTOR: google.protobuf.descriptor.Descriptor
+    @_typing.final
+    class BluetoothConfig(_message.Message):
+        DESCRIPTOR: _descriptor.Descriptor
 
         class _PairingMode:
-            ValueType = typing.NewType("ValueType", builtins.int)
-            V: typing_extensions.TypeAlias = ValueType
+            ValueType = _typing.NewType("ValueType", _builtins.int)
+            V: _TypeAlias = ValueType  # noqa: Y015
 
-        class _PairingModeEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[Config.BluetoothConfig._PairingMode.ValueType], builtins.type):
-            DESCRIPTOR: google.protobuf.descriptor.EnumDescriptor
+        class _PairingModeEnumTypeWrapper(_enum_type_wrapper._EnumTypeWrapper[Config.BluetoothConfig._PairingMode.ValueType], _builtins.type):
+            DESCRIPTOR: _descriptor.EnumDescriptor
             RANDOM_PIN: Config.BluetoothConfig._PairingMode.ValueType  # 0
             """
             Device generates a random PIN that will be shown on the screen of the device for pairing
@@ -1787,71 +2026,75 @@ class Config(google.protobuf.message.Message):
         Device requires no PIN for pairing
         """
 
-        ENABLED_FIELD_NUMBER: builtins.int
-        MODE_FIELD_NUMBER: builtins.int
-        FIXED_PIN_FIELD_NUMBER: builtins.int
-        enabled: builtins.bool
+        ENABLED_FIELD_NUMBER: _builtins.int
+        MODE_FIELD_NUMBER: _builtins.int
+        FIXED_PIN_FIELD_NUMBER: _builtins.int
+        enabled: _builtins.bool
         """
         Enable Bluetooth on the device
         """
-        mode: global___Config.BluetoothConfig.PairingMode.ValueType
+        mode: Global___Config.BluetoothConfig.PairingMode.ValueType
         """
         Determines the pairing strategy for the device
         """
-        fixed_pin: builtins.int
+        fixed_pin: _builtins.int
         """
         Specified PIN for PairingMode.FixedPin
         """
         def __init__(
             self,
             *,
-            enabled: builtins.bool = ...,
-            mode: global___Config.BluetoothConfig.PairingMode.ValueType = ...,
-            fixed_pin: builtins.int = ...,
+            enabled: _builtins.bool = ...,
+            mode: Global___Config.BluetoothConfig.PairingMode.ValueType = ...,
+            fixed_pin: _builtins.int = ...,
         ) -> None: ...
-        def ClearField(self, field_name: typing.Literal["enabled", b"enabled", "fixed_pin", b"fixed_pin", "mode", b"mode"]) -> None: ...
+        _HasFieldArgType: _TypeAlias = _Never  # noqa: Y015
+        def HasField(self, field_name: _HasFieldArgType) -> _builtins.bool: ...
+        _ClearFieldArgType: _TypeAlias = _typing.Literal["enabled", b"enabled", "fixed_pin", b"fixed_pin", "mode", b"mode"]  # noqa: Y015
+        def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
+        def WhichOneof(self, oneof_group: _Never) -> None: ...
 
-    @typing.final
-    class SecurityConfig(google.protobuf.message.Message):
-        DESCRIPTOR: google.protobuf.descriptor.Descriptor
+    @_typing.final
+    class SecurityConfig(_message.Message):
+        DESCRIPTOR: _descriptor.Descriptor
 
-        PUBLIC_KEY_FIELD_NUMBER: builtins.int
-        PRIVATE_KEY_FIELD_NUMBER: builtins.int
-        ADMIN_KEY_FIELD_NUMBER: builtins.int
-        IS_MANAGED_FIELD_NUMBER: builtins.int
-        SERIAL_ENABLED_FIELD_NUMBER: builtins.int
-        DEBUG_LOG_API_ENABLED_FIELD_NUMBER: builtins.int
-        ADMIN_CHANNEL_ENABLED_FIELD_NUMBER: builtins.int
-        public_key: builtins.bytes
+        PUBLIC_KEY_FIELD_NUMBER: _builtins.int
+        PRIVATE_KEY_FIELD_NUMBER: _builtins.int
+        ADMIN_KEY_FIELD_NUMBER: _builtins.int
+        IS_MANAGED_FIELD_NUMBER: _builtins.int
+        SERIAL_ENABLED_FIELD_NUMBER: _builtins.int
+        DEBUG_LOG_API_ENABLED_FIELD_NUMBER: _builtins.int
+        ADMIN_CHANNEL_ENABLED_FIELD_NUMBER: _builtins.int
+        public_key: _builtins.bytes
         """
         The public key of the user's device.
         Sent out to other nodes on the mesh to allow them to compute a shared secret key.
         """
-        private_key: builtins.bytes
+        private_key: _builtins.bytes
         """
         The private key of the device.
         Used to create a shared key with a remote device.
         """
-        is_managed: builtins.bool
+        is_managed: _builtins.bool
         """
         If true, device is considered to be "managed" by a mesh administrator via admin messages
         Device is managed by a mesh administrator.
         """
-        serial_enabled: builtins.bool
+        serial_enabled: _builtins.bool
         """
         Serial Console over the Stream API."
         """
-        debug_log_api_enabled: builtins.bool
+        debug_log_api_enabled: _builtins.bool
         """
         By default we turn off logging as soon as an API client connects (to keep shared serial link quiet).
         Output live debug logging over serial or bluetooth is set to true.
         """
-        admin_channel_enabled: builtins.bool
+        admin_channel_enabled: _builtins.bool
         """
         Allow incoming device control over the insecure legacy admin channel.
         """
-        @property
-        def admin_key(self) -> google.protobuf.internal.containers.RepeatedScalarFieldContainer[builtins.bytes]:
+        @_builtins.property
+        def admin_key(self) -> _containers.RepeatedScalarFieldContainer[_builtins.bytes]:
             """
             The public key authorized to send admin messages to this node.
             """
@@ -1859,74 +2102,87 @@ class Config(google.protobuf.message.Message):
         def __init__(
             self,
             *,
-            public_key: builtins.bytes = ...,
-            private_key: builtins.bytes = ...,
-            admin_key: collections.abc.Iterable[builtins.bytes] | None = ...,
-            is_managed: builtins.bool = ...,
-            serial_enabled: builtins.bool = ...,
-            debug_log_api_enabled: builtins.bool = ...,
-            admin_channel_enabled: builtins.bool = ...,
+            public_key: _builtins.bytes = ...,
+            private_key: _builtins.bytes = ...,
+            admin_key: _abc.Iterable[_builtins.bytes] | None = ...,
+            is_managed: _builtins.bool = ...,
+            serial_enabled: _builtins.bool = ...,
+            debug_log_api_enabled: _builtins.bool = ...,
+            admin_channel_enabled: _builtins.bool = ...,
         ) -> None: ...
-        def ClearField(self, field_name: typing.Literal["admin_channel_enabled", b"admin_channel_enabled", "admin_key", b"admin_key", "debug_log_api_enabled", b"debug_log_api_enabled", "is_managed", b"is_managed", "private_key", b"private_key", "public_key", b"public_key", "serial_enabled", b"serial_enabled"]) -> None: ...
+        _HasFieldArgType: _TypeAlias = _Never  # noqa: Y015
+        def HasField(self, field_name: _HasFieldArgType) -> _builtins.bool: ...
+        _ClearFieldArgType: _TypeAlias = _typing.Literal["admin_channel_enabled", b"admin_channel_enabled", "admin_key", b"admin_key", "debug_log_api_enabled", b"debug_log_api_enabled", "is_managed", b"is_managed", "private_key", b"private_key", "public_key", b"public_key", "serial_enabled", b"serial_enabled"]  # noqa: Y015
+        def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
+        def WhichOneof(self, oneof_group: _Never) -> None: ...
 
-    @typing.final
-    class SessionkeyConfig(google.protobuf.message.Message):
+    @_typing.final
+    class SessionkeyConfig(_message.Message):
         """
         Blank config request, strictly for getting the session key
         """
 
-        DESCRIPTOR: google.protobuf.descriptor.Descriptor
+        DESCRIPTOR: _descriptor.Descriptor
 
         def __init__(
             self,
         ) -> None: ...
+        _HasFieldArgType: _TypeAlias = _Never  # noqa: Y015
+        def HasField(self, field_name: _HasFieldArgType) -> _builtins.bool: ...
+        _ClearFieldArgType: _TypeAlias = _Never  # noqa: Y015
+        def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
+        def WhichOneof(self, oneof_group: _Never) -> None: ...
 
-    DEVICE_FIELD_NUMBER: builtins.int
-    POSITION_FIELD_NUMBER: builtins.int
-    POWER_FIELD_NUMBER: builtins.int
-    NETWORK_FIELD_NUMBER: builtins.int
-    DISPLAY_FIELD_NUMBER: builtins.int
-    LORA_FIELD_NUMBER: builtins.int
-    BLUETOOTH_FIELD_NUMBER: builtins.int
-    SECURITY_FIELD_NUMBER: builtins.int
-    SESSIONKEY_FIELD_NUMBER: builtins.int
-    DEVICE_UI_FIELD_NUMBER: builtins.int
-    @property
-    def device(self) -> global___Config.DeviceConfig: ...
-    @property
-    def position(self) -> global___Config.PositionConfig: ...
-    @property
-    def power(self) -> global___Config.PowerConfig: ...
-    @property
-    def network(self) -> global___Config.NetworkConfig: ...
-    @property
-    def display(self) -> global___Config.DisplayConfig: ...
-    @property
-    def lora(self) -> global___Config.LoRaConfig: ...
-    @property
-    def bluetooth(self) -> global___Config.BluetoothConfig: ...
-    @property
-    def security(self) -> global___Config.SecurityConfig: ...
-    @property
-    def sessionkey(self) -> global___Config.SessionkeyConfig: ...
-    @property
-    def device_ui(self) -> device_ui_pb2.DeviceUIConfig: ...
+    DEVICE_FIELD_NUMBER: _builtins.int
+    POSITION_FIELD_NUMBER: _builtins.int
+    POWER_FIELD_NUMBER: _builtins.int
+    NETWORK_FIELD_NUMBER: _builtins.int
+    DISPLAY_FIELD_NUMBER: _builtins.int
+    LORA_FIELD_NUMBER: _builtins.int
+    BLUETOOTH_FIELD_NUMBER: _builtins.int
+    SECURITY_FIELD_NUMBER: _builtins.int
+    SESSIONKEY_FIELD_NUMBER: _builtins.int
+    DEVICE_UI_FIELD_NUMBER: _builtins.int
+    @_builtins.property
+    def device(self) -> Global___Config.DeviceConfig: ...
+    @_builtins.property
+    def position(self) -> Global___Config.PositionConfig: ...
+    @_builtins.property
+    def power(self) -> Global___Config.PowerConfig: ...
+    @_builtins.property
+    def network(self) -> Global___Config.NetworkConfig: ...
+    @_builtins.property
+    def display(self) -> Global___Config.DisplayConfig: ...
+    @_builtins.property
+    def lora(self) -> Global___Config.LoRaConfig: ...
+    @_builtins.property
+    def bluetooth(self) -> Global___Config.BluetoothConfig: ...
+    @_builtins.property
+    def security(self) -> Global___Config.SecurityConfig: ...
+    @_builtins.property
+    def sessionkey(self) -> Global___Config.SessionkeyConfig: ...
+    @_builtins.property
+    def device_ui(self) -> _device_ui_pb2.DeviceUIConfig: ...
     def __init__(
         self,
         *,
-        device: global___Config.DeviceConfig | None = ...,
-        position: global___Config.PositionConfig | None = ...,
-        power: global___Config.PowerConfig | None = ...,
-        network: global___Config.NetworkConfig | None = ...,
-        display: global___Config.DisplayConfig | None = ...,
-        lora: global___Config.LoRaConfig | None = ...,
-        bluetooth: global___Config.BluetoothConfig | None = ...,
-        security: global___Config.SecurityConfig | None = ...,
-        sessionkey: global___Config.SessionkeyConfig | None = ...,
-        device_ui: device_ui_pb2.DeviceUIConfig | None = ...,
+        device: Global___Config.DeviceConfig | None = ...,
+        position: Global___Config.PositionConfig | None = ...,
+        power: Global___Config.PowerConfig | None = ...,
+        network: Global___Config.NetworkConfig | None = ...,
+        display: Global___Config.DisplayConfig | None = ...,
+        lora: Global___Config.LoRaConfig | None = ...,
+        bluetooth: Global___Config.BluetoothConfig | None = ...,
+        security: Global___Config.SecurityConfig | None = ...,
+        sessionkey: Global___Config.SessionkeyConfig | None = ...,
+        device_ui: _device_ui_pb2.DeviceUIConfig | None = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing.Literal["bluetooth", b"bluetooth", "device", b"device", "device_ui", b"device_ui", "display", b"display", "lora", b"lora", "network", b"network", "payload_variant", b"payload_variant", "position", b"position", "power", b"power", "security", b"security", "sessionkey", b"sessionkey"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["bluetooth", b"bluetooth", "device", b"device", "device_ui", b"device_ui", "display", b"display", "lora", b"lora", "network", b"network", "payload_variant", b"payload_variant", "position", b"position", "power", b"power", "security", b"security", "sessionkey", b"sessionkey"]) -> None: ...
-    def WhichOneof(self, oneof_group: typing.Literal["payload_variant", b"payload_variant"]) -> typing.Literal["device", "position", "power", "network", "display", "lora", "bluetooth", "security", "sessionkey", "device_ui"] | None: ...
+    _HasFieldArgType: _TypeAlias = _typing.Literal["bluetooth", b"bluetooth", "device", b"device", "device_ui", b"device_ui", "display", b"display", "lora", b"lora", "network", b"network", "payload_variant", b"payload_variant", "position", b"position", "power", b"power", "security", b"security", "sessionkey", b"sessionkey"]  # noqa: Y015
+    def HasField(self, field_name: _HasFieldArgType) -> _builtins.bool: ...
+    _ClearFieldArgType: _TypeAlias = _typing.Literal["bluetooth", b"bluetooth", "device", b"device", "device_ui", b"device_ui", "display", b"display", "lora", b"lora", "network", b"network", "payload_variant", b"payload_variant", "position", b"position", "power", b"power", "security", b"security", "sessionkey", b"sessionkey"]  # noqa: Y015
+    def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
+    _WhichOneofReturnType_payload_variant: _TypeAlias = _typing.Literal["device", "position", "power", "network", "display", "lora", "bluetooth", "security", "sessionkey", "device_ui"]  # noqa: Y015
+    _WhichOneofArgType_payload_variant: _TypeAlias = _typing.Literal["payload_variant", b"payload_variant"]  # noqa: Y015
+    def WhichOneof(self, oneof_group: _WhichOneofArgType_payload_variant) -> _WhichOneofReturnType_payload_variant | None: ...
 
-global___Config = Config
+Global___Config: _TypeAlias = Config  # noqa: Y015

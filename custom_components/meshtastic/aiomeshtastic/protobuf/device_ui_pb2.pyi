@@ -3,26 +3,26 @@
 isort:skip_file
 """
 
-import builtins
-import google.protobuf.descriptor
-import google.protobuf.internal.enum_type_wrapper
-import google.protobuf.message
+from google.protobuf import descriptor as _descriptor
+from google.protobuf import message as _message
+from google.protobuf.internal import enum_type_wrapper as _enum_type_wrapper
+import builtins as _builtins
 import sys
-import typing
+import typing as _typing
 
-if sys.version_info >= (3, 10):
-    import typing as typing_extensions
+if sys.version_info >= (3, 11):
+    from typing import TypeAlias as _TypeAlias, Never as _Never
 else:
-    import typing_extensions
+    from typing_extensions import TypeAlias as _TypeAlias, Never as _Never
 
-DESCRIPTOR: google.protobuf.descriptor.FileDescriptor
+DESCRIPTOR: _descriptor.FileDescriptor
 
 class _CompassMode:
-    ValueType = typing.NewType("ValueType", builtins.int)
-    V: typing_extensions.TypeAlias = ValueType
+    ValueType = _typing.NewType("ValueType", _builtins.int)
+    V: _TypeAlias = ValueType  # noqa: Y015
 
-class _CompassModeEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[_CompassMode.ValueType], builtins.type):
-    DESCRIPTOR: google.protobuf.descriptor.EnumDescriptor
+class _CompassModeEnumTypeWrapper(_enum_type_wrapper._EnumTypeWrapper[_CompassMode.ValueType], _builtins.type):
+    DESCRIPTOR: _descriptor.EnumDescriptor
     DYNAMIC: _CompassMode.ValueType  # 0
     """
     Compass with dynamic ring and heading
@@ -50,14 +50,14 @@ FREEZE_HEADING: CompassMode.ValueType  # 2
 """
 Compass with heading and freeze option
 """
-global___CompassMode = CompassMode
+Global___CompassMode: _TypeAlias = CompassMode  # noqa: Y015
 
 class _Theme:
-    ValueType = typing.NewType("ValueType", builtins.int)
-    V: typing_extensions.TypeAlias = ValueType
+    ValueType = _typing.NewType("ValueType", _builtins.int)
+    V: _TypeAlias = ValueType  # noqa: Y015
 
-class _ThemeEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[_Theme.ValueType], builtins.type):
-    DESCRIPTOR: google.protobuf.descriptor.EnumDescriptor
+class _ThemeEnumTypeWrapper(_enum_type_wrapper._EnumTypeWrapper[_Theme.ValueType], _builtins.type):
+    DESCRIPTOR: _descriptor.EnumDescriptor
     DARK: _Theme.ValueType  # 0
     """
     Dark
@@ -85,14 +85,14 @@ RED: Theme.ValueType  # 2
 """
 Red
 """
-global___Theme = Theme
+Global___Theme: _TypeAlias = Theme  # noqa: Y015
 
 class _Language:
-    ValueType = typing.NewType("ValueType", builtins.int)
-    V: typing_extensions.TypeAlias = ValueType
+    ValueType = _typing.NewType("ValueType", _builtins.int)
+    V: _TypeAlias = ValueType  # noqa: Y015
 
-class _LanguageEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[_Language.ValueType], builtins.type):
-    DESCRIPTOR: google.protobuf.descriptor.EnumDescriptor
+class _LanguageEnumTypeWrapper(_enum_type_wrapper._EnumTypeWrapper[_Language.ValueType], _builtins.type):
+    DESCRIPTOR: _descriptor.EnumDescriptor
     ENGLISH: _Language.ValueType  # 0
     """
     English
@@ -164,6 +164,14 @@ class _LanguageEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._EnumT
     BULGARIAN: _Language.ValueType  # 17
     """
     Bulgarian
+    """
+    CZECH: _Language.ValueType  # 18
+    """
+    Czech
+    """
+    DANISH: _Language.ValueType  # 19
+    """
+    Danish
     """
     SIMPLIFIED_CHINESE: _Language.ValueType  # 30
     """
@@ -251,6 +259,14 @@ BULGARIAN: Language.ValueType  # 17
 """
 Bulgarian
 """
+CZECH: Language.ValueType  # 18
+"""
+Czech
+"""
+DANISH: Language.ValueType  # 19
+"""
+Danish
+"""
 SIMPLIFIED_CHINESE: Language.ValueType  # 30
 """
 Simplified Chinese (experimental)
@@ -259,98 +275,188 @@ TRADITIONAL_CHINESE: Language.ValueType  # 31
 """
 Traditional Chinese (experimental)
 """
-global___Language = Language
+Global___Language: _TypeAlias = Language  # noqa: Y015
 
-@typing.final
-class DeviceUIConfig(google.protobuf.message.Message):
+@_typing.final
+class DeviceUIConfig(_message.Message):
     """
     Protobuf structures for device-ui persistency
     """
 
-    DESCRIPTOR: google.protobuf.descriptor.Descriptor
+    DESCRIPTOR: _descriptor.Descriptor
 
-    VERSION_FIELD_NUMBER: builtins.int
-    SCREEN_BRIGHTNESS_FIELD_NUMBER: builtins.int
-    SCREEN_TIMEOUT_FIELD_NUMBER: builtins.int
-    SCREEN_LOCK_FIELD_NUMBER: builtins.int
-    SETTINGS_LOCK_FIELD_NUMBER: builtins.int
-    PIN_CODE_FIELD_NUMBER: builtins.int
-    THEME_FIELD_NUMBER: builtins.int
-    ALERT_ENABLED_FIELD_NUMBER: builtins.int
-    BANNER_ENABLED_FIELD_NUMBER: builtins.int
-    RING_TONE_ID_FIELD_NUMBER: builtins.int
-    LANGUAGE_FIELD_NUMBER: builtins.int
-    NODE_FILTER_FIELD_NUMBER: builtins.int
-    NODE_HIGHLIGHT_FIELD_NUMBER: builtins.int
-    CALIBRATION_DATA_FIELD_NUMBER: builtins.int
-    MAP_DATA_FIELD_NUMBER: builtins.int
-    COMPASS_MODE_FIELD_NUMBER: builtins.int
-    SCREEN_RGB_COLOR_FIELD_NUMBER: builtins.int
-    IS_CLOCKFACE_ANALOG_FIELD_NUMBER: builtins.int
-    version: builtins.int
+    class _GpsCoordinateFormat:
+        ValueType = _typing.NewType("ValueType", _builtins.int)
+        V: _TypeAlias = ValueType  # noqa: Y015
+
+    class _GpsCoordinateFormatEnumTypeWrapper(_enum_type_wrapper._EnumTypeWrapper[DeviceUIConfig._GpsCoordinateFormat.ValueType], _builtins.type):
+        DESCRIPTOR: _descriptor.EnumDescriptor
+        DEC: DeviceUIConfig._GpsCoordinateFormat.ValueType  # 0
+        """
+        GPS coordinates are displayed in the normal decimal degrees format:
+        DD.DDDDDD DDD.DDDDDD
+        """
+        DMS: DeviceUIConfig._GpsCoordinateFormat.ValueType  # 1
+        """
+        GPS coordinates are displayed in the degrees minutes seconds format:
+        DD°MM'SS"C DDD°MM'SS"C, where C is the compass point representing the locations quadrant
+        """
+        UTM: DeviceUIConfig._GpsCoordinateFormat.ValueType  # 2
+        """
+        Universal Transverse Mercator format:
+        ZZB EEEEEE NNNNNNN, where Z is zone, B is band, E is easting, N is northing
+        """
+        MGRS: DeviceUIConfig._GpsCoordinateFormat.ValueType  # 3
+        """
+        Military Grid Reference System format:
+        ZZB CD EEEEE NNNNN, where Z is zone, B is band, C is the east 100k square, D is the north 100k square,
+        E is easting, N is northing
+        """
+        OLC: DeviceUIConfig._GpsCoordinateFormat.ValueType  # 4
+        """
+        Open Location Code (aka Plus Codes).
+        """
+        OSGR: DeviceUIConfig._GpsCoordinateFormat.ValueType  # 5
+        """
+        Ordnance Survey Grid Reference (the National Grid System of the UK).
+        Format: AB EEEEE NNNNN, where A is the east 100k square, B is the north 100k square,
+        E is the easting, N is the northing
+        """
+        MLS: DeviceUIConfig._GpsCoordinateFormat.ValueType  # 6
+        """
+        Maidenhead Locator System
+        Described here: https://en.wikipedia.org/wiki/Maidenhead_Locator_System
+        """
+
+    class GpsCoordinateFormat(_GpsCoordinateFormat, metaclass=_GpsCoordinateFormatEnumTypeWrapper):
+        """
+        How the GPS coordinates are displayed on the OLED screen.
+        """
+
+    DEC: DeviceUIConfig.GpsCoordinateFormat.ValueType  # 0
+    """
+    GPS coordinates are displayed in the normal decimal degrees format:
+    DD.DDDDDD DDD.DDDDDD
+    """
+    DMS: DeviceUIConfig.GpsCoordinateFormat.ValueType  # 1
+    """
+    GPS coordinates are displayed in the degrees minutes seconds format:
+    DD°MM'SS"C DDD°MM'SS"C, where C is the compass point representing the locations quadrant
+    """
+    UTM: DeviceUIConfig.GpsCoordinateFormat.ValueType  # 2
+    """
+    Universal Transverse Mercator format:
+    ZZB EEEEEE NNNNNNN, where Z is zone, B is band, E is easting, N is northing
+    """
+    MGRS: DeviceUIConfig.GpsCoordinateFormat.ValueType  # 3
+    """
+    Military Grid Reference System format:
+    ZZB CD EEEEE NNNNN, where Z is zone, B is band, C is the east 100k square, D is the north 100k square,
+    E is easting, N is northing
+    """
+    OLC: DeviceUIConfig.GpsCoordinateFormat.ValueType  # 4
+    """
+    Open Location Code (aka Plus Codes).
+    """
+    OSGR: DeviceUIConfig.GpsCoordinateFormat.ValueType  # 5
+    """
+    Ordnance Survey Grid Reference (the National Grid System of the UK).
+    Format: AB EEEEE NNNNN, where A is the east 100k square, B is the north 100k square,
+    E is the easting, N is the northing
+    """
+    MLS: DeviceUIConfig.GpsCoordinateFormat.ValueType  # 6
+    """
+    Maidenhead Locator System
+    Described here: https://en.wikipedia.org/wiki/Maidenhead_Locator_System
+    """
+
+    VERSION_FIELD_NUMBER: _builtins.int
+    SCREEN_BRIGHTNESS_FIELD_NUMBER: _builtins.int
+    SCREEN_TIMEOUT_FIELD_NUMBER: _builtins.int
+    SCREEN_LOCK_FIELD_NUMBER: _builtins.int
+    SETTINGS_LOCK_FIELD_NUMBER: _builtins.int
+    PIN_CODE_FIELD_NUMBER: _builtins.int
+    THEME_FIELD_NUMBER: _builtins.int
+    ALERT_ENABLED_FIELD_NUMBER: _builtins.int
+    BANNER_ENABLED_FIELD_NUMBER: _builtins.int
+    RING_TONE_ID_FIELD_NUMBER: _builtins.int
+    LANGUAGE_FIELD_NUMBER: _builtins.int
+    NODE_FILTER_FIELD_NUMBER: _builtins.int
+    NODE_HIGHLIGHT_FIELD_NUMBER: _builtins.int
+    CALIBRATION_DATA_FIELD_NUMBER: _builtins.int
+    MAP_DATA_FIELD_NUMBER: _builtins.int
+    COMPASS_MODE_FIELD_NUMBER: _builtins.int
+    SCREEN_RGB_COLOR_FIELD_NUMBER: _builtins.int
+    IS_CLOCKFACE_ANALOG_FIELD_NUMBER: _builtins.int
+    GPS_FORMAT_FIELD_NUMBER: _builtins.int
+    version: _builtins.int
     """
     A version integer used to invalidate saved files when we make incompatible changes.
     """
-    screen_brightness: builtins.int
+    screen_brightness: _builtins.int
     """
     TFT display brightness 1..255
     """
-    screen_timeout: builtins.int
+    screen_timeout: _builtins.int
     """
     Screen timeout 0..900
     """
-    screen_lock: builtins.bool
+    screen_lock: _builtins.bool
     """
     Screen/Settings lock enabled
     """
-    settings_lock: builtins.bool
-    pin_code: builtins.int
-    theme: global___Theme.ValueType
+    settings_lock: _builtins.bool
+    pin_code: _builtins.int
+    theme: Global___Theme.ValueType
     """
     Color theme
     """
-    alert_enabled: builtins.bool
+    alert_enabled: _builtins.bool
     """
     Audible message, banner and ring tone
     """
-    banner_enabled: builtins.bool
-    ring_tone_id: builtins.int
-    language: global___Language.ValueType
+    banner_enabled: _builtins.bool
+    ring_tone_id: _builtins.int
+    language: Global___Language.ValueType
     """
     Localization
     """
-    calibration_data: builtins.bytes
+    calibration_data: _builtins.bytes
     """
     8 integers for screen calibration data
     """
-    compass_mode: global___CompassMode.ValueType
+    compass_mode: Global___CompassMode.ValueType
     """
     Compass mode
     """
-    screen_rgb_color: builtins.int
+    screen_rgb_color: _builtins.int
     """
     RGB color for BaseUI
     0xRRGGBB format, e.g. 0xFF0000 for red
     """
-    is_clockface_analog: builtins.bool
+    is_clockface_analog: _builtins.bool
     """
     Clockface analog style
     true for analog clockface, false for digital clockface
     """
-    @property
-    def node_filter(self) -> global___NodeFilter:
+    gps_format: Global___DeviceUIConfig.GpsCoordinateFormat.ValueType
+    """
+    How the GPS coordinates are formatted on the OLED screen.
+    """
+    @_builtins.property
+    def node_filter(self) -> Global___NodeFilter:
         """
         Node list filter
         """
 
-    @property
-    def node_highlight(self) -> global___NodeHighlight:
+    @_builtins.property
+    def node_highlight(self) -> Global___NodeHighlight:
         """
         Node list highlightening
         """
 
-    @property
-    def map_data(self) -> global___Map:
+    @_builtins.property
+    def map_data(self) -> Global___Map:
         """
         Map related data
         """
@@ -358,173 +464,189 @@ class DeviceUIConfig(google.protobuf.message.Message):
     def __init__(
         self,
         *,
-        version: builtins.int = ...,
-        screen_brightness: builtins.int = ...,
-        screen_timeout: builtins.int = ...,
-        screen_lock: builtins.bool = ...,
-        settings_lock: builtins.bool = ...,
-        pin_code: builtins.int = ...,
-        theme: global___Theme.ValueType = ...,
-        alert_enabled: builtins.bool = ...,
-        banner_enabled: builtins.bool = ...,
-        ring_tone_id: builtins.int = ...,
-        language: global___Language.ValueType = ...,
-        node_filter: global___NodeFilter | None = ...,
-        node_highlight: global___NodeHighlight | None = ...,
-        calibration_data: builtins.bytes = ...,
-        map_data: global___Map | None = ...,
-        compass_mode: global___CompassMode.ValueType = ...,
-        screen_rgb_color: builtins.int = ...,
-        is_clockface_analog: builtins.bool = ...,
+        version: _builtins.int = ...,
+        screen_brightness: _builtins.int = ...,
+        screen_timeout: _builtins.int = ...,
+        screen_lock: _builtins.bool = ...,
+        settings_lock: _builtins.bool = ...,
+        pin_code: _builtins.int = ...,
+        theme: Global___Theme.ValueType = ...,
+        alert_enabled: _builtins.bool = ...,
+        banner_enabled: _builtins.bool = ...,
+        ring_tone_id: _builtins.int = ...,
+        language: Global___Language.ValueType = ...,
+        node_filter: Global___NodeFilter | None = ...,
+        node_highlight: Global___NodeHighlight | None = ...,
+        calibration_data: _builtins.bytes = ...,
+        map_data: Global___Map | None = ...,
+        compass_mode: Global___CompassMode.ValueType = ...,
+        screen_rgb_color: _builtins.int = ...,
+        is_clockface_analog: _builtins.bool = ...,
+        gps_format: Global___DeviceUIConfig.GpsCoordinateFormat.ValueType = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing.Literal["map_data", b"map_data", "node_filter", b"node_filter", "node_highlight", b"node_highlight"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["alert_enabled", b"alert_enabled", "banner_enabled", b"banner_enabled", "calibration_data", b"calibration_data", "compass_mode", b"compass_mode", "is_clockface_analog", b"is_clockface_analog", "language", b"language", "map_data", b"map_data", "node_filter", b"node_filter", "node_highlight", b"node_highlight", "pin_code", b"pin_code", "ring_tone_id", b"ring_tone_id", "screen_brightness", b"screen_brightness", "screen_lock", b"screen_lock", "screen_rgb_color", b"screen_rgb_color", "screen_timeout", b"screen_timeout", "settings_lock", b"settings_lock", "theme", b"theme", "version", b"version"]) -> None: ...
+    _HasFieldArgType: _TypeAlias = _typing.Literal["map_data", b"map_data", "node_filter", b"node_filter", "node_highlight", b"node_highlight"]  # noqa: Y015
+    def HasField(self, field_name: _HasFieldArgType) -> _builtins.bool: ...
+    _ClearFieldArgType: _TypeAlias = _typing.Literal["alert_enabled", b"alert_enabled", "banner_enabled", b"banner_enabled", "calibration_data", b"calibration_data", "compass_mode", b"compass_mode", "gps_format", b"gps_format", "is_clockface_analog", b"is_clockface_analog", "language", b"language", "map_data", b"map_data", "node_filter", b"node_filter", "node_highlight", b"node_highlight", "pin_code", b"pin_code", "ring_tone_id", b"ring_tone_id", "screen_brightness", b"screen_brightness", "screen_lock", b"screen_lock", "screen_rgb_color", b"screen_rgb_color", "screen_timeout", b"screen_timeout", "settings_lock", b"settings_lock", "theme", b"theme", "version", b"version"]  # noqa: Y015
+    def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
+    def WhichOneof(self, oneof_group: _Never) -> None: ...
 
-global___DeviceUIConfig = DeviceUIConfig
+Global___DeviceUIConfig: _TypeAlias = DeviceUIConfig  # noqa: Y015
 
-@typing.final
-class NodeFilter(google.protobuf.message.Message):
-    DESCRIPTOR: google.protobuf.descriptor.Descriptor
+@_typing.final
+class NodeFilter(_message.Message):
+    DESCRIPTOR: _descriptor.Descriptor
 
-    UNKNOWN_SWITCH_FIELD_NUMBER: builtins.int
-    OFFLINE_SWITCH_FIELD_NUMBER: builtins.int
-    PUBLIC_KEY_SWITCH_FIELD_NUMBER: builtins.int
-    HOPS_AWAY_FIELD_NUMBER: builtins.int
-    POSITION_SWITCH_FIELD_NUMBER: builtins.int
-    NODE_NAME_FIELD_NUMBER: builtins.int
-    CHANNEL_FIELD_NUMBER: builtins.int
-    unknown_switch: builtins.bool
+    UNKNOWN_SWITCH_FIELD_NUMBER: _builtins.int
+    OFFLINE_SWITCH_FIELD_NUMBER: _builtins.int
+    PUBLIC_KEY_SWITCH_FIELD_NUMBER: _builtins.int
+    HOPS_AWAY_FIELD_NUMBER: _builtins.int
+    POSITION_SWITCH_FIELD_NUMBER: _builtins.int
+    NODE_NAME_FIELD_NUMBER: _builtins.int
+    CHANNEL_FIELD_NUMBER: _builtins.int
+    unknown_switch: _builtins.bool
     """
     Filter unknown nodes
     """
-    offline_switch: builtins.bool
+    offline_switch: _builtins.bool
     """
     Filter offline nodes
     """
-    public_key_switch: builtins.bool
+    public_key_switch: _builtins.bool
     """
     Filter nodes w/o public key
     """
-    hops_away: builtins.int
+    hops_away: _builtins.int
     """
     Filter based on hops away
     """
-    position_switch: builtins.bool
+    position_switch: _builtins.bool
     """
     Filter nodes w/o position
     """
-    node_name: builtins.str
+    node_name: _builtins.str
     """
     Filter nodes by matching name string
     """
-    channel: builtins.int
+    channel: _builtins.int
     """
     Filter based on channel
     """
     def __init__(
         self,
         *,
-        unknown_switch: builtins.bool = ...,
-        offline_switch: builtins.bool = ...,
-        public_key_switch: builtins.bool = ...,
-        hops_away: builtins.int = ...,
-        position_switch: builtins.bool = ...,
-        node_name: builtins.str = ...,
-        channel: builtins.int = ...,
+        unknown_switch: _builtins.bool = ...,
+        offline_switch: _builtins.bool = ...,
+        public_key_switch: _builtins.bool = ...,
+        hops_away: _builtins.int = ...,
+        position_switch: _builtins.bool = ...,
+        node_name: _builtins.str = ...,
+        channel: _builtins.int = ...,
     ) -> None: ...
-    def ClearField(self, field_name: typing.Literal["channel", b"channel", "hops_away", b"hops_away", "node_name", b"node_name", "offline_switch", b"offline_switch", "position_switch", b"position_switch", "public_key_switch", b"public_key_switch", "unknown_switch", b"unknown_switch"]) -> None: ...
+    _HasFieldArgType: _TypeAlias = _Never  # noqa: Y015
+    def HasField(self, field_name: _HasFieldArgType) -> _builtins.bool: ...
+    _ClearFieldArgType: _TypeAlias = _typing.Literal["channel", b"channel", "hops_away", b"hops_away", "node_name", b"node_name", "offline_switch", b"offline_switch", "position_switch", b"position_switch", "public_key_switch", b"public_key_switch", "unknown_switch", b"unknown_switch"]  # noqa: Y015
+    def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
+    def WhichOneof(self, oneof_group: _Never) -> None: ...
 
-global___NodeFilter = NodeFilter
+Global___NodeFilter: _TypeAlias = NodeFilter  # noqa: Y015
 
-@typing.final
-class NodeHighlight(google.protobuf.message.Message):
-    DESCRIPTOR: google.protobuf.descriptor.Descriptor
+@_typing.final
+class NodeHighlight(_message.Message):
+    DESCRIPTOR: _descriptor.Descriptor
 
-    CHAT_SWITCH_FIELD_NUMBER: builtins.int
-    POSITION_SWITCH_FIELD_NUMBER: builtins.int
-    TELEMETRY_SWITCH_FIELD_NUMBER: builtins.int
-    IAQ_SWITCH_FIELD_NUMBER: builtins.int
-    NODE_NAME_FIELD_NUMBER: builtins.int
-    chat_switch: builtins.bool
+    CHAT_SWITCH_FIELD_NUMBER: _builtins.int
+    POSITION_SWITCH_FIELD_NUMBER: _builtins.int
+    TELEMETRY_SWITCH_FIELD_NUMBER: _builtins.int
+    IAQ_SWITCH_FIELD_NUMBER: _builtins.int
+    NODE_NAME_FIELD_NUMBER: _builtins.int
+    chat_switch: _builtins.bool
     """
     Hightlight nodes w/ active chat
     """
-    position_switch: builtins.bool
+    position_switch: _builtins.bool
     """
     Highlight nodes w/ position
     """
-    telemetry_switch: builtins.bool
+    telemetry_switch: _builtins.bool
     """
     Highlight nodes w/ telemetry data
     """
-    iaq_switch: builtins.bool
+    iaq_switch: _builtins.bool
     """
     Highlight nodes w/ iaq data
     """
-    node_name: builtins.str
+    node_name: _builtins.str
     """
     Highlight nodes by matching name string
     """
     def __init__(
         self,
         *,
-        chat_switch: builtins.bool = ...,
-        position_switch: builtins.bool = ...,
-        telemetry_switch: builtins.bool = ...,
-        iaq_switch: builtins.bool = ...,
-        node_name: builtins.str = ...,
+        chat_switch: _builtins.bool = ...,
+        position_switch: _builtins.bool = ...,
+        telemetry_switch: _builtins.bool = ...,
+        iaq_switch: _builtins.bool = ...,
+        node_name: _builtins.str = ...,
     ) -> None: ...
-    def ClearField(self, field_name: typing.Literal["chat_switch", b"chat_switch", "iaq_switch", b"iaq_switch", "node_name", b"node_name", "position_switch", b"position_switch", "telemetry_switch", b"telemetry_switch"]) -> None: ...
+    _HasFieldArgType: _TypeAlias = _Never  # noqa: Y015
+    def HasField(self, field_name: _HasFieldArgType) -> _builtins.bool: ...
+    _ClearFieldArgType: _TypeAlias = _typing.Literal["chat_switch", b"chat_switch", "iaq_switch", b"iaq_switch", "node_name", b"node_name", "position_switch", b"position_switch", "telemetry_switch", b"telemetry_switch"]  # noqa: Y015
+    def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
+    def WhichOneof(self, oneof_group: _Never) -> None: ...
 
-global___NodeHighlight = NodeHighlight
+Global___NodeHighlight: _TypeAlias = NodeHighlight  # noqa: Y015
 
-@typing.final
-class GeoPoint(google.protobuf.message.Message):
-    DESCRIPTOR: google.protobuf.descriptor.Descriptor
+@_typing.final
+class GeoPoint(_message.Message):
+    DESCRIPTOR: _descriptor.Descriptor
 
-    ZOOM_FIELD_NUMBER: builtins.int
-    LATITUDE_FIELD_NUMBER: builtins.int
-    LONGITUDE_FIELD_NUMBER: builtins.int
-    zoom: builtins.int
+    ZOOM_FIELD_NUMBER: _builtins.int
+    LATITUDE_FIELD_NUMBER: _builtins.int
+    LONGITUDE_FIELD_NUMBER: _builtins.int
+    zoom: _builtins.int
     """
     Zoom level
     """
-    latitude: builtins.int
+    latitude: _builtins.int
     """
     Coordinate: latitude
     """
-    longitude: builtins.int
+    longitude: _builtins.int
     """
     Coordinate: longitude
     """
     def __init__(
         self,
         *,
-        zoom: builtins.int = ...,
-        latitude: builtins.int = ...,
-        longitude: builtins.int = ...,
+        zoom: _builtins.int = ...,
+        latitude: _builtins.int = ...,
+        longitude: _builtins.int = ...,
     ) -> None: ...
-    def ClearField(self, field_name: typing.Literal["latitude", b"latitude", "longitude", b"longitude", "zoom", b"zoom"]) -> None: ...
+    _HasFieldArgType: _TypeAlias = _Never  # noqa: Y015
+    def HasField(self, field_name: _HasFieldArgType) -> _builtins.bool: ...
+    _ClearFieldArgType: _TypeAlias = _typing.Literal["latitude", b"latitude", "longitude", b"longitude", "zoom", b"zoom"]  # noqa: Y015
+    def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
+    def WhichOneof(self, oneof_group: _Never) -> None: ...
 
-global___GeoPoint = GeoPoint
+Global___GeoPoint: _TypeAlias = GeoPoint  # noqa: Y015
 
-@typing.final
-class Map(google.protobuf.message.Message):
-    DESCRIPTOR: google.protobuf.descriptor.Descriptor
+@_typing.final
+class Map(_message.Message):
+    DESCRIPTOR: _descriptor.Descriptor
 
-    HOME_FIELD_NUMBER: builtins.int
-    STYLE_FIELD_NUMBER: builtins.int
-    FOLLOW_GPS_FIELD_NUMBER: builtins.int
-    style: builtins.str
+    HOME_FIELD_NUMBER: _builtins.int
+    STYLE_FIELD_NUMBER: _builtins.int
+    FOLLOW_GPS_FIELD_NUMBER: _builtins.int
+    style: _builtins.str
     """
     Map tile style
     """
-    follow_gps: builtins.bool
+    follow_gps: _builtins.bool
     """
     Map scroll follows GPS
     """
-    @property
-    def home(self) -> global___GeoPoint:
+    @_builtins.property
+    def home(self) -> Global___GeoPoint:
         """
         Home coordinates
         """
@@ -532,11 +654,14 @@ class Map(google.protobuf.message.Message):
     def __init__(
         self,
         *,
-        home: global___GeoPoint | None = ...,
-        style: builtins.str = ...,
-        follow_gps: builtins.bool = ...,
+        home: Global___GeoPoint | None = ...,
+        style: _builtins.str = ...,
+        follow_gps: _builtins.bool = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing.Literal["home", b"home"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["follow_gps", b"follow_gps", "home", b"home", "style", b"style"]) -> None: ...
+    _HasFieldArgType: _TypeAlias = _typing.Literal["home", b"home"]  # noqa: Y015
+    def HasField(self, field_name: _HasFieldArgType) -> _builtins.bool: ...
+    _ClearFieldArgType: _TypeAlias = _typing.Literal["follow_gps", b"follow_gps", "home", b"home", "style", b"style"]  # noqa: Y015
+    def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
+    def WhichOneof(self, oneof_group: _Never) -> None: ...
 
-global___Map = Map
+Global___Map: _TypeAlias = Map  # noqa: Y015

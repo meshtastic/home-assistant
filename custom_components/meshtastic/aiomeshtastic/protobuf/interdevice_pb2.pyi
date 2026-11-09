@@ -3,26 +3,26 @@
 isort:skip_file
 """
 
-import builtins
-import google.protobuf.descriptor
-import google.protobuf.internal.enum_type_wrapper
-import google.protobuf.message
+from google.protobuf import descriptor as _descriptor
+from google.protobuf import message as _message
+from google.protobuf.internal import enum_type_wrapper as _enum_type_wrapper
+import builtins as _builtins
 import sys
-import typing
+import typing as _typing
 
 if sys.version_info >= (3, 10):
-    import typing as typing_extensions
+    from typing import TypeAlias as _TypeAlias
 else:
-    import typing_extensions
+    from typing_extensions import TypeAlias as _TypeAlias
 
-DESCRIPTOR: google.protobuf.descriptor.FileDescriptor
+DESCRIPTOR: _descriptor.FileDescriptor
 
 class _MessageType:
-    ValueType = typing.NewType("ValueType", builtins.int)
-    V: typing_extensions.TypeAlias = ValueType
+    ValueType = _typing.NewType("ValueType", _builtins.int)
+    V: _TypeAlias = ValueType  # noqa: Y015
 
-class _MessageTypeEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[_MessageType.ValueType], builtins.type):
-    DESCRIPTOR: google.protobuf.descriptor.EnumDescriptor
+class _MessageTypeEnumTypeWrapper(_enum_type_wrapper._EnumTypeWrapper[_MessageType.ValueType], _builtins.type):
+    DESCRIPTOR: _descriptor.EnumDescriptor
     ACK: _MessageType.ValueType  # 0
     COLLECT_INTERVAL: _MessageType.ValueType  # 160
     """in ms"""
@@ -57,49 +57,57 @@ SCD41_CO2: MessageType.ValueType  # 178
 AHT20_TEMP: MessageType.ValueType  # 179
 AHT20_HUMIDITY: MessageType.ValueType  # 180
 TVOC_INDEX: MessageType.ValueType  # 181
-global___MessageType = MessageType
+Global___MessageType: _TypeAlias = MessageType  # noqa: Y015
 
-@typing.final
-class SensorData(google.protobuf.message.Message):
-    DESCRIPTOR: google.protobuf.descriptor.Descriptor
+@_typing.final
+class SensorData(_message.Message):
+    DESCRIPTOR: _descriptor.Descriptor
 
-    TYPE_FIELD_NUMBER: builtins.int
-    FLOAT_VALUE_FIELD_NUMBER: builtins.int
-    UINT32_VALUE_FIELD_NUMBER: builtins.int
-    type: global___MessageType.ValueType
+    TYPE_FIELD_NUMBER: _builtins.int
+    FLOAT_VALUE_FIELD_NUMBER: _builtins.int
+    UINT32_VALUE_FIELD_NUMBER: _builtins.int
+    type: Global___MessageType.ValueType
     """The message type"""
-    float_value: builtins.float
-    uint32_value: builtins.int
+    float_value: _builtins.float
+    uint32_value: _builtins.int
     def __init__(
         self,
         *,
-        type: global___MessageType.ValueType = ...,
-        float_value: builtins.float = ...,
-        uint32_value: builtins.int = ...,
+        type: Global___MessageType.ValueType = ...,
+        float_value: _builtins.float = ...,
+        uint32_value: _builtins.int = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing.Literal["data", b"data", "float_value", b"float_value", "uint32_value", b"uint32_value"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["data", b"data", "float_value", b"float_value", "type", b"type", "uint32_value", b"uint32_value"]) -> None: ...
-    def WhichOneof(self, oneof_group: typing.Literal["data", b"data"]) -> typing.Literal["float_value", "uint32_value"] | None: ...
+    _HasFieldArgType: _TypeAlias = _typing.Literal["data", b"data", "float_value", b"float_value", "uint32_value", b"uint32_value"]  # noqa: Y015
+    def HasField(self, field_name: _HasFieldArgType) -> _builtins.bool: ...
+    _ClearFieldArgType: _TypeAlias = _typing.Literal["data", b"data", "float_value", b"float_value", "type", b"type", "uint32_value", b"uint32_value"]  # noqa: Y015
+    def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
+    _WhichOneofReturnType_data: _TypeAlias = _typing.Literal["float_value", "uint32_value"]  # noqa: Y015
+    _WhichOneofArgType_data: _TypeAlias = _typing.Literal["data", b"data"]  # noqa: Y015
+    def WhichOneof(self, oneof_group: _WhichOneofArgType_data) -> _WhichOneofReturnType_data | None: ...
 
-global___SensorData = SensorData
+Global___SensorData: _TypeAlias = SensorData  # noqa: Y015
 
-@typing.final
-class InterdeviceMessage(google.protobuf.message.Message):
-    DESCRIPTOR: google.protobuf.descriptor.Descriptor
+@_typing.final
+class InterdeviceMessage(_message.Message):
+    DESCRIPTOR: _descriptor.Descriptor
 
-    NMEA_FIELD_NUMBER: builtins.int
-    SENSOR_FIELD_NUMBER: builtins.int
-    nmea: builtins.str
-    @property
-    def sensor(self) -> global___SensorData: ...
+    NMEA_FIELD_NUMBER: _builtins.int
+    SENSOR_FIELD_NUMBER: _builtins.int
+    nmea: _builtins.str
+    @_builtins.property
+    def sensor(self) -> Global___SensorData: ...
     def __init__(
         self,
         *,
-        nmea: builtins.str = ...,
-        sensor: global___SensorData | None = ...,
+        nmea: _builtins.str = ...,
+        sensor: Global___SensorData | None = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing.Literal["data", b"data", "nmea", b"nmea", "sensor", b"sensor"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["data", b"data", "nmea", b"nmea", "sensor", b"sensor"]) -> None: ...
-    def WhichOneof(self, oneof_group: typing.Literal["data", b"data"]) -> typing.Literal["nmea", "sensor"] | None: ...
+    _HasFieldArgType: _TypeAlias = _typing.Literal["data", b"data", "nmea", b"nmea", "sensor", b"sensor"]  # noqa: Y015
+    def HasField(self, field_name: _HasFieldArgType) -> _builtins.bool: ...
+    _ClearFieldArgType: _TypeAlias = _typing.Literal["data", b"data", "nmea", b"nmea", "sensor", b"sensor"]  # noqa: Y015
+    def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
+    _WhichOneofReturnType_data: _TypeAlias = _typing.Literal["nmea", "sensor"]  # noqa: Y015
+    _WhichOneofArgType_data: _TypeAlias = _typing.Literal["data", b"data"]  # noqa: Y015
+    def WhichOneof(self, oneof_group: _WhichOneofArgType_data) -> _WhichOneofReturnType_data | None: ...
 
-global___InterdeviceMessage = InterdeviceMessage
+Global___InterdeviceMessage: _TypeAlias = InterdeviceMessage  # noqa: Y015

@@ -26,14 +26,14 @@ from . import channel_pb2 as meshtastic_dot_aiomeshtastic_dot_protobuf_dot_chann
 from . import config_pb2 as meshtastic_dot_aiomeshtastic_dot_protobuf_dot_config__pb2
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n/meshtastic/aiomeshtastic/protobuf/apponly.proto\x12!meshtastic.aiomeshtastic.protobuf\x1a/meshtastic/aiomeshtastic/protobuf/channel.proto\x1a.meshtastic/aiomeshtastic/protobuf/config.proto\"\x9d\x01\n\nChannelSet\x12\x44\n\x08settings\x18\x01 \x03(\x0b\x32\x32.meshtastic.aiomeshtastic.protobuf.ChannelSettings\x12I\n\x0blora_config\x18\x02 \x01(\x0b\x32\x34.meshtastic.aiomeshtastic.protobuf.Config.LoRaConfigBb\n\x13\x63om.geeksville.meshB\rAppOnlyProtosZ\"github.com/meshtastic/go/generated\xaa\x02\x14Meshtastic.Protobufs\xba\x02\x00\x62\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n/meshtastic/aiomeshtastic/protobuf/apponly.proto\x12!meshtastic.aiomeshtastic.protobuf\x1a/meshtastic/aiomeshtastic/protobuf/channel.proto\x1a.meshtastic/aiomeshtastic/protobuf/config.proto\"\x9d\x01\n\nChannelSet\x12\x44\n\x08settings\x18\x01 \x03(\x0b\x32\x32.meshtastic.aiomeshtastic.protobuf.ChannelSettings\x12I\n\x0blora_config\x18\x02 \x01(\x0b\x32\x34.meshtastic.aiomeshtastic.protobuf.Config.LoRaConfigBc\n\x14org.meshtastic.protoB\rAppOnlyProtosZ\"github.com/meshtastic/go/generated\xaa\x02\x14Meshtastic.Protobufs\xba\x02\x00\x62\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
 _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'meshtastic.aiomeshtastic.protobuf.apponly_pb2', _globals)
 if not _descriptor._USE_C_DESCRIPTORS:
   _globals['DESCRIPTOR']._loaded_options = None
-  _globals['DESCRIPTOR']._serialized_options = b'\n\023com.geeksville.meshB\rAppOnlyProtosZ\"github.com/meshtastic/go/generated\252\002\024Meshtastic.Protobufs\272\002\000'
+  _globals['DESCRIPTOR']._serialized_options = b'\n\024org.meshtastic.protoB\rAppOnlyProtosZ\"github.com/meshtastic/go/generated\252\002\024Meshtastic.Protobufs\272\002\000'
   _globals['_CHANNELSET']._serialized_start=184
   _globals['_CHANNELSET']._serialized_end=341
 # @@protoc_insertion_point(module_scope)

@@ -3,34 +3,34 @@
 isort:skip_file
 """
 
-import builtins
-import google.protobuf.descriptor
-import google.protobuf.internal.enum_type_wrapper
-import google.protobuf.message
+from google.protobuf import descriptor as _descriptor
+from google.protobuf import message as _message
+from google.protobuf.internal import enum_type_wrapper as _enum_type_wrapper
+import builtins as _builtins
 import sys
-import typing
+import typing as _typing
 
-if sys.version_info >= (3, 10):
-    import typing as typing_extensions
+if sys.version_info >= (3, 11):
+    from typing import TypeAlias as _TypeAlias, Never as _Never
 else:
-    import typing_extensions
+    from typing_extensions import TypeAlias as _TypeAlias, Never as _Never
 
-DESCRIPTOR: google.protobuf.descriptor.FileDescriptor
+DESCRIPTOR: _descriptor.FileDescriptor
 
-@typing.final
-class StoreAndForward(google.protobuf.message.Message):
+@_typing.final
+class StoreAndForward(_message.Message):
     """
     TODO: REPLACE
     """
 
-    DESCRIPTOR: google.protobuf.descriptor.Descriptor
+    DESCRIPTOR: _descriptor.Descriptor
 
     class _RequestResponse:
-        ValueType = typing.NewType("ValueType", builtins.int)
-        V: typing_extensions.TypeAlias = ValueType
+        ValueType = _typing.NewType("ValueType", _builtins.int)
+        V: _TypeAlias = ValueType  # noqa: Y015
 
-    class _RequestResponseEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[StoreAndForward._RequestResponse.ValueType], builtins.type):
-        DESCRIPTOR: google.protobuf.descriptor.EnumDescriptor
+    class _RequestResponseEnumTypeWrapper(_enum_type_wrapper._EnumTypeWrapper[StoreAndForward._RequestResponse.ValueType], _builtins.type):
+        DESCRIPTOR: _descriptor.EnumDescriptor
         UNSET: StoreAndForward._RequestResponse.ValueType  # 0
         """
         Unset/unused
@@ -171,94 +171,98 @@ class StoreAndForward(google.protobuf.message.Message):
     Client has requested that the router abort processing the client's request
     """
 
-    @typing.final
-    class Statistics(google.protobuf.message.Message):
+    @_typing.final
+    class Statistics(_message.Message):
         """
         TODO: REPLACE
         """
 
-        DESCRIPTOR: google.protobuf.descriptor.Descriptor
+        DESCRIPTOR: _descriptor.Descriptor
 
-        MESSAGES_TOTAL_FIELD_NUMBER: builtins.int
-        MESSAGES_SAVED_FIELD_NUMBER: builtins.int
-        MESSAGES_MAX_FIELD_NUMBER: builtins.int
-        UP_TIME_FIELD_NUMBER: builtins.int
-        REQUESTS_FIELD_NUMBER: builtins.int
-        REQUESTS_HISTORY_FIELD_NUMBER: builtins.int
-        HEARTBEAT_FIELD_NUMBER: builtins.int
-        RETURN_MAX_FIELD_NUMBER: builtins.int
-        RETURN_WINDOW_FIELD_NUMBER: builtins.int
-        messages_total: builtins.int
+        MESSAGES_TOTAL_FIELD_NUMBER: _builtins.int
+        MESSAGES_SAVED_FIELD_NUMBER: _builtins.int
+        MESSAGES_MAX_FIELD_NUMBER: _builtins.int
+        UP_TIME_FIELD_NUMBER: _builtins.int
+        REQUESTS_FIELD_NUMBER: _builtins.int
+        REQUESTS_HISTORY_FIELD_NUMBER: _builtins.int
+        HEARTBEAT_FIELD_NUMBER: _builtins.int
+        RETURN_MAX_FIELD_NUMBER: _builtins.int
+        RETURN_WINDOW_FIELD_NUMBER: _builtins.int
+        messages_total: _builtins.int
         """
         Number of messages we have ever seen
         """
-        messages_saved: builtins.int
+        messages_saved: _builtins.int
         """
         Number of messages we have currently saved our history.
         """
-        messages_max: builtins.int
+        messages_max: _builtins.int
         """
         Maximum number of messages we will save
         """
-        up_time: builtins.int
+        up_time: _builtins.int
         """
         Router uptime in seconds
         """
-        requests: builtins.int
+        requests: _builtins.int
         """
         Number of times any client sent a request to the S&F.
         """
-        requests_history: builtins.int
+        requests_history: _builtins.int
         """
         Number of times the history was requested.
         """
-        heartbeat: builtins.bool
+        heartbeat: _builtins.bool
         """
         Is the heartbeat enabled on the server?
         """
-        return_max: builtins.int
+        return_max: _builtins.int
         """
         Maximum number of messages the server will return.
         """
-        return_window: builtins.int
+        return_window: _builtins.int
         """
         Maximum history window in minutes the server will return messages from.
         """
         def __init__(
             self,
             *,
-            messages_total: builtins.int = ...,
-            messages_saved: builtins.int = ...,
-            messages_max: builtins.int = ...,
-            up_time: builtins.int = ...,
-            requests: builtins.int = ...,
-            requests_history: builtins.int = ...,
-            heartbeat: builtins.bool = ...,
-            return_max: builtins.int = ...,
-            return_window: builtins.int = ...,
+            messages_total: _builtins.int = ...,
+            messages_saved: _builtins.int = ...,
+            messages_max: _builtins.int = ...,
+            up_time: _builtins.int = ...,
+            requests: _builtins.int = ...,
+            requests_history: _builtins.int = ...,
+            heartbeat: _builtins.bool = ...,
+            return_max: _builtins.int = ...,
+            return_window: _builtins.int = ...,
         ) -> None: ...
-        def ClearField(self, field_name: typing.Literal["heartbeat", b"heartbeat", "messages_max", b"messages_max", "messages_saved", b"messages_saved", "messages_total", b"messages_total", "requests", b"requests", "requests_history", b"requests_history", "return_max", b"return_max", "return_window", b"return_window", "up_time", b"up_time"]) -> None: ...
+        _HasFieldArgType: _TypeAlias = _Never  # noqa: Y015
+        def HasField(self, field_name: _HasFieldArgType) -> _builtins.bool: ...
+        _ClearFieldArgType: _TypeAlias = _typing.Literal["heartbeat", b"heartbeat", "messages_max", b"messages_max", "messages_saved", b"messages_saved", "messages_total", b"messages_total", "requests", b"requests", "requests_history", b"requests_history", "return_max", b"return_max", "return_window", b"return_window", "up_time", b"up_time"]  # noqa: Y015
+        def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
+        def WhichOneof(self, oneof_group: _Never) -> None: ...
 
-    @typing.final
-    class History(google.protobuf.message.Message):
+    @_typing.final
+    class History(_message.Message):
         """
         TODO: REPLACE
         """
 
-        DESCRIPTOR: google.protobuf.descriptor.Descriptor
+        DESCRIPTOR: _descriptor.Descriptor
 
-        HISTORY_MESSAGES_FIELD_NUMBER: builtins.int
-        WINDOW_FIELD_NUMBER: builtins.int
-        LAST_REQUEST_FIELD_NUMBER: builtins.int
-        history_messages: builtins.int
+        HISTORY_MESSAGES_FIELD_NUMBER: _builtins.int
+        WINDOW_FIELD_NUMBER: _builtins.int
+        LAST_REQUEST_FIELD_NUMBER: _builtins.int
+        history_messages: _builtins.int
         """
         Number of that will be sent to the client
         """
-        window: builtins.int
+        window: _builtins.int
         """
         The window of messages that was used to filter the history client requested
         """
-        last_request: builtins.int
+        last_request: _builtins.int
         """
         Index in the packet history of the last message sent in a previous request to the server.
         Will be sent to the client before sending the history and can be set in a subsequent request to avoid getting packets the server already sent to the client.
@@ -266,65 +270,73 @@ class StoreAndForward(google.protobuf.message.Message):
         def __init__(
             self,
             *,
-            history_messages: builtins.int = ...,
-            window: builtins.int = ...,
-            last_request: builtins.int = ...,
+            history_messages: _builtins.int = ...,
+            window: _builtins.int = ...,
+            last_request: _builtins.int = ...,
         ) -> None: ...
-        def ClearField(self, field_name: typing.Literal["history_messages", b"history_messages", "last_request", b"last_request", "window", b"window"]) -> None: ...
+        _HasFieldArgType: _TypeAlias = _Never  # noqa: Y015
+        def HasField(self, field_name: _HasFieldArgType) -> _builtins.bool: ...
+        _ClearFieldArgType: _TypeAlias = _typing.Literal["history_messages", b"history_messages", "last_request", b"last_request", "window", b"window"]  # noqa: Y015
+        def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
+        def WhichOneof(self, oneof_group: _Never) -> None: ...
 
-    @typing.final
-    class Heartbeat(google.protobuf.message.Message):
+    @_typing.final
+    class Heartbeat(_message.Message):
         """
         TODO: REPLACE
         """
 
-        DESCRIPTOR: google.protobuf.descriptor.Descriptor
+        DESCRIPTOR: _descriptor.Descriptor
 
-        PERIOD_FIELD_NUMBER: builtins.int
-        SECONDARY_FIELD_NUMBER: builtins.int
-        period: builtins.int
+        PERIOD_FIELD_NUMBER: _builtins.int
+        SECONDARY_FIELD_NUMBER: _builtins.int
+        period: _builtins.int
         """
         Period in seconds that the heartbeat is sent out that will be sent to the client
         """
-        secondary: builtins.int
+        secondary: _builtins.int
         """
         If set, this is not the primary Store & Forward router on the mesh
         """
         def __init__(
             self,
             *,
-            period: builtins.int = ...,
-            secondary: builtins.int = ...,
+            period: _builtins.int = ...,
+            secondary: _builtins.int = ...,
         ) -> None: ...
-        def ClearField(self, field_name: typing.Literal["period", b"period", "secondary", b"secondary"]) -> None: ...
+        _HasFieldArgType: _TypeAlias = _Never  # noqa: Y015
+        def HasField(self, field_name: _HasFieldArgType) -> _builtins.bool: ...
+        _ClearFieldArgType: _TypeAlias = _typing.Literal["period", b"period", "secondary", b"secondary"]  # noqa: Y015
+        def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
+        def WhichOneof(self, oneof_group: _Never) -> None: ...
 
-    RR_FIELD_NUMBER: builtins.int
-    STATS_FIELD_NUMBER: builtins.int
-    HISTORY_FIELD_NUMBER: builtins.int
-    HEARTBEAT_FIELD_NUMBER: builtins.int
-    TEXT_FIELD_NUMBER: builtins.int
-    rr: global___StoreAndForward.RequestResponse.ValueType
+    RR_FIELD_NUMBER: _builtins.int
+    STATS_FIELD_NUMBER: _builtins.int
+    HISTORY_FIELD_NUMBER: _builtins.int
+    HEARTBEAT_FIELD_NUMBER: _builtins.int
+    TEXT_FIELD_NUMBER: _builtins.int
+    rr: Global___StoreAndForward.RequestResponse.ValueType
     """
     TODO: REPLACE
     """
-    text: builtins.bytes
+    text: _builtins.bytes
     """
     Text from history message.
     """
-    @property
-    def stats(self) -> global___StoreAndForward.Statistics:
+    @_builtins.property
+    def stats(self) -> Global___StoreAndForward.Statistics:
         """
         TODO: REPLACE
         """
 
-    @property
-    def history(self) -> global___StoreAndForward.History:
+    @_builtins.property
+    def history(self) -> Global___StoreAndForward.History:
         """
         TODO: REPLACE
         """
 
-    @property
-    def heartbeat(self) -> global___StoreAndForward.Heartbeat:
+    @_builtins.property
+    def heartbeat(self) -> Global___StoreAndForward.Heartbeat:
         """
         TODO: REPLACE
         """
@@ -332,14 +344,18 @@ class StoreAndForward(google.protobuf.message.Message):
     def __init__(
         self,
         *,
-        rr: global___StoreAndForward.RequestResponse.ValueType = ...,
-        stats: global___StoreAndForward.Statistics | None = ...,
-        history: global___StoreAndForward.History | None = ...,
-        heartbeat: global___StoreAndForward.Heartbeat | None = ...,
-        text: builtins.bytes = ...,
+        rr: Global___StoreAndForward.RequestResponse.ValueType = ...,
+        stats: Global___StoreAndForward.Statistics | None = ...,
+        history: Global___StoreAndForward.History | None = ...,
+        heartbeat: Global___StoreAndForward.Heartbeat | None = ...,
+        text: _builtins.bytes = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing.Literal["heartbeat", b"heartbeat", "history", b"history", "stats", b"stats", "text", b"text", "variant", b"variant"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["heartbeat", b"heartbeat", "history", b"history", "rr", b"rr", "stats", b"stats", "text", b"text", "variant", b"variant"]) -> None: ...
-    def WhichOneof(self, oneof_group: typing.Literal["variant", b"variant"]) -> typing.Literal["stats", "history", "heartbeat", "text"] | None: ...
+    _HasFieldArgType: _TypeAlias = _typing.Literal["heartbeat", b"heartbeat", "history", b"history", "stats", b"stats", "text", b"text", "variant", b"variant"]  # noqa: Y015
+    def HasField(self, field_name: _HasFieldArgType) -> _builtins.bool: ...
+    _ClearFieldArgType: _TypeAlias = _typing.Literal["heartbeat", b"heartbeat", "history", b"history", "rr", b"rr", "stats", b"stats", "text", b"text", "variant", b"variant"]  # noqa: Y015
+    def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
+    _WhichOneofReturnType_variant: _TypeAlias = _typing.Literal["stats", "history", "heartbeat", "text"]  # noqa: Y015
+    _WhichOneofArgType_variant: _TypeAlias = _typing.Literal["variant", b"variant"]  # noqa: Y015
+    def WhichOneof(self, oneof_group: _WhichOneofArgType_variant) -> _WhichOneofReturnType_variant | None: ...
 
-global___StoreAndForward = StoreAndForward
+Global___StoreAndForward: _TypeAlias = StoreAndForward  # noqa: Y015
