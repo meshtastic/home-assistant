@@ -29,7 +29,14 @@ from .api import (
 from .const import (
     DOMAIN,
     EVENT_MESHTASTIC_DOMAIN_EVENT,
+    EVENT_MESHTASTIC_DOMAIN_EVENT_DATA_ATTR_CHANNEL_NAME,
+    EVENT_MESHTASTIC_DOMAIN_EVENT_DATA_ATTR_HOP_COUNT,
     EVENT_MESHTASTIC_DOMAIN_EVENT_DATA_ATTR_MESSAGE,
+    EVENT_MESHTASTIC_DOMAIN_EVENT_DATA_ATTR_RX_RSSI,
+    EVENT_MESHTASTIC_DOMAIN_EVENT_DATA_ATTR_RX_SNR,
+    EVENT_MESHTASTIC_DOMAIN_EVENT_DATA_ATTR_SENDER_ID,
+    EVENT_MESHTASTIC_DOMAIN_EVENT_DATA_ATTR_SENDER_LONG_NAME,
+    EVENT_MESHTASTIC_DOMAIN_EVENT_DATA_ATTR_SENDER_SHORT_NAME,
     EVENT_MESHTASTIC_DOMAIN_MESSAGE_LOG,
     EVENT_MESHTASTIC_MESSAGE_LOG_EVENT_DATA_ATTR_FROM_NAME,
     EVENT_MESHTASTIC_MESSAGE_LOG_EVENT_DATA_ATTR_MESSAGE,
@@ -135,6 +142,9 @@ async def async_setup_message_logger(hass: HomeAssistant, entry: MeshtasticConfi
             config_entry_id, gateway_node_id, to, to_device
         )
         message = data["message"]
+        rx_snr = data.get("rx_snr")
+        rx_rssi = data.get("rx_rssi")
+        hop_count = data.get("hop_count")
 
         if produce_domain_event:
             if from_device:
@@ -143,21 +153,55 @@ async def async_setup_message_logger(hass: HomeAssistant, entry: MeshtasticConfi
                     CONF_TYPE: MeshtasticDomainEventType.MESSAGE_SENT,
                     EVENT_MESHTASTIC_DOMAIN_EVENT_DATA_ATTR_MESSAGE: message,
                 }
+                # Add signal quality metrics if available
+                if rx_snr is not None:
+                    domain_event_data[EVENT_MESHTASTIC_DOMAIN_EVENT_DATA_ATTR_RX_SNR] = rx_snr
+                if rx_rssi is not None:
+                    domain_event_data[EVENT_MESHTASTIC_DOMAIN_EVENT_DATA_ATTR_RX_RSSI] = rx_rssi
+                if hop_count is not None:
+                    domain_event_data[EVENT_MESHTASTIC_DOMAIN_EVENT_DATA_ATTR_HOP_COUNT] = hop_count
                 if to_channel_entity_id:
                     domain_event_data[CONF_ENTITY_ID] = to_channel_entity_id
+                    # Add channel name if available
+                    if channel_entity := entity_registry.entities.get(to_channel_entity_id):
+                        domain_event_data[EVENT_MESHTASTIC_DOMAIN_EVENT_DATA_ATTR_CHANNEL_NAME] = (
+                            channel_entity.name or channel_entity.original_name
+                        )
                 if to_dm_entity_id:
                     domain_event_data[CONF_ENTITY_ID] = to_dm_entity_id
                 hass.bus.async_fire(event_type=EVENT_MESHTASTIC_DOMAIN_EVENT, event_data=domain_event_data)
 
             if to_device:
+                # Get sender node info
+                sender_node_info = entry.runtime_data.client.get_node_info(int(from_node_id))
+
                 domain_event_data: MeshtasticDomainEventData = {
                     CONF_DEVICE_ID: to_device.id,
                     CONF_TYPE: MeshtasticDomainEventType.MESSAGE_RECEIVED,
                     EVENT_MESHTASTIC_DOMAIN_EVENT_DATA_ATTR_MESSAGE: message,
                 }
 
+                # Add sender information if available
+                if sender_node_info:
+                    domain_event_data[EVENT_MESHTASTIC_DOMAIN_EVENT_DATA_ATTR_SENDER_SHORT_NAME] = sender_node_info.short_name
+                    domain_event_data[EVENT_MESHTASTIC_DOMAIN_EVENT_DATA_ATTR_SENDER_LONG_NAME] = sender_node_info.long_name
+                    domain_event_data[EVENT_MESHTASTIC_DOMAIN_EVENT_DATA_ATTR_SENDER_ID] = sender_node_info.user_id
+
+                # Add signal quality metrics if available
+                if rx_snr is not None:
+                    domain_event_data[EVENT_MESHTASTIC_DOMAIN_EVENT_DATA_ATTR_RX_SNR] = rx_snr
+                if rx_rssi is not None:
+                    domain_event_data[EVENT_MESHTASTIC_DOMAIN_EVENT_DATA_ATTR_RX_RSSI] = rx_rssi
+                if hop_count is not None:
+                    domain_event_data[EVENT_MESHTASTIC_DOMAIN_EVENT_DATA_ATTR_HOP_COUNT] = hop_count
+
                 if to_channel_entity_id:
                     domain_event_data[CONF_ENTITY_ID] = to_channel_entity_id
+                    # Add channel name if available
+                    if channel_entity := entity_registry.entities.get(to_channel_entity_id):
+                        domain_event_data[EVENT_MESHTASTIC_DOMAIN_EVENT_DATA_ATTR_CHANNEL_NAME] = (
+                            channel_entity.name or channel_entity.original_name
+                        )
                 if to_dm_entity_id:
                     domain_event_data[CONF_ENTITY_ID] = to_dm_entity_id
 

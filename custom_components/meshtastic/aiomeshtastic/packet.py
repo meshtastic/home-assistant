@@ -32,6 +32,25 @@ class Packet[T]:
         return self.mesh_packet.rx_snr if self.mesh_packet is not None else None
 
     @property
+    def rx_rssi(self) -> int | None:
+        return self.mesh_packet.rx_rssi if self.mesh_packet is not None else None
+
+    @property
+    def hop_start(self) -> int | None:
+        return self.mesh_packet.hop_start if self.mesh_packet is not None else None
+
+    @property
+    def hop_limit(self) -> int | None:
+        return self.mesh_packet.hop_limit if self.mesh_packet is not None else None
+
+    @property
+    def hop_count(self) -> int | None:
+        """Calculate how many hops this packet traveled (hop_start - hop_limit)."""
+        if self.mesh_packet is not None and self.hop_start is not None and self.hop_limit is not None:
+            return self.hop_start - self.hop_limit
+        return None
+
+    @property
     def to_id(self) -> int | None:
         return self.mesh_packet.to if self.mesh_packet is not None else None
 
