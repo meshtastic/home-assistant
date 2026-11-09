@@ -46,8 +46,9 @@ $SEDCMD 's/\(meshtastic\./(meshtastic.aiomeshtastic.protobuf./g' "${INDIR}/"*.pr
 # adjust nanopb
 $SEDCMD 's/^import "nanopb.proto";/import "meshtastic\/aiomeshtastic\/protobuf\/nanopb.proto";/' "${INDIR}/"*.proto
 
-# Generate the python files
-protoc -I="$TMPDIR/in" --python_out "${OUTDIR}" "--mypy_out=${PYIDIR}" "${INDIR}/"*.proto
+# Generate the python files; grpcio-tools from requirements.protobuf.txt provides protoc as a module
+PROTOC="${PROTOC:-python3 -m grpc_tools.protoc}"
+$PROTOC -I="$TMPDIR/in" --python_out "${OUTDIR}" "--mypy_out=${PYIDIR}" "${INDIR}/"*.proto
 
 # Change to relative imports
 $SEDCMD 's/^from meshtastic.aiomeshtastic.protobuf import/from . import/' "${OUTDIR}/meshtastic/aiomeshtastic/protobuf/"*pb2*.py
@@ -61,6 +62,10 @@ $SEDCMD 's/\[meshtastic.aiomeshtastic.protobuf./[/' "${OUTDIR}/meshtastic/aiomes
 PROTOBUF_VERSION=$(cd "${PWD}/protobufs" && git tag --points-at HEAD | sed 's/v\(.*\)/\1/')
 # Create a __init__.py in the out directory with protobuf version
 cat <<EOT > "${OUTDIR}/meshtastic/aiomeshtastic/protobuf/__init__.py"
+# SPDX-FileCopyrightText: 2024-2025 Pascal Brogle @broglep
+#
+# SPDX-License-Identifier: MIT
+
 __version__ = "$PROTOBUF_VERSION"
 EOT
 
