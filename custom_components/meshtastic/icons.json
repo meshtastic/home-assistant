@@ -1,4 +1,106 @@
 {
+  "entity": {
+    "sensor": {
+      "node_last_heard": {
+        "default": "mdi:timeline-clock"
+      },
+      "node_snr": {
+        "default": "mdi:signal"
+      },
+      "node_hops_away": {
+        "default": "mdi:rabbit"
+      },
+      "node_role": {
+        "default": "mdi:card-account-details"
+      },
+      "node_short_name": {
+        "default": "mdi:card-account-details"
+      },
+      "node_long_name": {
+        "default": "mdi:card-account-details"
+      },
+      "device_uptime": {
+        "default": "mdi:progress-clock"
+      },
+      "device_channel_utilization": {
+        "default": "mdi:signal-distance-variant"
+      },
+      "device_airtime": {
+        "default": "mdi:timer"
+      },
+      "stats_packets_tx": {
+        "default": "mdi:call-made"
+      },
+      "stats_packets_rx": {
+        "default": "mdi:call-received"
+      },
+      "stats_packets_rx_bad": {
+        "default": "mdi:call-missed"
+      },
+      "stats_packets_rx_duplicate": {
+        "default": "mdi:call-split"
+      },
+      "stats_packets_tx_relayed": {
+        "default": "mdi:call-missed"
+      },
+      "stats_packets_tx_relay_cancelled": {
+        "default": "mdi:call-missed"
+      },
+      "stats_nodes_online": {
+        "default": "mdi:radio-handheld"
+      },
+      "stats_nodes_total": {
+        "default": "mdi:radio-handheld"
+      },
+      "stats_heap_total_bytes": {
+        "default": "mdi:memory"
+      },
+      "stats_heap_free_bytes": {
+        "default": "mdi:memory"
+      },
+      "stats_noise_floor": {
+        "default": "mdi:signal"
+      }
+    },
+    "binary_sensor": {
+      "node_heard_on_current_lora": {
+        "default": "mdi:radio-tower"
+      },
+      "node_has_xeddsa_signed": {
+        "default": "mdi:draw-pen"
+      }
+    },
+    "text": {
+      "node_role": {
+        "default": "mdi:card-account-details"
+      },
+      "node_short_name": {
+        "default": "mdi:card-account-details"
+      },
+      "node_long_name": {
+        "default": "mdi:card-account-details"
+      }
+    },
+    "notify": {
+      "mesh_node": {
+        "default": "mdi:radio-handheld"
+      },
+      "mesh_channel": {
+        "default": "mdi:forum"
+      }
+    },
+    "meshtastic": {
+      "gateway": {
+        "default": "mdi:radio-handheld"
+      },
+      "channel": {
+        "default": "mdi:forum"
+      },
+      "direct_messages": {
+        "default": "mdi:message-lock"
+      }
+    }
+  },
   "services": {
     "send_text": {
       "service": "mdi:message"

@@ -11,7 +11,6 @@ https://github.com/meshtastic/home-assistant
 
 from __future__ import annotations
 
-import asyncio
 import base64
 import contextlib
 import datetime
@@ -19,7 +18,6 @@ from collections import defaultdict
 from collections.abc import Callable
 from typing import TYPE_CHECKING, Any, cast
 
-from homeassistant import config_entries
 from homeassistant.components.logbook import DOMAIN as LOGBOOK_DOMAIN
 from homeassistant.config_entries import ConfigEntryState
 from homeassistant.const import (
@@ -445,23 +443,26 @@ async def async_unload_entry(
     return unload_ok
 
 
-_reload_lock = asyncio.Lock()
-
-
 async def async_reload_entry(
     hass: HomeAssistant,
     entry: MeshtasticConfigEntry,
 ) -> None:
-    async with _reload_lock:
-        token = None
-        if config_entries.current_entry.get() is None:
-            token = config_entries.current_entry.set(entry)
-        try:
-            await async_unload_entry(hass, entry)
-            await async_setup_entry(hass, entry)
-        finally:
-            if token:
-                config_entries.current_entry.reset(token)
+    await hass.config_entries.async_reload(entry.entry_id)
+
+
+async def async_remove_config_entry_device(
+    hass: HomeAssistant,  # noqa: ARG001
+    entry: MeshtasticConfigEntry,
+    device_entry: dr.DeviceEntry,
+) -> bool:
+    """Allow deleting a node device unless it is the gateway or a node the entry still selects."""
+    kept_nodes = {str(el["id"]) for el in entry.options.get(CONF_OPTION_FILTER_NODES, [])}
+    if entry.runtime_data is not None:
+        kept_nodes.add(str(entry.runtime_data.gateway_node["num"]))
+    elif entry.unique_id is not None:
+        kept_nodes.add(entry.unique_id)
+
+    return not any(domain == DOMAIN and node in kept_nodes for domain, node in device_entry.identifiers)
 
 
 async def async_migrate_entry(hass: HomeAssistant, config_entry: MeshtasticConfigEntry) -> bool:

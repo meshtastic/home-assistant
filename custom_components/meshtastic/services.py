@@ -136,8 +136,7 @@ async def async_setup_services(hass: HomeAssistant) -> None:
             if res != _SERVICE_CANT_HANDLE_RESPONSE:
                 return res
 
-        msg = "No gateway could handle the request"
-        raise ServiceValidationError(msg)
+        raise ServiceValidationError(translation_domain=DOMAIN, translation_key="no_gateway_for_request")
 
     services = hass.services.async_services_for_domain(DOMAIN)
 
@@ -194,21 +193,30 @@ async def _build_default_handler(  # noqa: PLR0915
     def _convert_device_id_to_node_id(device_id: str) -> int:
         device = device_registry.async_get(device_id)
         if device is None:
-            msg = f"No device found with id {device_id}"
-            raise ServiceValidationError(msg)
+            raise ServiceValidationError(
+                translation_domain=DOMAIN,
+                translation_key="device_not_found",
+                translation_placeholders={"device_id": device_id},
+            )
 
         return next((int(i[1]) for i in device.identifiers if i[0] == DOMAIN), None)
 
     def _convert_entity_to_channel_index(entity_id: str) -> int:
         entity = entity_registry.async_get(entity_id)
         if entity is None:
-            msg = f"No entity found with id {entity_id}"
-            raise ServiceValidationError(msg)
+            raise ServiceValidationError(
+                translation_domain=DOMAIN,
+                translation_key="entity_not_found",
+                translation_placeholders={"entity_id": entity_id},
+            )
 
         channel_entity = hass.data[DATA_COMPONENT].get_entity(entity.entity_id)
         if channel_entity is None:
-            msg = f"No entity found with id {entity.entity_id}"
-            raise ServiceValidationError(msg)
+            raise ServiceValidationError(
+                translation_domain=DOMAIN,
+                translation_key="entity_not_found",
+                translation_placeholders={"entity_id": entity.entity_id},
+            )
 
         return channel_entity.extra_state_attributes[STATE_ATTRIBUTE_CHANNEL_INDEX]
 
@@ -261,8 +269,7 @@ async def _build_default_handler(  # noqa: PLR0915
             raise
         except Exception as e:
             LOGGER.warning("Error handling service call", exc_info=True)
-            msg = "Unhandled exception while handling service call"
-            raise ServiceValidationError(msg) from e
+            raise ServiceValidationError(translation_domain=DOMAIN, translation_key="service_call_failed") from e
 
     return handle_service_call
 
@@ -277,13 +284,15 @@ async def _setup_service_send_direct_message_handler(
         device_id = call.data[ATTR_SERVICE_DATA_TO]
         device_entry = device_registry.async_get(device_id)
         if device_entry is None:
-            msg = f"No device found with id {device_id}"
-            raise ServiceValidationError(msg)
+            raise ServiceValidationError(
+                translation_domain=DOMAIN,
+                translation_key="device_not_found",
+                translation_placeholders={"device_id": device_id},
+            )
 
         to_node_id = next((int(i[1]) for i in device_entry.identifiers if i[0] == DOMAIN), None)
         if to_node_id == gateway_node["num"]:
-            msg = "Can't send direct message to oneself"
-            raise ServiceValidationError(msg)
+            raise ServiceValidationError(translation_domain=DOMAIN, translation_key="direct_message_to_self")
 
         if device_entry.via_device_id:
             gateway_device_entry = device_registry.async_get(device_entry.via_device_id)
@@ -314,13 +323,19 @@ async def _setup_service_broadcast_channel_message_handler(
         channel = call.data[ATTR_SERVICE_BROADCAST_CHANNEL_MESSAGE_DATA_CHANNEL]
         entity_entry = entity_registry.async_get(channel)
         if entity_entry is None:
-            msg = f"No entity found with id {channel}"
-            raise ServiceValidationError(msg)
+            raise ServiceValidationError(
+                translation_domain=DOMAIN,
+                translation_key="entity_not_found",
+                translation_placeholders={"entity_id": channel},
+            )
 
         channel_entity = hass.data[DATA_COMPONENT].get_entity(entity_entry.entity_id)
         if channel_entity is None:
-            msg = f"No entity found with id {entity_entry.entity_id}"
-            raise ServiceValidationError(msg)
+            raise ServiceValidationError(
+                translation_domain=DOMAIN,
+                translation_key="entity_not_found",
+                translation_placeholders={"entity_id": entity_entry.entity_id},
+            )
 
         gateway_node_id = channel_entity.extra_state_attributes[STATE_ATTRIBUTE_CHANNEL_NODE]
         if gateway_node_id != gateway_node["num"]:

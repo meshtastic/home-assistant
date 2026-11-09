@@ -15,6 +15,7 @@ from homeassistant.components.text import (
     TextEntity,
     TextEntityDescription,
 )
+from homeassistant.const import EntityCategory
 
 from . import helpers
 from .entity import MeshtasticNodeEntity
@@ -30,6 +31,9 @@ if TYPE_CHECKING:
     from .data import MeshtasticConfigEntry, MeshtasticData
 
 
+PARALLEL_UPDATES = 0
+
+
 def _build_texts(nodes: Mapping[int, Mapping[str, Any]], runtime_data: MeshtasticData) -> Iterable[MeshtasticText]:
     coordinator = runtime_data.coordinator
     gateway = runtime_data.client.get_own_node()
@@ -39,7 +43,7 @@ def _build_texts(nodes: Mapping[int, Mapping[str, Any]], runtime_data: Meshtasti
             coordinator=coordinator,
             entity_description=MeshtasticTextEntityDescription(
                 key="node_role",
-                icon="mdi:card-account-details",
+                entity_category=EntityCategory.DIAGNOSTIC,
                 value_fn=lambda device: device.coordinator.data[device.node_id].get("user", {}).get("role", None),
                 attributes_fn=lambda device: dict(
                     device_role_attributes(device.coordinator.data[device.node_id].get("user", {}).get("role", None))
@@ -55,7 +59,7 @@ def _build_texts(nodes: Mapping[int, Mapping[str, Any]], runtime_data: Meshtasti
             coordinator=coordinator,
             entity_description=MeshtasticTextEntityDescription(
                 key="node_short_name",
-                icon="mdi:card-account-details",
+                entity_category=EntityCategory.DIAGNOSTIC,
                 value_fn=lambda device: device.coordinator.data[device.node_id].get("user", {}).get("shortName", None),
             ),
             gateway=gateway,
@@ -69,7 +73,7 @@ def _build_texts(nodes: Mapping[int, Mapping[str, Any]], runtime_data: Meshtasti
             coordinator=coordinator,
             entity_description=MeshtasticTextEntityDescription(
                 key="node_long_name",
-                icon="mdi:card-account-details",
+                entity_category=EntityCategory.DIAGNOSTIC,
                 value_fn=lambda device: device.coordinator.data[device.node_id].get("user", {}).get("longName", None),
             ),
             gateway=gateway,

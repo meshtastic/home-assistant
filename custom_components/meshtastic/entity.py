@@ -66,7 +66,7 @@ def _gateway_short_prefix(short_name: str, long_name: str) -> str:
 
 
 class GatewayEntity(MeshtasticEntity):
-    _attr_icon = "mdi:radio-handheld"
+    _attr_translation_key = "gateway"
 
     def __init__(  # noqa: PLR0913
         self,
@@ -113,8 +113,6 @@ class GatewayEntity(MeshtasticEntity):
 
 
 class GatewayChannelEntity(MeshtasticEntity):
-    _attr_icon = "mdi:forum"
-
     @staticmethod
     def build_unique_id(
         config_entry_id: str,
@@ -179,7 +177,6 @@ class GatewayChannelEntity(MeshtasticEntity):
 
 
 class GatewayDirectMessageEntity(MeshtasticEntity):
-    _attr_icon = "mdi:message-lock"
     _attr_translation_key = "direct_messages"
     _attr_has_entity_name = True
     _attr_should_poll = False
