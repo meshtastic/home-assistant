@@ -522,21 +522,32 @@ class MeshtasticApiClient:
             response = await self._interface.request_telemetry(node, telemetry_type=telemetry_type)
             return self._message_to_dict(response)
         except MeshRoutingError as e:
-            msg = f"No response for {telemetry_type}"
-            raise MeshtasticApiClientError(msg) from e
+            raise MeshtasticApiClientError(
+                translation_domain=DOMAIN,
+                translation_key="no_telemetry_response",
+                translation_placeholders={"telemetry_type": str(telemetry_type)},
+            ) from e
         except MeshtasticError as e:
-            raise MeshtasticApiClientError(str(e)) from e
+            raise self._request_failed(e) from e
 
     async def request_position(self, node: int) -> Mapping[str, Any]:
         try:
             response = await self._interface.request_position(node)
             return self._message_to_dict(response)
         except MeshtasticError as e:
-            raise MeshtasticApiClientError(str(e)) from e
+            raise self._request_failed(e) from e
 
     async def request_traceroute(self, node: int) -> Mapping[str, Any]:
         try:
             response = await self._interface.request_traceroute(node)
             return self._message_to_dict(response)
         except MeshtasticError as e:
-            raise MeshtasticApiClientError(str(e)) from e
+            raise self._request_failed(e) from e
+
+    @staticmethod
+    def _request_failed(error: MeshtasticError) -> MeshtasticApiClientError:
+        return MeshtasticApiClientError(
+            translation_domain=DOMAIN,
+            translation_key="request_failed",
+            translation_placeholders={"error": str(error)},
+        )
