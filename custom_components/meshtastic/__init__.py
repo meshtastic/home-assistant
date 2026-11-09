@@ -37,6 +37,7 @@ from homeassistant.helpers.typing import UNDEFINED, ConfigType
 from homeassistant.loader import async_get_loaded_integration
 
 from . import frontend, meshtastic_web, services
+from .aiomeshtastic.interface import ConnectionState
 from .api import (
     MeshtasticApiClient,
 )
@@ -169,6 +170,10 @@ async def _async_setup_connected_entry(
         coordinator=coordinator,
         gateway_node=gateway_node,
     )
+
+    entry.async_on_unload(client.add_connection_state_listener(coordinator.async_connection_state_changed))
+    if client.connection_state != ConnectionState.CONNECTED:
+        coordinator.async_connection_state_changed(client.connection_state)
 
     if entry.state == ConfigEntryState.SETUP_IN_PROGRESS:
         await coordinator.async_config_entry_first_refresh()

@@ -45,13 +45,13 @@ from .const import (
 )
 
 if TYPE_CHECKING:
-    from collections.abc import Coroutine, Mapping, MutableMapping
+    from collections.abc import Callable, Coroutine, Mapping, MutableMapping
     from types import MappingProxyType, TracebackType
 
     from google.protobuf.message import Message
     from homeassistant.core import HomeAssistant
 
-    from .aiomeshtastic.interface import MeshNode, TelemetryType
+    from .aiomeshtastic.interface import ConnectionState, MeshNode, TelemetryType
     from .aiomeshtastic.packet import Packet
 
 _LOGGER = LOGGER.getChild(__name__)
@@ -193,6 +193,13 @@ class MeshtasticApiClient:
             await self._interface.stop()
         except Exception as e:
             raise MeshtasticApiClientCommunicationError from e
+
+    @property
+    def connection_state(self) -> ConnectionState:
+        return self._interface.connection_state
+
+    def add_connection_state_listener(self, listener: Callable[[ConnectionState], None]) -> Callable[[], None]:
+        return self._interface.add_connection_state_listener(listener)
 
     async def async_get_channels(self) -> list[Mapping[str, Any]]:
         if not await self._interface.connected_node_ready():

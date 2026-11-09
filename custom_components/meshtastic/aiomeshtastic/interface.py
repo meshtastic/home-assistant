@@ -113,6 +113,13 @@ class TelemetryType(enum.StrEnum):
     AIR_QUALITY_METRICS = "air_quality_metrics"
 
 
+class ConnectionState(enum.StrEnum):
+    CONNECTED = "connected"
+    RECONNECTING = "reconnecting"
+    # still retrying, but the fast backoff ladder is exhausted
+    FAILED = "failed"
+
+
 class MeshInterface:
     PKC_CHANNEL_INDEX = 8
 
@@ -170,6 +177,8 @@ class MeshInterface:
             defaultdict(list)
         )
         self._previous_reconnects = deque(maxlen=10)
+        self._connection_state = ConnectionState.CONNECTED
+        self._connection_state_listeners: list[Callable[[ConnectionState], None]] = []
 
         # MQTT client for persistent connection
         self._mqtt_proxy_enabled = enable_mqtt_proxy
@@ -205,6 +214,30 @@ class MeshInterface:
 
         self._app_listeners[packet_type].append(wrapper)
         return lambda: self._app_listeners[packet_type].remove(wrapper)
+
+    @property
+    def connection_state(self) -> ConnectionState:
+        return self._connection_state
+
+    def add_connection_state_listener(self, listener: Callable[[ConnectionState], None]) -> Callable[[], None]:
+        """Call listener on every change of the connection state; returns the remover."""
+        self._connection_state_listeners.append(listener)
+
+        def remove() -> None:
+            with contextlib.suppress(ValueError):
+                self._connection_state_listeners.remove(listener)
+
+        return remove
+
+    def _set_connection_state(self, state: ConnectionState) -> None:
+        if state == self._connection_state:
+            return
+        self._connection_state = state
+        for listener in list(self._connection_state_listeners):
+            try:
+                listener(state)
+            except Exception:
+                self._logger.exception("Connection state listener failed")
 
     def nodes(self) -> Mapping[int, Mapping[str, Any]]:
         return MappingProxyType(self._node_database)
@@ -765,22 +798,27 @@ class MeshInterface:
                 except Exception:  # noqa: BLE001
                     await self._reconnect_while_running()
 
-    async def _reconnect_while_running(self, *, force: bool = False) -> None:  # noqa: PLR0915
+    async def _reconnect_while_running(self, *, force: bool = False) -> None:  # noqa: PLR0912, PLR0915
         force_reconnect = force
         reconnect_counter_max = 6
         reconnect_counter = -1
+        if self.is_running:
+            self._set_connection_state(ConnectionState.RECONNECTING)
         now = datetime.datetime.now(tz=datetime.UTC)
         self._previous_reconnects.append(now)
         recent_reconnects = [t for t in self._previous_reconnects if (now - t) <= datetime.timedelta(seconds=30)]
         if len(recent_reconnects) >= reconnect_counter_max:
             backoff = float(random.randint(30, 60))  # noqa: S311
             self._logger.debug("Too many reconnects in last 30 seconds, waiting %.0f seconds", backoff)
+            self._set_connection_state(ConnectionState.FAILED)
             await asyncio.sleep(backoff)
             force_reconnect = True
 
         while self.is_running:
             if reconnect_counter < reconnect_counter_max:
                 reconnect_counter += 1
+            else:
+                self._set_connection_state(ConnectionState.FAILED)
             reconnect_delay = float(random.randint(2**reconnect_counter, 2 ** (reconnect_counter + 1)))  # noqa: S311
 
             try:
@@ -822,6 +860,7 @@ class MeshInterface:
                     else:
                         force_reconnect = False
                         self._logger.debug("Reconnect finished")
+                        self._set_connection_state(ConnectionState.CONNECTED)
                         self._reconnect_done.set()
                         return
 
