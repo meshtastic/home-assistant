@@ -42,7 +42,6 @@ def _build_binary_sensors(
             coordinator=coordinator,
             entity_description=MeshtasticBinarySensorEntityDescription(
                 key="device_powered",
-                name="Powered",
                 icon="mdi:power-plug",
                 device_class=BinarySensorDeviceClass.POWER,
                 exists_fn=lambda device: (
@@ -64,7 +63,6 @@ def _build_binary_sensors(
             coordinator=coordinator,
             entity_description=MeshtasticBinarySensorEntityDescription(
                 key=key,
-                name=name,
                 icon=icon,
                 entity_category=EntityCategory.DIAGNOSTIC,
                 exists_fn=lambda _device: True,
@@ -73,9 +71,9 @@ def _build_binary_sensors(
             gateway=gateway,
             node_id=node_id,
         )
-        for key, name, icon, field in (
-            ("node_heard_on_current_lora", "Heard on current LoRa", "mdi:radio-tower", "heardOnCurrentLora"),
-            ("node_has_xeddsa_signed", "Has signed packets", "mdi:draw-pen", "hasXeddsaSigned"),
+        for key, icon, field in (
+            ("node_heard_on_current_lora", "mdi:radio-tower", "heardOnCurrentLora"),
+            ("node_has_xeddsa_signed", "mdi:draw-pen", "hasXeddsaSigned"),
         )
         for node_id, node_info in nodes.items()
         if node_id != runtime_data.gateway_node["num"]
