@@ -16,17 +16,11 @@ jobs:
         - name: "Checkout the repository"
           uses: "actions/checkout@v7.0.1"
 
-        - name: "Set up Python"
-          uses: actions/setup-python@v7.0.0
+        - name: "Set up uv"
+          uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
           with:
             python-version: "3.14"
-            cache: "pip"
-            cache-dependency-path: |
-              requirements.txt
-              requirements.test.txt
-
-        - name: "Install requirements"
-          run: python3 -m pip install -r requirements.txt -r requirements.test.txt
+            enable-cache: true
 
         - name: "Test"
-          run: python3 -m pytest tests
+          run: uv run --group dev --group test python -m pytest tests

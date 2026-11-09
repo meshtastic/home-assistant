@@ -1,0 +1,87 @@
+[project]
+name = "meshtastic-home-assistant"
+version = "0.0.0"
+description = "Development tooling for the Meshtastic Home Assistant integration; runtime requirements live in custom_components/meshtastic/manifest.json."
+requires-python = ">=3.14.2"
+license = "GPL-3.0-only"
+license-files = ["LICENSE"]
+dependencies = []
+
+[tool.uv]
+package = false
+default-groups = ["dev", "test"]
+# grpcio-tools 1.68.1 needs protobuf<6, Home Assistant 2026.8.0 pins protobuf==6.32.0
+conflicts = [
+  [{ group = "protobuf" }, { group = "dev" }],
+  [{ group = "protobuf" }, { group = "test" }],
+]
+
+[dependency-groups]
+dev = [
+  "colorlog==6.10.1",
+  "homeassistant==2026.8.0",
+  "ruff==0.15.15",
+  # runtime requirements of the integration, as Home Assistant installs them from manifest.json
+  "bleak~=3.0.2",
+  "serialx==1.8.2",
+  "aiomqtt>=2.5.1",
+]
+test = [
+  "coverage",
+  "pytest",
+  "pytest-asyncio",
+  "pytest-cov",
+  # tied to homeassistant==2026.8.0 in the dev group
+  "pytest-homeassistant-custom-component==0.13.354",
+  # Home Assistant 2026.8.0's own constraint
+  "protobuf==6.32.0",
+]
+protobuf = [
+  "grpcio-tools==1.68.1",
+  "mypy-protobuf==3.6.0",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+
+[tool.ruff]
+# Based on https://github.com/home-assistant/core/blob/dev/pyproject.toml
+target-version = "py312"
+line-length = 120
+exclude = ["custom_components/meshtastic/aiomeshtastic/protobuf"]
+
+[tool.ruff.lint]
+select = [
+    "ALL",
+]
+ignore = [
+    "ANN401", # Dynamically typed expressions (typing.Any) are disallowed
+    "D203", # no-blank-line-before-class (incompatible with formatter)
+    "D212", # multi-line-summary-first-line (incompatible with formatter)
+    "COM812", # incompatible with formatter
+    "ISC001", # incompatible with formatter
+    "D100", # Missing docstring (currently no distributed library)
+    "D101", # Missing docstring (currently no distributed library)
+    "D102", # Missing docstring (currently no distributed library)
+    "D103", # Missing docstring (currently no distributed library)
+    "D104", # Missing docstring (currently no distributed library)
+    "D105", # Missing docstring (currently no distributed library)
+    "D107", # Missing docstring (currently no distributed library)
+]
+
+[tool.ruff.lint.flake8-pytest-style]
+fixture-parentheses = false
+
+[tool.ruff.lint.pyupgrade]
+keep-runtime-typing = true
+
+[tool.ruff.lint.mccabe]
+max-complexity = 25
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = [
+    "PLR2004", # magic values are the expected results in tests
+    "S101", # pytest asserts
+    "SLF001", # tests exercise internals with fakes
+]

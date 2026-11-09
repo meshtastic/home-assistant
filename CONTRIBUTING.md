@@ -22,20 +22,20 @@ Report a bug by [opening a new issue](../../issues/new/choose). A useful report 
 
 ## Code style
 
-[Ruff](https://docs.astral.sh/ruff/) is the formatter and linter, pinned to 0.15.15 in `requirements.txt`.
-`scripts/setup` installs the requirements and `scripts/lint` formats and fixes what it can. CI runs
-`ruff check .` and `ruff format --check .` on every pull request, next to the HACS and hassfest
-validations.
+[Ruff](https://docs.astral.sh/ruff/) is the formatter and linter, pinned to 0.15.15 in the `dev`
+dependency group of `pyproject.toml`, which [uv](https://docs.astral.sh/uv/) manages (`uv.lock`).
+`scripts/setup` runs `uv sync --group dev --group test` and `scripts/lint` formats and fixes what it can.
+CI runs `ruff check .` and `ruff format --check .` on every pull request, next to the HACS and hassfest
+validations. Runtime requirements stay in `custom_components/meshtastic/manifest.json`.
 
 ## Tests
 
 `tests/` holds pytest tests for the TCP proxy and the channel handling, using
-`pytest-homeassistant-custom-component` from `requirements.test.txt`. CI does not run them, so run them
-before you open a pull request that touches that code:
+`pytest-homeassistant-custom-component` from the `test` dependency group. CI runs them on every pull
+request; to run them locally:
 
 ```sh
-python3 -m pip install -r requirements.txt -r requirements.test.txt
-python3 -m pytest tests
+uv run python -m pytest tests
 ```
 
 The repo also ships a VS Code dev container that starts a standalone Home Assistant with
@@ -48,9 +48,11 @@ The generated protobuf code under `custom_components/meshtastic/aiomeshtastic/pr
 `protobufs` submodule. To move to a new version, check out its tag in the submodule and run
 `scripts/generate_protobufs`. The script needs:
 
-- `protoc` and `protoc-gen-mypy`: `python3 -m pip install -r requirements.protobuf.txt` installs
-  `grpcio-tools` 1.68.1 (`python -m grpc_tools.protoc`, with gencode that matches the `protobuf` pin in
-  `requirements.test.txt`) and `mypy-protobuf` 3.6.0 (newer releases need protobuf 6),
+- `protoc` and `protoc-gen-mypy`, from the `protobuf` dependency group: `grpcio-tools` 1.68.1
+  (`python -m grpc_tools.protoc`, with gencode that matches the `protobuf` pin in the `test` group) and
+  `mypy-protobuf` 3.6.0 (newer releases need protobuf 6). The group conflicts with `dev` and `test`
+  (protobuf 5 against 6), so run it alone:
+  `uv run --no-default-groups --group protobuf bash scripts/generate_protobufs`,
 - GNU sed, as `sed` or `gsed`.
 
 Commit the submodule pointer together with the regenerated files.

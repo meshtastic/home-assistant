@@ -60,22 +60,22 @@ coordinator.py the node database as coordinator data, keyed by node number
 ## Commands
 
 ```sh
-scripts/setup                 # pip install -r requirements.txt (Home Assistant 2026.8, ruff 0.15.15)
+scripts/setup                 # uv sync --group dev --group test (Home Assistant 2026.8, ruff 0.15.15)
 scripts/lint                  # ruff format . && ruff check . --fix
-ruff check . && ruff format --check .   # what CI runs
-python3 -m pytest tests       # needs requirements.test.txt
-python3 -m pytest tests/test_tcp_proxy.py -k disconnect   # one test
+uv run ruff check . && uv run ruff format --check .   # what CI runs
+uv run python -m pytest tests # the tests
+uv run python -m pytest tests/test_tcp_proxy.py -k disconnect   # one test
 scripts/develop               # standalone Home Assistant on config/configuration.yaml
-scripts/generate_protobufs    # see CONTRIBUTING.md for protoc, mypy-protobuf 3.6 and GNU sed
+uv run --no-default-groups --group protobuf bash scripts/generate_protobufs   # see CONTRIBUTING.md for GNU sed
 ```
 
-`hacs.json` sets the minimum Home Assistant version (2026.8.0), which `requirements.txt` pins for
+`hacs.json` sets the minimum Home Assistant version (2026.8.0), which the `dev` group in `pyproject.toml` pins for
 development; the code also runs on current releases, so check deprecations against both. Devices are
 per config entry from 2026.8, so look them up with `async_get_device_by_identifier(identifier, entry_id)`.
 
 ## CI and merging
 
-- CI is `lint.yml` (ruff), `tests.yml` (pytest on Python 3.14), `validate.yml` (HACS and hassfest,
+- CI is `lint.yml` (ruff), `tests.yml` (pytest on Python 3.14, both through uv), `validate.yml` (HACS and hassfest,
   also nightly) and `release.yml` (zip on release).
 - Fork pull requests from first-time contributors wait for a maintainer to approve their workflow runs.
 - The CLA assistant check must pass. Pull requests are squash-merged with Conventional titles.
