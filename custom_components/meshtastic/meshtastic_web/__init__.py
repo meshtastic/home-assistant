@@ -245,25 +245,12 @@ async def async_setup(hass: HomeAssistant) -> bool:
         return True
 
 
-# The bundled web client stores its database in the origin private file system,
-# which needs SharedArrayBuffer, which needs the document to be cross-origin
-# isolated. Without these the client cannot persist meshtastic.db and re-reads
-# the whole node database from the radio on every load.
-#
-# credentialless rather than require-corp: the map style is fetched from a
-# third party, and require-corp would block it for want of a CORP header.
-# credentialless fetches cross-origin subresources without credentials instead,
-# which is what upstream's own dev server uses. Browsers that do not implement
-# it simply are not isolated, and fall back to the previous behaviour.
-# How long to hold a fromradio request open waiting for a packet.
-#
-# This is a long poll, so it must return before the client stops waiting or the
-# client aborts the request and reports the connection as lost. The bundled
-# client gives up after 7s (READ_TIMEOUT_MS in @meshtastic/transport-http), so
-# stay comfortably under that: holding longer made an idle mesh look like it
-# was disconnecting every few seconds.
+# The fromradio long poll must answer before the client aborts at 7 s (READ_TIMEOUT_MS in
+# @meshtastic/transport-http), or the client reports the connection lost.
 FROM_RADIO_HOLD_SECONDS = 5.0
 
+# The client persists its database in OPFS, which needs a cross-origin isolated document.
+# credentialless, not require-corp, because the third-party map style sends no CORP header.
 CROSS_ORIGIN_ISOLATION_HEADERS = {
     "Cross-Origin-Opener-Policy": "same-origin",
     "Cross-Origin-Embedder-Policy": "credentialless",
