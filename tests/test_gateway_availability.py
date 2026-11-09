@@ -37,7 +37,7 @@ class FakeConnection:
             raise ConnectionError
         return True
 
-    async def request_config(self, minimal: bool = False) -> bool:  # noqa: ARG002, FBT001, FBT002
+    async def request_config(self, minimal: bool = False, on_packet: object = None) -> bool:  # noqa: ARG002, FBT001, FBT002
         return True
 
 

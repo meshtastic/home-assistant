@@ -6,7 +6,6 @@
   "pep621": { "enabled": true },
   "lockFileMaintenance": { "enabled": true },
   "github-actions": { "pinDigests": true },
-  "git-submodules": { "enabled": true },
   "packageRules": [
     {
       "description": "The minimum Home Assistant version moves only on purpose, from the dependency dashboard",

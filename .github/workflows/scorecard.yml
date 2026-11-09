@@ -1,0 +1,33 @@
+# OpenSSF Scorecard — supply-chain security posture (https://securityscorecards.dev).
+name: Scorecard
+
+on:
+  branch_protection_rule:
+  schedule:
+    - cron: "0 6 * * 1"
+  push:
+    branches: [main]
+
+permissions: read-all
+
+jobs:
+  analysis:
+    # OpenSSF Scorecard only works on public repos (its analysis checkout 404s on a private
+    # one, and the posture metrics are meaningless while private). Auto-enables on going public.
+    if: ${{ !github.event.repository.private }}
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: ossf/scorecard-action@fa7117db83c52d787ae5a89f350999701505d78e # v2.5.0
+        with:
+          results_file: results.sarif
+          results_format: sarif
+          publish_results: true
+      - uses: github/codeql-action/upload-sarif@33d7b85da1a04171e211befe2c739303b9a4c066 # v4
+        with:
+          sarif_file: results.sarif
