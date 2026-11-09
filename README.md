@@ -88,6 +88,9 @@ There are triggers when messages have been sent or have been received.
 Gateway nodes offer more triggers than other nodes. You can further refine the triggers to only fire when a message was 
 sent/received on a particular channel or as direct message.
 
+Mesh Beacon packets received by a gateway fire the `meshtastic_api_mesh_beacon` event, which you can use with a "Manual Events" trigger.
+`data.beacon` holds the decoded beacon (`message` and, when offered, `offerChannel`, `offerRegion`, `offerPreset`, `offerFrequencySlot`),
+next to `from`, `to`, `gateway`, `hop_start`, `hop_limit`, `rx_snr` and `rx_rssi`.
 
 #### Actions
  * Send Direct Message

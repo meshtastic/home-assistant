@@ -9,7 +9,7 @@ from typing import Any, TypeVar
 import google
 
 from .const import LOGGER
-from .protobuf import admin_pb2, mesh_pb2, portnums_pb2, telemetry_pb2
+from .protobuf import admin_pb2, mesh_beacon_pb2, mesh_pb2, portnums_pb2, telemetry_pb2
 
 T = TypeVar("T", None, mesh_pb2.Routing, telemetry_pb2.Telemetry, admin_pb2.AdminMessage, str)
 
@@ -80,6 +80,10 @@ class Packet[T]:
             return payload.decode()
         if port_num == portnums_pb2.PortNum.DETECTION_SENSOR_APP:
             return payload.decode()
+        if port_num == portnums_pb2.PortNum.MESH_BEACON_APP:
+            beacon = mesh_beacon_pb2.MeshBeacon()
+            beacon.ParseFromString(payload)
+            return beacon
         if port_num == portnums_pb2.PortNum.TELEMETRY_APP:
             telemetry = telemetry_pb2.Telemetry()
             telemetry.ParseFromString(payload)
