@@ -48,9 +48,9 @@ The generated protobuf code under `custom_components/meshtastic/aiomeshtastic/pr
 `protobufs` submodule. To move to a new version, check out its tag in the submodule and run
 `scripts/generate_protobufs`. The script needs:
 
-- `protoc` with Python gencode that matches the `protobuf` pin in `requirements.test.txt`, for example
-  from `grpcio-tools` 1.68 (`python -m grpc_tools.protoc`),
-- `protoc-gen-mypy` from `mypy-protobuf` 3.6 (newer releases need protobuf 6),
+- `protoc` and `protoc-gen-mypy`: `python3 -m pip install -r requirements.protobuf.txt` installs
+  `grpcio-tools` 1.68.1 (`python -m grpc_tools.protoc`, with gencode that matches the `protobuf` pin in
+  `requirements.test.txt`) and `mypy-protobuf` 3.6.0 (newer releases need protobuf 6),
 - GNU sed, as `sed` or `gsed`.
 
 Commit the submodule pointer together with the regenerated files.
