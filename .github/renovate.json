@@ -8,17 +8,16 @@
   "git-submodules": { "enabled": true },
   "packageRules": [
     {
-      "description": "These pins follow the Home Assistant version in requirements.txt and hacs.json; they move together or not at all",
+      "description": "The minimum Home Assistant version moves only on purpose, from the dependency dashboard",
       "matchManagers": ["pip_requirements"],
-      "matchPackageNames": [
-        "homeassistant",
-        "pytest-homeassistant-custom-component",
-        "protobuf",
-        "josepy",
-        "bleak"
-      ],
-      "groupName": "Home Assistant pins",
+      "matchPackageNames": ["homeassistant"],
       "dependencyDashboardApproval": true
+    },
+    {
+      "description": "These pins are taken from the pinned Home Assistant release and move by hand with it, never on their own",
+      "matchManagers": ["pip_requirements"],
+      "matchPackageNames": ["pytest-homeassistant-custom-component", "protobuf", "josepy", "bleak"],
+      "enabled": false
     }
   ]
 }
