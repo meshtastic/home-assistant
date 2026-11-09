@@ -531,9 +531,9 @@ def _build_local_stats_sensors(
                     native_unit_of_measurement=SIGNAL_STRENGTH_DECIBELS_MILLIWATT,
                     device_class=SensorDeviceClass.SIGNAL_STRENGTH,
                     state_class=SensorStateClass.MEASUREMENT,
-                    value_fn=lambda device: device.coordinator.data[device.node_id]
-                    .get("localStats", {})
-                    .get("noiseFloor", None),
+                    value_fn=lambda device: (
+                        device.coordinator.data[device.node_id].get("localStats", {}).get("noiseFloor", None)
+                    ),
                 ),
                 gateway=gateway,
                 node_id=node_id,
