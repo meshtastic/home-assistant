@@ -10,6 +10,7 @@ on:
   pull_request:
     branches:
       - "main"
+  merge_group:
 
 jobs:
   hassfest: # https://developers.home-assistant.io/blog/2020/04/16/hassfest
