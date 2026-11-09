@@ -3,4 +3,7 @@ coverage
 pytest
 pytest-asyncio
 pytest-cov
-pytest-homeassistant-custom-component
+# tied to homeassistant==2026.8.0 in requirements.txt
+pytest-homeassistant-custom-component==0.13.354
+# Home Assistant 2026.8.0's own constraint
+protobuf==6.32.0

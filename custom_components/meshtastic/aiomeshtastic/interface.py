@@ -1,7 +1,6 @@
 # SPDX-FileCopyrightText: 2024-2025 Pascal Brogle @broglep
 # SPDX-FileCopyrightText: 2025 Hendrik @novag
 # SPDX-FileCopyrightText: 2025 Ovidiu D. Nițan @ov1d1u
-# SPDX-FileCopyrightText: 2025 Zdeněk Biberle @zdenek-biberle
 #
 # SPDX-License-Identifier: MIT
 
@@ -223,6 +222,12 @@ class MeshInterface:
 
         return MappingProxyType(node)
 
+    def connected_node_info(self) -> mesh_pb2.MyNodeInfo | None:
+        if not self._connected_node_ready.is_set():
+            return None
+
+        return self._connected_node_info
+
     def connected_node_metadata(self) -> mesh_pb2.DeviceMetadata | None:
         if not self._connected_node_ready.is_set():
             return None
@@ -289,7 +294,7 @@ class MeshInterface:
             return None
 
         if index is not None:
-            if len(self._connected_node_channels) < index:
+            if len(self._connected_node_channels) <= index:
                 return None
 
             channel = self._connected_node_channels[index]
@@ -420,7 +425,8 @@ class MeshInterface:
 
         # Parse broker address
         hostname = broker.split(":", 1)[0]
-        port = int(broker.split(":", 1)[1]) if ":" in broker else 1883
+        default_port = 8883 if use_tls else 1883
+        port = int(broker.split(":", 1)[1]) if ":" in broker else default_port
 
         # Get node ID for client identifier
         node_id = self._connected_node_info.my_node_num
@@ -547,7 +553,15 @@ class MeshInterface:
         elif packet.HasField("metadata"):
             self._connected_node_metadata = packet.metadata
         elif packet.HasField("channel"):
-            self._connected_node_channels.append(packet.channel)
+            # replace by index: a bootstrap requested by another party (e.g. a TCP proxy client) resends all channels
+            channels = self._connected_node_channels
+            for i, existing in enumerate(channels):
+                if existing.index == packet.channel.index:
+                    channels[i] = packet.channel
+                    break
+            else:
+                channels.append(packet.channel)
+                channels.sort(key=lambda c: c.index)
         elif packet.HasField("queueStatus"):
             self._connected_node_queue_status = packet.queueStatus
         elif packet.HasField("log_record"):
@@ -1061,8 +1075,8 @@ class MeshInterface:
         want_ack: bool = False,
         channel_index: int | None = None,
         priority: MeshPacket.Priority | None = None,
-        reply_id: int = 0,
-        emoji: int = 0,
+        reply_id: int | None = None,
+        is_reaction: bool = False,
         on_message_sent: Callable[[Packet], Awaitable[None]] | None = None,
     ) -> None:
         if isinstance(destination, MeshNode):
@@ -1085,7 +1099,7 @@ class MeshInterface:
             to_node = self.BROADCAST_NUM
 
         if channel_index is not None:
-            if len(self._connected_node_channels) < channel_index:
+            if len(self._connected_node_channels) <= channel_index:
                 msg = "Unavailable channel index"
                 raise ValueError(msg)
 
@@ -1093,6 +1107,10 @@ class MeshInterface:
             if channel.role == channel_pb2.Channel.Role.DISABLED:
                 msg = f"Channel #{channel_index} is disabled"
                 raise ValueError(msg)
+
+        if is_reaction and reply_id is None:
+            msg = "reply_id is required when sending a reaction"
+            raise ValueError(msg)
 
         if on_message_sent is not None:
 
@@ -1111,7 +1129,7 @@ class MeshInterface:
             want_response=False,
             ack=want_ack,
             reply_id=reply_id,
-            emoji=emoji,
+            emoji=is_reaction,
             out_callback=out_callback,
         )
 

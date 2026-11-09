@@ -55,6 +55,9 @@ async def async_unload_entry(
     return await helpers.async_unload_entry(hass, entry)
 
 
+_DOP_ATTRIBUTES = ("PDOP", "HDOP", "VDOP")
+
+
 class MeshtasticDeviceTracker(MeshtasticNodeEntity, TrackerEntity):
     entity_description: TrackerEntityDescription
 
@@ -112,15 +115,9 @@ class MeshtasticDeviceTracker(MeshtasticNodeEntity, TrackerEntity):
         self._attr_latitude = position.get("latitude", None)
         self._attr_longitude = position.get("longitude", None)
         self._attr_location_accuracy = self._precision_to_meters.get(precision_bits, 0)
+        # PDOP/HDOP/VDOP are transmitted in 1/100 units, convert to actual DOP values
         self._attr_extra_state_attributes = {
-            k: v
+            k: v / 100 if k in _DOP_ATTRIBUTES else v
             for k, v in position.items()
-            if k in ["altitude", "groundSpeed", "groundTrack", "locationSource", "satsInView"]
+            if k in ["altitude", "groundSpeed", "groundTrack", "locationSource", "satsInView", *_DOP_ATTRIBUTES]
         }
-
-    @property
-    def battery_level(self) -> int | None:
-        level = self.coordinator.data[self.node_id].get("deviceMetrics", {}).get("batteryLevel", None)
-        if level is not None:
-            return max(0, min(100, level))
-        return level

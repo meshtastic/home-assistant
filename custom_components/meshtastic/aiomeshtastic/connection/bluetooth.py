@@ -11,6 +11,7 @@ from typing import TYPE_CHECKING, Any
 
 import bleak
 from bleak import BaseBleakClient, BleakClient, BleakGATTCharacteristic
+from bleak_retry_connector import establish_connection
 from google.protobuf import message
 
 from ..protobuf import mesh_pb2  # noqa: TID252
@@ -41,10 +42,15 @@ class BluetoothConnection(ClientApiConnection):
     BTM_CHARACTERISTIC_LOG_UUID = "5a3d6e49-06e6-4423-9944-e9de8cdf9547"
 
     def __init__(
-        self, ble_address: str, bleak_client_backend: type[BaseBleakClient] | None = None, connect_timeout: float = 10.0
+        self,
+        ble_address: str,
+        ble_device: Any | None = None,
+        bleak_client_backend: type[BaseBleakClient] | None = None,
+        connect_timeout: float = 10.0,
     ) -> None:
         super().__init__()
         self._ble_address = ble_address
+        self._ble_device = ble_device
         self._bleak_client_backend = bleak_client_backend
         self._connect_timeout = connect_timeout
         self._ble_meshtastic_service: BleakGATTService | None = None
@@ -57,19 +63,18 @@ class BluetoothConnection(ClientApiConnection):
         self._force_read_event = asyncio.Event()
 
     async def _connect(self) -> None:
-        self._bleak_client = BleakClient(
-            self._ble_address, timeout=self._connect_timeout, backend=self._bleak_client_backend
-        )
-        await self._bleak_client.connect()
-
-        # attempt pairing, we don't know if it is required. Should not harm if
-        # not needed. if pairing is required, external input is necessary as we are not
-        # able to fully pair with bleak see https://github.com/hbldh/bleak/issues/1434.
-        # possible workaround: https://technotes.kynetics.com/2018/pairing_agents_bluez/
-        try:
-            await self._bleak_client.pair()
-        except:  # noqa: E722
-            self._logger.debug("Pairing failed", exc_info=True)
+        if self._ble_device is not None:
+            self._bleak_client = await establish_connection(
+                client_class=BleakClient,
+                device=self._ble_device,
+                name=self._ble_address,
+                max_attempts=3,
+            )
+        else:
+            self._bleak_client = BleakClient(
+                self._ble_address, timeout=self._connect_timeout, backend=self._bleak_client_backend
+            )
+            await self._bleak_client.connect()
 
         self._ble_meshtastic_service = self._bleak_client.services[BluetoothConnection.BTM_SERVICE_UUID]
 

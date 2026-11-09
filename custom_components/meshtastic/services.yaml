@@ -1,5 +1,4 @@
 # SPDX-FileCopyrightText: 2024-2025 Pascal Brogle @broglep
-# SPDX-FileCopyrightText: 2025 Zdeněk Biberle @zdenek-biberle
 #
 # SPDX-License-Identifier: MIT
 
@@ -38,11 +37,13 @@ send_text:
     reply_id:
       required: false
       selector:
-        template:
-    emoji:
-      required: true
+        text:
+          multiline: false
+    is_reaction:
+      required: false
+      default: false
       selector:
-        boolean:
+        boolean: {}
 
 send_direct_message:
   fields:
@@ -64,11 +65,13 @@ send_direct_message:
     reply_id:
       required: false
       selector:
-        template:
-    emoji:
-      required: true
+        text:
+          multiline: false
+    is_reaction:
+      required: false
+      default: false
       selector:
-        boolean:
+        boolean: {}
 
 broadcast_channel_message:
   fields:
@@ -92,11 +95,13 @@ broadcast_channel_message:
     reply_id:
       required: false
       selector:
-        template:
-    emoji:
-      required: true
+        text:
+          multiline: false
+    is_reaction:
+      required: false
+      default: false
       selector:
-        boolean:
+        boolean: {}
 
 request_telemetry:
   fields:

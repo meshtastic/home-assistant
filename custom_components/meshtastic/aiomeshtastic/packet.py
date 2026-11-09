@@ -9,7 +9,7 @@ from typing import Any, TypeVar
 import google
 
 from .const import LOGGER
-from .protobuf import admin_pb2, mesh_pb2, portnums_pb2, telemetry_pb2
+from .protobuf import admin_pb2, mesh_beacon_pb2, mesh_pb2, portnums_pb2, telemetry_pb2
 
 T = TypeVar("T", None, mesh_pb2.Routing, telemetry_pb2.Telemetry, admin_pb2.AdminMessage, str)
 
@@ -47,6 +47,22 @@ class Packet[T]:
     def port_num(self) -> portnums_pb2.PortNum | None:
         return self.data.portnum if self.data is not None else None
 
+    @property
+    def via_mqtt(self) -> bool:
+        return self.mesh_packet.via_mqtt if self.mesh_packet is not None else False
+
+    @property
+    def xeddsa_signed(self) -> bool:
+        return self.mesh_packet.xeddsa_signed if self.mesh_packet is not None else False
+
+    @property
+    def hop_start(self) -> int | None:
+        return self.mesh_packet.hop_start if self.mesh_packet is not None else None
+
+    @property
+    def hop_limit(self) -> int | None:
+        return self.mesh_packet.hop_limit if self.mesh_packet is not None else None
+
     @cached_property
     def app_payload(self) -> T:  # noqa: PLR0911
         data = self.data
@@ -62,6 +78,12 @@ class Packet[T]:
             return routing
         if port_num == portnums_pb2.PortNum.TEXT_MESSAGE_APP:
             return payload.decode()
+        if port_num == portnums_pb2.PortNum.DETECTION_SENSOR_APP:
+            return payload.decode()
+        if port_num == portnums_pb2.PortNum.MESH_BEACON_APP:
+            beacon = mesh_beacon_pb2.MeshBeacon()
+            beacon.ParseFromString(payload)
+            return beacon
         if port_num == portnums_pb2.PortNum.TELEMETRY_APP:
             telemetry = telemetry_pb2.Telemetry()
             telemetry.ParseFromString(payload)
@@ -74,6 +96,10 @@ class Packet[T]:
             position_message = mesh_pb2.Position()
             position_message.ParseFromString(payload)
             return position_message
+        if port_num == portnums_pb2.PortNum.WAYPOINT_APP:
+            waypoint = mesh_pb2.Waypoint()
+            waypoint.ParseFromString(payload)
+            return waypoint
         if port_num == portnums_pb2.PortNum.NODEINFO_APP:
             node_info = mesh_pb2.NodeInfo()
             node_info.user.ParseFromString(payload)

@@ -101,6 +101,10 @@ class _PortNumEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._EnumTy
     """
     Module/port for handling key verification requests.
     """
+    REMOTE_SHELL_APP: _PortNum.ValueType  # 13
+    """
+    Module/port for handling primitive remote shell access.
+    """
     REPLY_APP: _PortNum.ValueType  # 32
     """
     Provides a 'ping' service that replies to any packet it receives.
@@ -116,6 +120,35 @@ class _PortNumEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._EnumTy
     """
     Paxcounter lib included in the firmware
     ENCODING: protobuf
+    """
+    STORE_FORWARD_PLUSPLUS_APP: _PortNum.ValueType  # 35
+    """
+    Store and Forward++ module included in the firmware
+    ENCODING: protobuf
+    This module is specifically for Native Linux nodes, and provides a Git-style
+    chain of messages.
+    """
+    NODE_STATUS_APP: _PortNum.ValueType  # 36
+    """
+    Node Status module
+    ENCODING: protobuf
+    This module allows setting an extra string of status for a node.
+    Broadcasts on change and on a timer, possibly once a day.
+    """
+    MESH_BEACON_APP: _PortNum.ValueType  # 37
+    """
+    Beacon module broadcast packets.
+    ENCODING: protobuf
+    Periodically broadcast by nodes in beacon mode; received by nodes with MeshBeaconConfig.FLAG_LISTEN_ENABLED.
+    Carries a text message plus optional channel/preset offers for client apps.
+    """
+    PAGING_APP: _PortNum.ValueType  # 38
+    """
+    Acknowledged paging: alerts a person is expected to physically acknowledge, and the
+    acknowledgements themselves.
+    ENCODING: protobuf PagingPacket
+    Distinct from ALERT_APP, which is a text message the recipient never confirms, and from a
+    routing or delivery ACK, which says the packet arrived rather than that someone saw it.
     """
     SERIAL_APP: _PortNum.ValueType  # 64
     """
@@ -183,6 +216,11 @@ class _PortNumEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._EnumTy
     """
     PowerStress based monitoring support (for automated power consumption testing)
     """
+    LORAWAN_BRIDGE: _PortNum.ValueType  # 75
+    """
+    LoraWAN Payload Transport
+    ENCODING: LoRaWANBridge protobuf, see lorawan_bridge.proto
+    """
     RETICULUM_TUNNEL_APP: _PortNum.ValueType  # 76
     """
     Reticulum Network Stack Tunnel App
@@ -193,6 +231,23 @@ class _PortNumEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._EnumTy
     App for transporting Cayenne Low Power Payload, popular for LoRaWAN sensor nodes. Offers ability to send
     arbitrary telemetry over meshtastic that is not covered by telemetry.proto
     ENCODING: CayenneLLP
+    """
+    ATAK_PLUGIN_V2: _PortNum.ValueType  # 78
+    """
+    ATAK Plugin V2
+    Portnum for payloads from the official Meshtastic ATAK plugin using
+    TAKPacketV2 with zstd dictionary compression.
+    """
+    LORA_OTA_APP: _PortNum.ValueType  # 79
+    """signed firmware updates over lora.
+
+    ENCODING: binary (ota-common transport frames)
+    """
+    GROUPALARM_APP: _PortNum.ValueType  # 112
+    """
+    GroupAlarm integration
+    Used for transporting GroupAlarm-related messages between Meshtastic nodes
+    and companion applications/services.
     """
     PRIVATE_APP: _PortNum.ValueType  # 256
     """
@@ -305,6 +360,10 @@ KEY_VERIFICATION_APP: PortNum.ValueType  # 12
 """
 Module/port for handling key verification requests.
 """
+REMOTE_SHELL_APP: PortNum.ValueType  # 13
+"""
+Module/port for handling primitive remote shell access.
+"""
 REPLY_APP: PortNum.ValueType  # 32
 """
 Provides a 'ping' service that replies to any packet it receives.
@@ -320,6 +379,35 @@ PAXCOUNTER_APP: PortNum.ValueType  # 34
 """
 Paxcounter lib included in the firmware
 ENCODING: protobuf
+"""
+STORE_FORWARD_PLUSPLUS_APP: PortNum.ValueType  # 35
+"""
+Store and Forward++ module included in the firmware
+ENCODING: protobuf
+This module is specifically for Native Linux nodes, and provides a Git-style
+chain of messages.
+"""
+NODE_STATUS_APP: PortNum.ValueType  # 36
+"""
+Node Status module
+ENCODING: protobuf
+This module allows setting an extra string of status for a node.
+Broadcasts on change and on a timer, possibly once a day.
+"""
+MESH_BEACON_APP: PortNum.ValueType  # 37
+"""
+Beacon module broadcast packets.
+ENCODING: protobuf
+Periodically broadcast by nodes in beacon mode; received by nodes with MeshBeaconConfig.FLAG_LISTEN_ENABLED.
+Carries a text message plus optional channel/preset offers for client apps.
+"""
+PAGING_APP: PortNum.ValueType  # 38
+"""
+Acknowledged paging: alerts a person is expected to physically acknowledge, and the
+acknowledgements themselves.
+ENCODING: protobuf PagingPacket
+Distinct from ALERT_APP, which is a text message the recipient never confirms, and from a
+routing or delivery ACK, which says the packet arrived rather than that someone saw it.
 """
 SERIAL_APP: PortNum.ValueType  # 64
 """
@@ -387,6 +475,11 @@ POWERSTRESS_APP: PortNum.ValueType  # 74
 """
 PowerStress based monitoring support (for automated power consumption testing)
 """
+LORAWAN_BRIDGE: PortNum.ValueType  # 75
+"""
+LoraWAN Payload Transport
+ENCODING: LoRaWANBridge protobuf, see lorawan_bridge.proto
+"""
 RETICULUM_TUNNEL_APP: PortNum.ValueType  # 76
 """
 Reticulum Network Stack Tunnel App
@@ -397,6 +490,23 @@ CAYENNE_APP: PortNum.ValueType  # 77
 App for transporting Cayenne Low Power Payload, popular for LoRaWAN sensor nodes. Offers ability to send
 arbitrary telemetry over meshtastic that is not covered by telemetry.proto
 ENCODING: CayenneLLP
+"""
+ATAK_PLUGIN_V2: PortNum.ValueType  # 78
+"""
+ATAK Plugin V2
+Portnum for payloads from the official Meshtastic ATAK plugin using
+TAKPacketV2 with zstd dictionary compression.
+"""
+LORA_OTA_APP: PortNum.ValueType  # 79
+"""signed firmware updates over lora.
+
+ENCODING: binary (ota-common transport frames)
+"""
+GROUPALARM_APP: PortNum.ValueType  # 112
+"""
+GroupAlarm integration
+Used for transporting GroupAlarm-related messages between Meshtastic nodes
+and companion applications/services.
 """
 PRIVATE_APP: PortNum.ValueType  # 256
 """

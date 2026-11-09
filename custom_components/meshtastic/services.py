@@ -1,6 +1,5 @@
 # SPDX-FileCopyrightText: 2024-2025 Pascal Brogle @broglep
 # SPDX-FileCopyrightText: 2025 Ovidiu D. Nițan @ov1d1u
-# SPDX-FileCopyrightText: 2025 Zdeněk Biberle @zdenek-biberle
 #
 # SPDX-License-Identifier: MIT
 
@@ -37,8 +36,8 @@ from .const import (
     ATTR_SERVICE_BROADCAST_CHANNEL_MESSAGE_DATA_MESSAGE,
     ATTR_SERVICE_DATA_ACK,
     ATTR_SERVICE_DATA_CHANNEL,
-    ATTR_SERVICE_DATA_EMOJI,
     ATTR_SERVICE_DATA_FROM,
+    ATTR_SERVICE_DATA_IS_REACTION,
     ATTR_SERVICE_DATA_REPLY_ID,
     ATTR_SERVICE_DATA_TO,
     ATTR_SERVICE_REQUEST_TELEMETRY_DATA_TYPE,
@@ -64,8 +63,8 @@ SERVICE_SEND_TEXT_SCHEMA = vol.Schema(
         vol.Optional(ATTR_SERVICE_DATA_FROM): cv.string,
         vol.Optional(ATTR_SERVICE_DATA_CHANNEL): cv.string,
         vol.Required(ATTR_SERVICE_DATA_ACK, default=False): cv.boolean,
-        vol.Required(ATTR_SERVICE_DATA_REPLY_ID, default=0): cv.positive_int,
-        vol.Required(ATTR_SERVICE_DATA_EMOJI, default=False): cv.boolean,
+        vol.Optional(ATTR_SERVICE_DATA_REPLY_ID): cv.positive_int,
+        vol.Optional(ATTR_SERVICE_DATA_IS_REACTION, default=False): cv.boolean,
     }
 )
 
@@ -74,8 +73,8 @@ SERVICE_SEND_DIRECT_MESSAGE_SCHEMA = vol.Schema(
         vol.Required(ATTR_SERVICE_DATA_TO): cv.string,
         vol.Required(ATTR_SERVICE_SEND_DIRECT_MESSAGE_DATA_MESSAGE): cv.string,
         vol.Required(ATTR_SERVICE_DATA_ACK, default=True): cv.boolean,
-        vol.Required(ATTR_SERVICE_DATA_REPLY_ID, default=0): cv.positive_int,
-        vol.Required(ATTR_SERVICE_DATA_EMOJI, default=False): cv.boolean,
+        vol.Optional(ATTR_SERVICE_DATA_REPLY_ID): cv.positive_int,
+        vol.Optional(ATTR_SERVICE_DATA_IS_REACTION, default=False): cv.boolean,
     }
 )
 
@@ -84,8 +83,8 @@ SERVICE_BROADCAST_CHANNEL_MESSAGE_SCHEMA = vol.Schema(
         vol.Required(ATTR_SERVICE_BROADCAST_CHANNEL_MESSAGE_DATA_CHANNEL): cv.string,
         vol.Required(ATTR_SERVICE_BROADCAST_CHANNEL_MESSAGE_DATA_MESSAGE): cv.string,
         vol.Required(ATTR_SERVICE_DATA_ACK, default=True): cv.boolean,
-        vol.Required(ATTR_SERVICE_DATA_REPLY_ID, default=0): cv.positive_int,
-        vol.Required(ATTR_SERVICE_DATA_EMOJI, default=False): cv.boolean,
+        vol.Optional(ATTR_SERVICE_DATA_REPLY_ID): cv.positive_int,
+        vol.Optional(ATTR_SERVICE_DATA_IS_REACTION, default=False): cv.boolean,
     }
 )
 
@@ -297,8 +296,8 @@ async def _setup_service_send_direct_message_handler(
             text=text,
             destination_id=to_node_id,
             want_ack=call.data[ATTR_SERVICE_DATA_ACK],
-            reply_id=call.data[ATTR_SERVICE_DATA_REPLY_ID],
-            emoji=1 if call.data[ATTR_SERVICE_DATA_EMOJI] else 0,
+            reply_id=call.data.get(ATTR_SERVICE_DATA_REPLY_ID, None),
+            is_reaction=call.data.get(ATTR_SERVICE_DATA_IS_REACTION, False),
         )
         return None
 
@@ -334,8 +333,8 @@ async def _setup_service_broadcast_channel_message_handler(
             text=text,
             channel_index=channel_index,
             want_ack=call.data[ATTR_SERVICE_DATA_ACK],
-            reply_id=call.data[ATTR_SERVICE_DATA_REPLY_ID],
-            emoji=1 if call.data[ATTR_SERVICE_DATA_EMOJI] else 0,
+            reply_id=call.data.get(ATTR_SERVICE_DATA_REPLY_ID, None),
+            is_reaction=call.data.get(ATTR_SERVICE_DATA_IS_REACTION, False),
         )
         return None
 
@@ -379,8 +378,8 @@ async def _setup_service_send_text_handler(
             destination_id=to,
             channel_index=channel_index,
             want_ack=call.data[ATTR_SERVICE_DATA_ACK],
-            reply_id=call.data[ATTR_SERVICE_DATA_REPLY_ID],
-            emoji=1 if call.data[ATTR_SERVICE_DATA_EMOJI] else 0,
+            reply_id=call.data.get(ATTR_SERVICE_DATA_REPLY_ID, None),
+            is_reaction=call.data.get(ATTR_SERVICE_DATA_IS_REACTION, False),
         )
 
     _service_handlers[entry.entry_id][SERVICE_SEND_TEXT] = await _build_default_handler(hass, client, handler)
