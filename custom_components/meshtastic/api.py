@@ -61,6 +61,7 @@ EVENT_MESHTASTIC_API_NODE_UPDATED = EVENT_MESHTASTIC_API_BASE + "_node_updated"
 EVENT_MESHTASTIC_API_TELEMETRY = EVENT_MESHTASTIC_API_BASE + "_telemetry"
 EVENT_MESHTASTIC_API_PACKET = EVENT_MESHTASTIC_API_BASE + "_packet"
 EVENT_MESHTASTIC_API_TEXT_MESSAGE = EVENT_MESHTASTIC_API_BASE + "_text_message"
+EVENT_MESHTASTIC_API_DETECTION_SENSOR = EVENT_MESHTASTIC_API_BASE + "_detection_sensor"
 EVENT_MESHTASTIC_API_POSITION = EVENT_MESHTASTIC_API_BASE + "_position"
 
 ATTR_EVENT_MESHTASTIC_API_CONFIG_ENTRY_ID = "config_entry_id"
@@ -130,6 +131,11 @@ class MeshtasticApiClient:
         )
         self._interface.add_packet_app_listener(
             packet_type=portnums_pb2.PortNum.TEXT_MESSAGE_APP, callback=self._on_text_message, as_packet=True
+        )
+        self._interface.add_packet_app_listener(
+            packet_type=portnums_pb2.PortNum.DETECTION_SENSOR_APP,
+            callback=self._on_detection_sensor,
+            as_packet=True,
         )
         self._interface.add_packet_app_listener(
             packet_type=portnums_pb2.PortNum.TELEMETRY_APP, callback=self._on_telemetry, as_dict=True
@@ -288,6 +294,27 @@ class MeshtasticApiClient:
 
         event_data["message_id"] = packet.mesh_packet.id
         self._hass.bus.async_fire(EVENT_MESHTASTIC_API_TEXT_MESSAGE, event_data)
+
+    async def _on_detection_sensor(self, node: MeshNode, packet: Packet) -> None:
+        if packet.to_id == MeshInterface.BROADCAST_NUM:
+            to_channel = packet.channel_index
+            to_node = None
+        else:
+            to_channel = None
+            to_node = packet.to_id
+
+        event_data = self._build_event_data(
+            node.id,
+            {
+                "from": packet.from_id,
+                "to": {"node": to_node, "channel": to_channel},
+                "gateway": self.get_own_node()["num"],
+                "message": packet.app_payload,
+            },
+        )
+
+        event_data["message_id"] = packet.mesh_packet.id
+        self._hass.bus.async_fire(EVENT_MESHTASTIC_API_DETECTION_SENSOR, event_data)
 
     async def _on_telemetry(self, node: MeshNode, telemetry: dict[str, Any]) -> None:
         device_metrics = telemetry.get("deviceMetrics")
