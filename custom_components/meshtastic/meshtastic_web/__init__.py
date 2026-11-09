@@ -224,6 +224,22 @@ async def async_setup(hass: HomeAssistant) -> bool:
         return True
 
 
+# The bundled web client stores its database in the origin private file system,
+# which needs SharedArrayBuffer, which needs the document to be cross-origin
+# isolated. Without these the client cannot persist meshtastic.db and re-reads
+# the whole node database from the radio on every load.
+#
+# credentialless rather than require-corp: the map style is fetched from a
+# third party, and require-corp would block it for want of a CORP header.
+# credentialless fetches cross-origin subresources without credentials instead,
+# which is what upstream's own dev server uses. Browsers that do not implement
+# it simply are not isolated, and fall back to the previous behaviour.
+CROSS_ORIGIN_ISOLATION_HEADERS = {
+    "Cross-Origin-Opener-Policy": "same-origin",
+    "Cross-Origin-Embedder-Policy": "credentialless",
+}
+
+
 class MeshtasticWebConfigEntryView(HomeAssistantView):
     url = URL_BASE + "/web/{entity_id}"
     name = "meshtastic:web_api_index"
@@ -241,7 +257,10 @@ class MeshtasticWebConfigEntryView(HomeAssistantView):
         entity_id: str,
     ) -> web.Response:
         if not entity_id.startswith("gateway_"):
-            return web.FileResponse(Path(__file__).parent / "static" / entity_id, headers={"Cache-Control": "no-cache"})
+            return web.FileResponse(
+                Path(__file__).parent / "static" / entity_id,
+                headers={"Cache-Control": "no-cache", **CROSS_ORIGIN_ISOLATION_HEADERS},
+            )
 
         entity_registry = er.async_get(self._hass)
         entity_id = f"{DOMAIN}.{entity_id}"
