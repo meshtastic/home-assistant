@@ -132,7 +132,7 @@ channel broadcast; the channel index is the gateway's own.
 
 | Event | Fired when | `data` |
 | --- | --- | --- |
-| `meshtastic_api_text_message` | a text message is received | `from`, `to`, `gateway`, `message`, `hop_start`, `hop_limit`, `rx_snr`, `rx_rssi`, `via_mqtt`, `xeddsa_signed`, `reply_id`, `is_reaction` |
+| `meshtastic_api_text_message` | a text message is received | `from`, `from_id` (`!xxxxxxxx`), `to`, `gateway`, `message`, `hops_away` (null when unknown), `hop_start`, `hop_limit`, `rx_snr`, `rx_rssi`, `via_mqtt`, `xeddsa_signed`, `reply_id`, `is_reaction` |
 | `meshtastic_api_text_message_out` | the gateway sends a text message | `from` (the gateway), `to`, `gateway`, `message`, `reply_id`, `is_reaction` |
 | `meshtastic_api_detection_sensor` | a detection sensor packet is received | `from`, `to`, `gateway`, `message` (the sensor text) |
 | `meshtastic_api_mesh_beacon` | a Mesh Beacon is received | `from`, `to`, `gateway`, `beacon`, `hop_start`, `hop_limit`, `rx_snr`, `rx_rssi` |

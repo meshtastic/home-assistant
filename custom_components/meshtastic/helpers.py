@@ -50,7 +50,8 @@ async def setup_platform_entry(
 
     def on_coordinator_data_update() -> None:
         entities = entity_factory(get_nodes(entry), entry.runtime_data)
-        new_entities = [s for s in entities if s.entity_id not in platform.entities]
+        existing_unique_ids = {entity.unique_id for entity in platform.entities.values()}
+        new_entities = [s for s in entities if s.unique_id not in existing_unique_ids]
         if new_entities:
             async_add_entities(new_entities)
 

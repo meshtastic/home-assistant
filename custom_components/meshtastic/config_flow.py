@@ -577,8 +577,8 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     @staticmethod
     @callback
-    def async_get_options_flow(config_entry: ConfigEntry) -> OptionsFlowHandler:
-        return OptionsFlowHandler(config_entry)
+    def async_get_options_flow(config_entry: ConfigEntry) -> OptionsFlowHandler:  # noqa: ARG004
+        return OptionsFlowHandler()
 
     async def async_step_reconfigure(
         self,
@@ -672,19 +672,18 @@ class CannotConnectError(HomeAssistantError):
 
 
 class OptionsFlowHandler(config_entries.OptionsFlow):
-    def __init__(self, config_entry: config_entries.ConfigEntry) -> None:  # noqa: ARG002
+    def __init__(self) -> None:
+        """Initialize options flow."""
         self.options = {}
         self.nodes = None
 
     async def async_step_init(self, user_input: dict[str, Any] | None = None) -> dict[str, Any]:  # noqa: PLR0912
         errors: dict[str, str] = {}
 
-        if (
-            hasattr(self.config_entry, "runtime_data")
-            and self.config_entry.runtime_data
-            and self.config_entry.runtime_data.client
-        ):
-            self.nodes = await self.config_entry.runtime_data.client.async_get_all_nodes()
+        # runtime_data is unset on an entry that never loaded, and None after a failed setup
+        runtime_data = getattr(self.config_entry, "runtime_data", None)
+        if runtime_data and runtime_data.client:
+            self.nodes = await runtime_data.client.async_get_all_nodes()
 
         if self.nodes is None:
             try:

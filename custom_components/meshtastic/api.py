@@ -68,6 +68,10 @@ EVENT_MESHTASTIC_API_MESH_BEACON = EVENT_MESHTASTIC_API_BASE + "_mesh_beacon"
 EVENT_MESHTASTIC_API_POSITION = EVENT_MESHTASTIC_API_BASE + "_position"
 EVENT_MESHTASTIC_API_WAYPOINT = EVENT_MESHTASTIC_API_BASE + "_waypoint"
 
+# How long to wait for the connected node to finish its config exchange
+# before treating the connection as unusable.
+NODE_READY_TIMEOUT = 30
+
 ATTR_EVENT_MESHTASTIC_API_CONFIG_ENTRY_ID = "config_entry_id"
 ATTR_EVENT_MESHTASTIC_API_NODE = "node"
 ATTR_EVENT_MESHTASTIC_API_DATA = "data"
@@ -115,7 +119,11 @@ class MeshtasticApiClient:
             ble_address = data[CONF_CONNECTION_BLUETOOTH_ADDRESS]
             ble_device = None
             if hass:
-                from homeassistant.components.bluetooth import async_ble_device_from_address  # noqa: PLC0415
+                # Imported lazily: the bluetooth component is optional and may not be
+                # loaded, and importing it at module scope pulls it in unconditionally.
+                from homeassistant.components.bluetooth import (  # noqa: PLC0415
+                    async_ble_device_from_address,
+                )
 
                 ble_device = async_ble_device_from_address(hass, ble_address, connectable=True)
             connection = AioBluetoothConnection(ble_address=ble_address, ble_device=ble_device)
@@ -228,7 +236,17 @@ class MeshtasticApiClient:
         return self._interface.find_node(node_id=node_id)
 
     async def async_get_all_nodes(self) -> Mapping[int, Mapping[str, Any]]:
-        await self._interface.connected_node_ready()
+        # The node database is held in memory, so this is cheap once the node is
+        # ready. The readiness event is cleared whenever the connection drops or
+        # the node re-runs its config exchange, though, and waiting on it is
+        # otherwise unbounded -- a radio that never comes back would block the
+        # caller forever. Fail instead, so callers can retry or report.
+        try:
+            await asyncio.wait_for(self._interface.connected_node_ready(), timeout=NODE_READY_TIMEOUT)
+        except TimeoutError as e:
+            msg = f"Node not ready after {NODE_READY_TIMEOUT} seconds"
+            raise MeshtasticApiClientError(msg) from e
+
         return {node_id: self._transform_node_info(node_info) for node_id, node_info in self._interface.nodes().items()}
 
     def _transform_node_info(self, node_info: Mapping[str, Any]) -> Mapping[str, Any]:
@@ -362,9 +380,16 @@ class MeshtasticApiClient:
             node.id,
             {
                 "from": packet.from_id,
+                "from_id": f"!{packet.from_id:08x}" if packet.from_id is not None else None,
                 "to": {"node": to_node, "channel": to_channel},
                 "gateway": self.get_own_node()["num"],
                 "message": packet.app_payload,
+                # hop_start is 0 on packets from firmware too old to set it, so the hop count is unknown
+                "hops_away": (
+                    packet.mesh_packet.hop_start - packet.mesh_packet.hop_limit
+                    if packet.mesh_packet.hop_start
+                    else None
+                ),
                 "hop_start": packet.mesh_packet.hop_start,
                 "hop_limit": packet.mesh_packet.hop_limit,
                 "rx_snr": packet.mesh_packet.rx_snr,

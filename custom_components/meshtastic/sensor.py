@@ -125,7 +125,7 @@ def _build_node_sensors(
 
     def last_heard(device: MeshtasticNodeEntity) -> datetime.datetime | None:
         last_heard_int = device.coordinator.data[device.node_id].get("lastHeard")
-        if last_heard_int is None:
+        if not last_heard_int:
             return None
         return datetime.datetime.fromtimestamp(last_heard_int, tz=datetime.UTC)
 
@@ -154,6 +154,7 @@ def _build_node_sensors(
                 native_unit_of_measurement=SIGNAL_STRENGTH_DECIBELS,
                 device_class=SensorDeviceClass.SIGNAL_STRENGTH,
                 state_class=SensorStateClass.MEASUREMENT,
+                suggested_display_precision=2,
                 value_fn=lambda device: device.coordinator.data[device.node_id].get("snr", None),
             ),
             gateway=gateway,
@@ -283,6 +284,7 @@ def _build_device_sensors(
                 native_unit_of_measurement=UnitOfElectricPotential.VOLT,
                 device_class=SensorDeviceClass.VOLTAGE,
                 state_class=SensorStateClass.MEASUREMENT,
+                suggested_display_precision=2,
                 value_fn=lambda device: (
                     device.coordinator.data[device.node_id].get("deviceMetrics", {}).get("voltage", None)
                 ),
@@ -300,6 +302,7 @@ def _build_device_sensors(
                 entity_category=EntityCategory.DIAGNOSTIC,
                 native_unit_of_measurement=PERCENTAGE,
                 state_class=SensorStateClass.MEASUREMENT,
+                suggested_display_precision=2,
                 value_fn=lambda device: (
                     device.coordinator.data[device.node_id].get("deviceMetrics", {}).get("channelUtilization", None)
                 ),
@@ -317,6 +320,7 @@ def _build_device_sensors(
                 entity_category=EntityCategory.DIAGNOSTIC,
                 native_unit_of_measurement=PERCENTAGE,
                 state_class=SensorStateClass.MEASUREMENT,
+                suggested_display_precision=2,
                 value_fn=lambda device: (
                     device.coordinator.data[device.node_id].get("deviceMetrics", {}).get("airUtilTx", None)
                 ),
@@ -576,6 +580,7 @@ def _build_power_metrics_sensors(
                                 native_unit_of_measurement=UnitOfElectricPotential.VOLT,
                                 device_class=SensorDeviceClass.VOLTAGE,
                                 state_class=SensorStateClass.MEASUREMENT,
+                                suggested_display_precision=2,
                                 value_fn=power_metrics_value_fn(voltage_key),
                             ),
                             gateway=gateway,
@@ -591,6 +596,7 @@ def _build_power_metrics_sensors(
                                 native_unit_of_measurement=UnitOfElectricCurrent.MILLIAMPERE,
                                 device_class=SensorDeviceClass.CURRENT,
                                 state_class=SensorStateClass.MEASUREMENT,
+                                suggested_display_precision=2,
                                 value_fn=power_metrics_value_fn(current_key),
                             ),
                             gateway=gateway,
@@ -656,7 +662,7 @@ def _build_environment_metrics_sensors(
             add_sensor("temperature", SensorDeviceClass.TEMPERATURE, UnitOfTemperature.CELSIUS)
             add_sensor("relativeHumidity", SensorDeviceClass.HUMIDITY, PERCENTAGE)
             add_sensor("barometricPressure", SensorDeviceClass.ATMOSPHERIC_PRESSURE, UnitOfPressure.HPA)
-            add_sensor("gasResistance", None, UnitOfPressure.HPA)
+            add_sensor("gasResistance", None, "kΩ")
             add_sensor("iaq", SensorDeviceClass.AQI, None)
 
             add_sensor("distance", SensorDeviceClass.DISTANCE, UnitOfLength.MILLIMETERS)
