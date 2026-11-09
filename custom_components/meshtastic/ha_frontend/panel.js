@@ -28,7 +28,6 @@ class MeshtasticPanel extends LitElement {
 
     const gateway_info = gateway_entities.map(e => ({
       "entity": e.entity_id,
-      "gateway_id": e.entity_id.replace("meshtastic\.", ""),
       "name": this.hass.states[e.entity_id].attributes["friendly_name"],
       "unavailable": this.hass.states[e.entity_id].state === "unavailable"
     }));
@@ -55,16 +54,26 @@ class MeshtasticPanel extends LitElement {
                   <h3>&nbsp;</h3>
                   <div class="card-actions">
                     ${gateway.unavailable ? html`
-                      <ha-button unelevated disabled="true">Open</ha-button>` : html`<a
-                        href="${"/meshtastic/web/" + gateway.gateway_id}" target="_blank">
-                      <ha-button unelevated>Open</ha-button>
-                    </a>`}
+                      <ha-button unelevated disabled="true">Open</ha-button>` : html`
+                      <ha-button unelevated @click=${() => this._openWebClient(gateway.entity)}>Open</ha-button>`}
                   </div>
               </ha-card>
             `)}
           </div>
       </ha-top-app-bar-fixed>
     `;
+  }
+
+  async _openWebClient(entityId) {
+    // Opened before the await so the browser treats it as part of the click, not a popup.
+    const tab = window.open("about:blank", "_blank");
+    try {
+      const { url } = await this.hass.callWS({ type: "meshtastic/web_client/open", entity_id: entityId });
+      tab.location.href = url;
+    } catch (err) {
+      tab.close();
+      alert(`Could not open the web client: ${err.message || err.code}`);
+    }
   }
 
   static get styles() {

@@ -407,28 +407,23 @@ to this integration directly and the integration will act as a proxy.
 This also has the added benefit that it allows you to connect to meshtastic devices via the web client
 that are not connected via TCP (like serial or bluetooth) or don't support TCP at all (e.g. nRF based nodes).
 
-**Security Note**: As a side effect, enabling this feature results in unauthenticated access to your gateway nodes for 
-anyone that can reach your home assistant instance (because meshtastic does not support authentication on the http api).
-Make sure to only use this feature if your home assistant instance is running in a trusted environment!
+**Security Note**: The web client controls the gateway with full admin rights. Only Home Assistant admins can
+open it: the Open button issues a token for that gateway, and the radio API answers only under that token. A token
+lapses after an hour unused or a day after it was issued; press Open again for a new one. Anyone holding the
+web client's URL holds the token, so don't share it.
 
-To access the web client, perform the following steps:
+To open the web client:
 
-In Home Assistant:
-1. Enable the feature in the integration configuration
-2. Navigate to the "Meshtastic" menu item. If you don't see it, reload home assistant interface
-3. Press the "Open" button of the desired gateway to launch the web client
-
-Inside the Meshtastic Web Client:
-
-4. Press "New Connection" - the correct hostname is already populated
-5. Press "Connect"
+1. Enable the feature in the integration configuration.
+2. Open the "Meshtastic" sidebar item. If you don't see it, reload the Home Assistant interface.
+3. Press "Open" on the gateway. The web client connects to it on its own.
 
 ## Known limitations
 
 - A radio serves one phone-API client at a time. The Meshtastic phone apps and other tools can only connect while this integration is not using the radio, unless you enable the [web client](#meshtastic-web-client) or the TCP proxy and connect through it.
 - Messages are sent and received through the gateway radio only. Nodes the gateway does not hear are not reachable.
 - Waypoint geofence enter and exit are evaluated by the device and are not reported as events.
-- The web client has no authentication, see its security note above.
+- The TCP proxy has no authentication: anyone who can reach its port controls the gateway.
 
 ## Troubleshooting
 
