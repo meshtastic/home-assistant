@@ -15,7 +15,7 @@ jobs:
       contents: write
     steps:
       - name: "Checkout the repository"
-        uses: "actions/checkout@v7.0.1"
+        uses: "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1" # v7.0.1
 
       - name: "Set the manifest version from the release tag"
         shell: "bash"
@@ -33,6 +33,6 @@ jobs:
           zip homeassistant-meshtastic.zip -r ./
 
       - name: "Upload the ZIP file to the release"
-        uses: "softprops/action-gh-release@v3.0.2"
+        uses: "softprops/action-gh-release@3d0d9888cb7fd7b750713d6e236d1fcb99157228" # v3.0.2
         with:
           files: ${{ github.workspace }}/custom_components/meshtastic/homeassistant-meshtastic.zip
