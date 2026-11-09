@@ -38,7 +38,6 @@ def _build_texts(nodes: Mapping[int, Mapping[str, Any]], runtime_data: Meshtasti
             coordinator=coordinator,
             entity_description=MeshtasticTextEntityDescription(
                 key="node_role",
-                name="Role",
                 icon="mdi:card-account-details",
                 value_fn=lambda device: device.coordinator.data[device.node_id].get("user", {}).get("role", None),
             ),
@@ -52,7 +51,6 @@ def _build_texts(nodes: Mapping[int, Mapping[str, Any]], runtime_data: Meshtasti
             coordinator=coordinator,
             entity_description=MeshtasticTextEntityDescription(
                 key="node_short_name",
-                name="Short Name",
                 icon="mdi:card-account-details",
                 value_fn=lambda device: device.coordinator.data[device.node_id].get("user", {}).get("shortName", None),
             ),
@@ -67,7 +65,6 @@ def _build_texts(nodes: Mapping[int, Mapping[str, Any]], runtime_data: Meshtasti
             coordinator=coordinator,
             entity_description=MeshtasticTextEntityDescription(
                 key="node_long_name",
-                name="Long Name",
                 icon="mdi:card-account-details",
                 value_fn=lambda device: device.coordinator.data[device.node_id].get("user", {}).get("longName", None),
             ),

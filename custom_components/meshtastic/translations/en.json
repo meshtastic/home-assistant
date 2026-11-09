@@ -288,8 +288,333 @@
   },
   "entity": {
     "sensor": {
-      "battery_level": {
+      "node_last_heard": {
+        "name": "Last Heard"
+      },
+      "node_snr": {
+        "name": "Signal to Noise Ratio"
+      },
+      "node_hops_away": {
+        "name": "Hops away"
+      },
+      "node_role": {
+        "name": "Role"
+      },
+      "node_short_name": {
+        "name": "Short Name"
+      },
+      "node_long_name": {
+        "name": "Long Name"
+      },
+      "device_uptime": {
+        "name": "Uptime"
+      },
+      "device_battery_level": {
         "name": "Battery Level"
+      },
+      "device_voltage": {
+        "name": "Voltage"
+      },
+      "device_channel_utilization": {
+        "name": "Channel Utilization"
+      },
+      "device_airtime": {
+        "name": "Airtime"
+      },
+      "stats_packets_tx": {
+        "name": "Packets sent"
+      },
+      "stats_packets_rx": {
+        "name": "Packets received"
+      },
+      "stats_packets_rx_bad": {
+        "name": "Malformed Packets received"
+      },
+      "stats_packets_rx_duplicate": {
+        "name": "Duplicate Packets received"
+      },
+      "stats_packets_tx_relayed": {
+        "name": "Packets relayed"
+      },
+      "stats_packets_tx_relay_cancelled": {
+        "name": "Packets relay canceled"
+      },
+      "stats_nodes_online": {
+        "name": "Online Nodes"
+      },
+      "stats_nodes_total": {
+        "name": "Total Nodes"
+      },
+      "stats_heap_total_bytes": {
+        "name": "Heap Total"
+      },
+      "stats_heap_free_bytes": {
+        "name": "Heap Free"
+      },
+      "stats_noise_floor": {
+        "name": "Noise Floor"
+      },
+      "power_ch1_voltage": {
+        "name": "Channel 1 Voltage"
+      },
+      "power_ch1_current": {
+        "name": "Channel 1 Current"
+      },
+      "power_ch2_voltage": {
+        "name": "Channel 2 Voltage"
+      },
+      "power_ch2_current": {
+        "name": "Channel 2 Current"
+      },
+      "power_ch3_voltage": {
+        "name": "Channel 3 Voltage"
+      },
+      "power_ch3_current": {
+        "name": "Channel 3 Current"
+      },
+      "environment_temperature": {
+        "name": "Temperature"
+      },
+      "environment_relative_humidity": {
+        "name": "Humidity"
+      },
+      "environment_barometric_pressure": {
+        "name": "Pressure"
+      },
+      "environment_gas_resistance": {
+        "name": "Gas Resistance"
+      },
+      "environment_iaq": {
+        "name": "Air Quality Index"
+      },
+      "environment_distance": {
+        "name": "Distance"
+      },
+      "environment_lux": {
+        "name": "Illuminance"
+      },
+      "environment_white_lux": {
+        "name": "White Illuminance"
+      },
+      "environment_ir_lux": {
+        "name": "Infrared Illuminance"
+      },
+      "environment_uv_lux": {
+        "name": "Ultraviolet Illuminance"
+      },
+      "environment_wind_direction": {
+        "name": "Wind Direction"
+      },
+      "environment_wind_speed": {
+        "name": "Wind Speed"
+      },
+      "environment_wind_gust": {
+        "name": "Wind Gust"
+      },
+      "environment_wind_lull": {
+        "name": "Wind Lull"
+      },
+      "environment_voltage": {
+        "name": "Voltage"
+      },
+      "environment_current": {
+        "name": "Current"
+      },
+      "environment_rainfall1h": {
+        "name": "Rainfall (1h)"
+      },
+      "environment_rainfall24h": {
+        "name": "Rainfall (24h)"
+      },
+      "environment_soil_moisture": {
+        "name": "Soil Moisture"
+      },
+      "environment_soil_temperature": {
+        "name": "Soil Temperature"
+      },
+      "environment_lightning_distance_km": {
+        "name": "Lightning Distance"
+      },
+      "environment_lightning_strike_count1h": {
+        "name": "Lightning Strikes (1h)"
+      },
+      "environment_adc_voltage_ch0": {
+        "name": "ADC Voltage Channel 0"
+      },
+      "environment_one_wire_temperature_ch0": {
+        "name": "One-Wire Temperature Channel 0"
+      },
+      "environment_adc_voltage_ch1": {
+        "name": "ADC Voltage Channel 1"
+      },
+      "environment_one_wire_temperature_ch1": {
+        "name": "One-Wire Temperature Channel 1"
+      },
+      "environment_adc_voltage_ch2": {
+        "name": "ADC Voltage Channel 2"
+      },
+      "environment_one_wire_temperature_ch2": {
+        "name": "One-Wire Temperature Channel 2"
+      },
+      "environment_adc_voltage_ch3": {
+        "name": "ADC Voltage Channel 3"
+      },
+      "environment_one_wire_temperature_ch3": {
+        "name": "One-Wire Temperature Channel 3"
+      },
+      "environment_adc_voltage_ch4": {
+        "name": "ADC Voltage Channel 4"
+      },
+      "environment_one_wire_temperature_ch4": {
+        "name": "One-Wire Temperature Channel 4"
+      },
+      "environment_adc_voltage_ch5": {
+        "name": "ADC Voltage Channel 5"
+      },
+      "environment_one_wire_temperature_ch5": {
+        "name": "One-Wire Temperature Channel 5"
+      },
+      "environment_adc_voltage_ch6": {
+        "name": "ADC Voltage Channel 6"
+      },
+      "environment_one_wire_temperature_ch6": {
+        "name": "One-Wire Temperature Channel 6"
+      },
+      "environment_adc_voltage_ch7": {
+        "name": "ADC Voltage Channel 7"
+      },
+      "environment_one_wire_temperature_ch7": {
+        "name": "One-Wire Temperature Channel 7"
+      },
+      "host_uptime_seconds": {
+        "name": "Uptime"
+      },
+      "host_freemem_bytes": {
+        "name": "Free Memory"
+      },
+      "host_diskfree1_bytes": {
+        "name": "Free Disk"
+      },
+      "host_diskfree2_bytes": {
+        "name": "Free Disk 2"
+      },
+      "host_diskfree3_bytes": {
+        "name": "Free Disk 3"
+      },
+      "host_load1": {
+        "name": "Load 1"
+      },
+      "host_load5": {
+        "name": "Load 5"
+      },
+      "host_load15": {
+        "name": "Load 15"
+      },
+      "host_user_string": {
+        "name": "User String"
+      },
+      "airquality_pm10_standard": {
+        "name": "PM1.0 Standard"
+      },
+      "airquality_pm25_standard": {
+        "name": "PM2.5 Standard"
+      },
+      "airquality_pm100_standard": {
+        "name": "PM10 Standard"
+      },
+      "airquality_pm10_environmental": {
+        "name": "PM1.0 Environmental"
+      },
+      "airquality_pm25_environmental": {
+        "name": "PM2.5 Environmental"
+      },
+      "airquality_pm100_environmental": {
+        "name": "PM10 Environmental"
+      },
+      "airquality_particles03um": {
+        "name": "Particles 0.3 µm"
+      },
+      "airquality_particles05um": {
+        "name": "Particles 0.5 µm"
+      },
+      "airquality_particles10um": {
+        "name": "Particles 1.0 µm"
+      },
+      "airquality_particles25um": {
+        "name": "Particles 2.5 µm"
+      },
+      "airquality_particles50um": {
+        "name": "Particles 5.0 µm"
+      },
+      "airquality_particles100um": {
+        "name": "Particles 10 µm"
+      },
+      "soil_water_soil_ph": {
+        "name": "Soil pH"
+      },
+      "soil_water_ph": {
+        "name": "Water pH"
+      },
+      "soil_water_electrical_conductivity": {
+        "name": "Electrical Conductivity"
+      },
+      "soil_water_salinity": {
+        "name": "Salinity"
+      },
+      "soil_water_nitrogen": {
+        "name": "Nitrogen"
+      },
+      "soil_water_phosphorus": {
+        "name": "Phosphorus"
+      },
+      "soil_water_potassium": {
+        "name": "Potassium"
+      },
+      "soil_water_dissolved_oxygen": {
+        "name": "Dissolved Oxygen"
+      },
+      "soil_water_orp": {
+        "name": "Oxidation-Reduction Potential"
+      },
+      "soil_water_chemical_oxygen_demand": {
+        "name": "Chemical Oxygen Demand"
+      },
+      "soil_water_turbidity": {
+        "name": "Turbidity"
+      },
+      "soil_water_nitrate": {
+        "name": "Nitrate"
+      },
+      "soil_water_ammonium": {
+        "name": "Ammonium"
+      },
+      "soil_water_biochemical_oxygen_demand": {
+        "name": "Biochemical Oxygen Demand"
+      },
+      "soil_water_solar_irradiance": {
+        "name": "Solar Irradiance"
+      }
+    },
+    "binary_sensor": {
+      "device_powered": {
+        "name": "Powered"
+      },
+      "node_heard_on_current_lora": {
+        "name": "Heard on current LoRa"
+      },
+      "node_has_xeddsa_signed": {
+        "name": "Has signed packets"
+      }
+    },
+    "text": {
+      "node_role": {
+        "name": "Role"
+      },
+      "node_short_name": {
+        "name": "Short Name"
+      },
+      "node_long_name": {
+        "name": "Long Name"
       }
     },
     "meshtastic": {
