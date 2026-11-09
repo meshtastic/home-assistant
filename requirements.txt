@@ -4,6 +4,6 @@ pip>=26.1.2
 ruff==0.15.15
 
 bleak~=0.22.3
-pyserial-asyncio-fast~=0.16
+serialx>=1.15.1
 
 aiomqtt>=2.5.1
