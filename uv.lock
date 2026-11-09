@@ -1664,7 +1664,7 @@ dev = [
 ]
 protobuf = [
     { name = "grpcio-tools", specifier = "==1.68.1" },
-    { name = "mypy-protobuf", specifier = "==3.6.0" },
+    { name = "mypy-protobuf", specifier = "==3.7.0" },
 ]
 test = [
     { name = "coverage" },
@@ -1829,15 +1829,15 @@ wheels = [
 
 [[package]]
 name = "mypy-protobuf"
-version = "3.6.0"
+version = "3.7.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "protobuf", version = "5.29.6", source = { registry = "https://pypi.org/simple" } },
     { name = "types-protobuf" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/4d/6f/282d64d66bf48ce60e38a6560753f784e0f88ab245ac2fb5e93f701a36cd/mypy-protobuf-3.6.0.tar.gz", hash = "sha256:02f242eb3409f66889f2b1a3aa58356ec4d909cdd0f93115622e9e70366eca3c", size = 24445, upload-time = "2024-04-01T20:24:42.837Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/99/bd/92ee9e7d2ff30cb57b36bd6f61ee4da8a05acf32f6a6121883b58720e9d4/mypy_protobuf-3.7.0.tar.gz", hash = "sha256:912fb281f7c7b3e3a7c9b8695712618a716fddbab70f6ad63eaf68eda80c5efe", size = 25690, upload-time = "2025-11-17T22:11:12.809Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/e8/73/d6b999782ae22f16971cc05378b3b33f6a89ede3b9619e8366aa23484bca/mypy_protobuf-3.6.0-py3-none-any.whl", hash = "sha256:56176e4d569070e7350ea620262478b49b7efceba4103d468448f1d21492fd6c", size = 16434, upload-time = "2024-04-01T20:24:40.583Z" },
+    { url = "https://files.pythonhosted.org/packages/69/32/709df4390d155bd72e75f2a9bce6004c2958a21f31817f3a2c7750299f70/mypy_protobuf-3.7.0-py3-none-any.whl", hash = "sha256:85256e9d4da935722ce8fbaa8d19397e1a2989aa8075c96577987de9fe7cea4d", size = 17488, upload-time = "2025-11-17T22:11:11.62Z" },
 ]
 
 [[package]]
