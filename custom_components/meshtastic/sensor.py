@@ -21,7 +21,6 @@ from homeassistant.components.sensor import (
 )
 from homeassistant.config import callback
 from homeassistant.const import (
-    CONCENTRATION_PARTS_PER_MILLION,
     DEGREE,
     LIGHT_LUX,
     PERCENTAGE,
@@ -35,6 +34,7 @@ from homeassistant.const import (
     UnitOfIrradiance,
     UnitOfLength,
     UnitOfPressure,
+    UnitOfRatio,
     UnitOfSpeed,
     UnitOfTemperature,
     UnitOfTime,
@@ -879,8 +879,8 @@ def _build_soil_water_metrics_sensors(
             add_sensor("orp", None, UnitOfElectricPotential.MILLIVOLT)
             add_sensor("chemicalOxygenDemand", None, "mg/L")
             add_sensor("turbidity", None, "NTU")
-            add_sensor("nitrate", None, CONCENTRATION_PARTS_PER_MILLION)
-            add_sensor("ammonium", None, CONCENTRATION_PARTS_PER_MILLION)
+            add_sensor("nitrate", None, UnitOfRatio.PARTS_PER_MILLION)
+            add_sensor("ammonium", None, UnitOfRatio.PARTS_PER_MILLION)
             add_sensor("biochemicalOxygenDemand", None, "mg/L")
             add_sensor(
                 "solarIrradiance",

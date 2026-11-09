@@ -500,7 +500,8 @@ async def _add_entities_for_entry(hass: HomeAssistant, entities: list[Entity], e
     for e in entities:
         device_id = UNDEFINED
         if e.device_info:
-            device = device_registry.async_get_device(identifiers=e.device_info["identifiers"])
+            identifier = next(iter(e.device_info["identifiers"]))
+            device = device_registry.async_get_device_by_identifier(identifier, entry.entry_id)
             if device:
                 device_id = device.id
         try:
