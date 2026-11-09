@@ -52,6 +52,10 @@ class Packet[T]:
         return self.mesh_packet.via_mqtt if self.mesh_packet is not None else False
 
     @property
+    def xeddsa_signed(self) -> bool:
+        return self.mesh_packet.xeddsa_signed if self.mesh_packet is not None else False
+
+    @property
     def hop_start(self) -> int | None:
         return self.mesh_packet.hop_start if self.mesh_packet is not None else None
 

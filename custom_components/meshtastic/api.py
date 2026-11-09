@@ -336,6 +336,7 @@ class MeshtasticApiClient:
                 "rx_snr": packet.mesh_packet.rx_snr,
                 "rx_rssi": packet.mesh_packet.rx_rssi,
                 "via_mqtt": packet.mesh_packet.via_mqtt,
+                "xeddsa_signed": packet.mesh_packet.xeddsa_signed,
             },
         )
 
