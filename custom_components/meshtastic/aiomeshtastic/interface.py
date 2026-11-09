@@ -845,7 +845,13 @@ class MeshInterface:
                         self._logger.debug("Reconnect connection succeeded, requesting config")
 
                     try:
-                        await asyncio.wait_for(self._connection.request_config(minimal=self.no_nodes), timeout=60)
+                        # the packet loop is not listening while we reconnect, so apply the bootstrap here
+                        await asyncio.wait_for(
+                            self._connection.request_config(
+                                minimal=self.no_nodes, on_packet=self._process_connected_node_packets
+                            ),
+                            timeout=60,
+                        )
                         if not self._connected_node_ready.is_set():
                             self._logger.debug("Completed first request config as part of reconnect")
                             self._connected_node_ready.set()

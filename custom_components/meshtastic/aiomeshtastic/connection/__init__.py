@@ -209,7 +209,11 @@ class ClientApiConnection:
             msg = "Heartbeat failed"
             raise ClientApiConnectionInterruptedError(msg)
 
-    async def request_config(self, minimal: bool = False) -> bool:  # noqa: FBT001, FBT002
+    async def request_config(
+        self,
+        minimal: bool = False,  # noqa: FBT001, FBT002
+        on_packet: Callable[[mesh_pb2.FromRadio], Awaitable[None]] | None = None,
+    ) -> bool:
         start_config_packet = mesh_pb2.ToRadio()
 
         if minimal:
@@ -221,6 +225,11 @@ class ClientApiConnection:
                 start_config_packet.want_config_id += 1
 
         async for packet in self.listen(on_start=self.send_packet(start_config_packet)):
+            if on_packet is not None:
+                try:
+                    await on_packet(packet)
+                except:  # noqa: E722
+                    self._logger.warning("Request config packet callback failed", exc_info=True)
             try:
                 if (
                     packet.HasField("config_complete_id")
