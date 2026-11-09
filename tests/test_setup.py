@@ -94,3 +94,61 @@ async def test_failure_after_connect_disconnects_and_clears_runtime_data(
     fake_client.connect.assert_awaited_once()
     fake_client.disconnect.assert_awaited_once()
     assert getattr(entry, "runtime_data", None) is None
+
+
+@pytest.mark.usefixtures("fake_client")
+async def test_entities_attach_to_the_config_entry_and_device_without_a_warning(
+    hass: HomeAssistant, entry: MockConfigEntry, caplog: pytest.LogCaptureFixture
+) -> None:
+    assert await hass.config_entries.async_setup(entry.entry_id)
+    await hass.async_block_till_done()
+
+    assert "attach a device to an entity" not in caplog.text
+    gateway_device = dr.async_get(hass).async_get_device({(DOMAIN, str(GATEWAY_NUM))})
+    registry = er.async_get(hass)
+    for unique_id in (
+        f"{entry.entry_id}_gateway_{GATEWAY_NUM}",
+        f"{entry.entry_id}_channel_{GATEWAY_NUM}_0",
+        f"{entry.entry_id}_messages_{GATEWAY_NUM}_dm",
+    ):
+        entity_id = registry.async_get_entity_id(DOMAIN, DOMAIN, unique_id)
+        assert entity_id is not None
+        registry_entry = registry.async_get(entity_id)
+        assert registry_entry.config_entry_id == entry.entry_id
+        assert registry_entry.device_id == gateway_device.id
+    assert registry.async_get_entity_id(DOMAIN, DOMAIN, f"{entry.entry_id}_gateway_{GATEWAY_NUM}") == (
+        "meshtastic.gateway_gate"
+    )
+
+
+@pytest.mark.usefixtures("fake_client")
+async def test_unload_removes_the_entities_and_setup_can_run_again(hass: HomeAssistant, entry: MockConfigEntry) -> None:
+    assert await hass.config_entries.async_setup(entry.entry_id)
+    await hass.async_block_till_done()
+    registry = er.async_get(hass)
+    gateway_entity_id = registry.async_get_entity_id(DOMAIN, DOMAIN, f"{entry.entry_id}_gateway_{GATEWAY_NUM}")
+    assert hass.states.get(gateway_entity_id) is not None
+
+    assert await hass.config_entries.async_unload(entry.entry_id)
+    await hass.async_block_till_done()
+
+    assert hass.states.get(gateway_entity_id).state == "unavailable"
+    assert registry.async_get(gateway_entity_id) is not None
+
+    assert await hass.config_entries.async_setup(entry.entry_id)
+    await hass.async_block_till_done()
+    assert entry.state is ConfigEntryState.LOADED
+    assert hass.states.get(gateway_entity_id).state != "unavailable"
+
+
+@pytest.mark.usefixtures("fake_client")
+async def test_failure_after_the_platform_is_set_up_leaves_no_platform_behind(
+    hass: HomeAssistant, entry: MockConfigEntry
+) -> None:
+    with patch("custom_components.meshtastic.services.async_register_gateway", side_effect=RuntimeError("boom")):
+        assert not await hass.config_entries.async_setup(entry.entry_id)
+    assert entry.state is ConfigEntryState.SETUP_ERROR
+
+    assert await hass.config_entries.async_reload(entry.entry_id)
+    await hass.async_block_till_done()
+    assert entry.state is ConfigEntryState.LOADED
