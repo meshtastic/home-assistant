@@ -255,6 +255,15 @@ async def async_setup(hass: HomeAssistant) -> bool:
 # credentialless fetches cross-origin subresources without credentials instead,
 # which is what upstream's own dev server uses. Browsers that do not implement
 # it simply are not isolated, and fall back to the previous behaviour.
+# How long to hold a fromradio request open waiting for a packet.
+#
+# This is a long poll, so it must return before the client stops waiting or the
+# client aborts the request and reports the connection as lost. The bundled
+# client gives up after 7s (READ_TIMEOUT_MS in @meshtastic/transport-http), so
+# stay comfortably under that: holding longer made an idle mesh look like it
+# was disconnecting every few seconds.
+FROM_RADIO_HOLD_SECONDS = 5.0
+
 CROSS_ORIGIN_ISOLATION_HEADERS = {
     "Cross-Origin-Opener-Policy": "same-origin",
     "Cross-Origin-Embedder-Policy": "credentialless",
@@ -430,7 +439,7 @@ class MeshtasticWebApiV1FromRadioView(MeshtasticWebApiV1View):
             return response
 
         try:
-            from_radio = await asyncio.wait_for(queue.get(), timeout=10.0)
+            from_radio = await asyncio.wait_for(queue.get(), timeout=FROM_RADIO_HOLD_SECONDS)
             _LOGGER.debug(
                 "Forwarding: %s to %s",
                 (config_entry_id, request.remote, config_id),
