@@ -79,5 +79,6 @@ per config entry from 2026.8, so look them up with `async_get_device_by_identifi
   also nightly) and `release.yml` (zip on release).
 - Fork pull requests from first-time contributors wait for a maintainer to approve their workflow runs.
 - The CLA assistant check must pass. Pull requests are squash-merged with Conventional titles.
-- Dependabot opens the dependency bumps. Pins that follow Home Assistant 2026.8 (`bleak`, `protobuf`
-  in `requirements.test.txt`) move with the Home Assistant pin, not on their own.
+- Renovate opens the dependency bumps (`.github/renovate.json`). A `homeassistant` bump waits for approval on
+  the dependency dashboard issue; the pins taken from that release (`pytest-homeassistant-custom-component`,
+  `protobuf`, `josepy`, `bleak`) are never bumped by Renovate and move by hand with it.
