@@ -5,7 +5,6 @@
   "labels": ["dependencies"],
   "pip_requirements": { "fileMatch": ["(^|/)requirements[\\w.-]*\\.txt$"] },
   "github-actions": { "pinDigests": true },
-  "git-submodules": { "enabled": true },
   "packageRules": [
     {
       "description": "The minimum Home Assistant version moves only on purpose, from the dependency dashboard",
