@@ -3,22 +3,22 @@
 isort:skip_file
 """
 
-from google.protobuf import descriptor as _descriptor
-from google.protobuf import message as _message
-from google.protobuf.internal import enum_type_wrapper as _enum_type_wrapper
-import builtins as _builtins
+import builtins
+import google.protobuf.descriptor
+import google.protobuf.internal.enum_type_wrapper
+import google.protobuf.message
 import sys
-import typing as _typing
+import typing
 
-if sys.version_info >= (3, 11):
-    from typing import TypeAlias as _TypeAlias, Never as _Never
+if sys.version_info >= (3, 10):
+    import typing as typing_extensions
 else:
-    from typing_extensions import TypeAlias as _TypeAlias, Never as _Never
+    import typing_extensions
 
-DESCRIPTOR: _descriptor.FileDescriptor
+DESCRIPTOR: google.protobuf.descriptor.FileDescriptor
 
-@_typing.final
-class SerialHalCommand(_message.Message):
+@typing.final
+class SerialHalCommand(google.protobuf.message.Message):
     """SerialHalCommand messages are sent from host to device over the SerialHal
     framing stream. Responses normally come back as SerialHalResponse with the
     same transaction_id.
@@ -29,14 +29,14 @@ class SerialHalCommand(_message.Message):
     than replies to an outstanding request.
     """
 
-    DESCRIPTOR: _descriptor.Descriptor
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
 
     class _Type:
-        ValueType = _typing.NewType("ValueType", _builtins.int)
-        V: _TypeAlias = ValueType  # noqa: Y015
+        ValueType = typing.NewType("ValueType", builtins.int)
+        V: typing_extensions.TypeAlias = ValueType
 
-    class _TypeEnumTypeWrapper(_enum_type_wrapper._EnumTypeWrapper[SerialHalCommand._Type.ValueType], _builtins.type):
-        DESCRIPTOR: _descriptor.EnumDescriptor
+    class _TypeEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[SerialHalCommand._Type.ValueType], builtins.type):
+        DESCRIPTOR: google.protobuf.descriptor.EnumDescriptor
         UNSET: SerialHalCommand._Type.ValueType  # 0
         PIN_MODE: SerialHalCommand._Type.ValueType  # 1
         DIGITAL_WRITE: SerialHalCommand._Type.ValueType  # 2
@@ -56,49 +56,45 @@ class SerialHalCommand(_message.Message):
     SPI_TRANSFER: SerialHalCommand.Type.ValueType  # 6
     NOOP: SerialHalCommand.Type.ValueType  # 7
 
-    TRANSACTION_ID_FIELD_NUMBER: _builtins.int
-    TYPE_FIELD_NUMBER: _builtins.int
-    PIN_FIELD_NUMBER: _builtins.int
-    VALUE_FIELD_NUMBER: _builtins.int
-    MODE_FIELD_NUMBER: _builtins.int
-    DATA_FIELD_NUMBER: _builtins.int
-    transaction_id: _builtins.int
+    TRANSACTION_ID_FIELD_NUMBER: builtins.int
+    TYPE_FIELD_NUMBER: builtins.int
+    PIN_FIELD_NUMBER: builtins.int
+    VALUE_FIELD_NUMBER: builtins.int
+    MODE_FIELD_NUMBER: builtins.int
+    DATA_FIELD_NUMBER: builtins.int
+    transaction_id: builtins.int
     """Host-assigned request id. Replies echo this id back in
     SerialHalResponse.transaction_id.
     """
-    type: Global___SerialHalCommand.Type.ValueType
-    pin: _builtins.int
-    value: _builtins.int
-    mode: _builtins.int
-    data: _builtins.bytes
+    type: global___SerialHalCommand.Type.ValueType
+    pin: builtins.int
+    value: builtins.int
+    mode: builtins.int
+    data: builtins.bytes
     def __init__(
         self,
         *,
-        transaction_id: _builtins.int = ...,
-        type: Global___SerialHalCommand.Type.ValueType = ...,
-        pin: _builtins.int = ...,
-        value: _builtins.int = ...,
-        mode: _builtins.int = ...,
-        data: _builtins.bytes = ...,
+        transaction_id: builtins.int = ...,
+        type: global___SerialHalCommand.Type.ValueType = ...,
+        pin: builtins.int = ...,
+        value: builtins.int = ...,
+        mode: builtins.int = ...,
+        data: builtins.bytes = ...,
     ) -> None: ...
-    _HasFieldArgType: _TypeAlias = _Never  # noqa: Y015
-    def HasField(self, field_name: _HasFieldArgType) -> _builtins.bool: ...
-    _ClearFieldArgType: _TypeAlias = _typing.Literal["data", b"data", "mode", b"mode", "pin", b"pin", "transaction_id", b"transaction_id", "type", b"type", "value", b"value"]  # noqa: Y015
-    def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
-    def WhichOneof(self, oneof_group: _Never) -> None: ...
+    def ClearField(self, field_name: typing.Literal["data", b"data", "mode", b"mode", "pin", b"pin", "transaction_id", b"transaction_id", "type", b"type", "value", b"value"]) -> None: ...
 
-Global___SerialHalCommand: _TypeAlias = SerialHalCommand  # noqa: Y015
+global___SerialHalCommand = SerialHalCommand
 
-@_typing.final
-class SerialHalResponse(_message.Message):
-    DESCRIPTOR: _descriptor.Descriptor
+@typing.final
+class SerialHalResponse(google.protobuf.message.Message):
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
 
     class _Result:
-        ValueType = _typing.NewType("ValueType", _builtins.int)
-        V: _TypeAlias = ValueType  # noqa: Y015
+        ValueType = typing.NewType("ValueType", builtins.int)
+        V: typing_extensions.TypeAlias = ValueType
 
-    class _ResultEnumTypeWrapper(_enum_type_wrapper._EnumTypeWrapper[SerialHalResponse._Result.ValueType], _builtins.type):
-        DESCRIPTOR: _descriptor.EnumDescriptor
+    class _ResultEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[SerialHalResponse._Result.ValueType], builtins.type):
+        DESCRIPTOR: google.protobuf.descriptor.EnumDescriptor
         OK: SerialHalResponse._Result.ValueType  # 0
         ERROR: SerialHalResponse._Result.ValueType  # 1
         BAD_REQUEST: SerialHalResponse._Result.ValueType  # 2
@@ -110,12 +106,12 @@ class SerialHalResponse(_message.Message):
     BAD_REQUEST: SerialHalResponse.Result.ValueType  # 2
     UNSUPPORTED: SerialHalResponse.Result.ValueType  # 3
 
-    TRANSACTION_ID_FIELD_NUMBER: _builtins.int
-    RESULT_FIELD_NUMBER: _builtins.int
-    VALUE_FIELD_NUMBER: _builtins.int
-    DATA_FIELD_NUMBER: _builtins.int
-    ERROR_FIELD_NUMBER: _builtins.int
-    transaction_id: _builtins.int
+    TRANSACTION_ID_FIELD_NUMBER: builtins.int
+    RESULT_FIELD_NUMBER: builtins.int
+    VALUE_FIELD_NUMBER: builtins.int
+    DATA_FIELD_NUMBER: builtins.int
+    ERROR_FIELD_NUMBER: builtins.int
+    transaction_id: builtins.int
     """Matches the originating SerialHalCommand.transaction_id for normal
     request/response traffic.
 
@@ -123,26 +119,22 @@ class SerialHalResponse(_message.Message):
     the device. In that case, the host should interpret value as the GPIO pin
     that triggered.
     """
-    result: Global___SerialHalResponse.Result.ValueType
-    value: _builtins.int
+    result: global___SerialHalResponse.Result.ValueType
+    value: builtins.int
     """Used by DIGITAL_READ replies and interrupt notifications. For interrupt
     notifications (transaction_id == 0), this carries the pin number.
     """
-    data: _builtins.bytes
-    error: _builtins.str
+    data: builtins.bytes
+    error: builtins.str
     def __init__(
         self,
         *,
-        transaction_id: _builtins.int = ...,
-        result: Global___SerialHalResponse.Result.ValueType = ...,
-        value: _builtins.int = ...,
-        data: _builtins.bytes = ...,
-        error: _builtins.str = ...,
+        transaction_id: builtins.int = ...,
+        result: global___SerialHalResponse.Result.ValueType = ...,
+        value: builtins.int = ...,
+        data: builtins.bytes = ...,
+        error: builtins.str = ...,
     ) -> None: ...
-    _HasFieldArgType: _TypeAlias = _Never  # noqa: Y015
-    def HasField(self, field_name: _HasFieldArgType) -> _builtins.bool: ...
-    _ClearFieldArgType: _TypeAlias = _typing.Literal["data", b"data", "error", b"error", "result", b"result", "transaction_id", b"transaction_id", "value", b"value"]  # noqa: Y015
-    def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
-    def WhichOneof(self, oneof_group: _Never) -> None: ...
+    def ClearField(self, field_name: typing.Literal["data", b"data", "error", b"error", "result", b"result", "transaction_id", b"transaction_id", "value", b"value"]) -> None: ...
 
-Global___SerialHalResponse: _TypeAlias = SerialHalResponse  # noqa: Y015
+global___SerialHalResponse = SerialHalResponse

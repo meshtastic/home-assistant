@@ -3,33 +3,28 @@
 isort:skip_file
 trunk-ignore(buf-lint/PACKAGE_DIRECTORY_MATCH)"""
 
-from collections import abc as _abc
-from google.protobuf import descriptor as _descriptor
-from google.protobuf import message as _message
-from google.protobuf.internal import containers as _containers
-from google.protobuf.internal import enum_type_wrapper as _enum_type_wrapper
-import builtins as _builtins
+import builtins
+import collections.abc
+import google.protobuf.descriptor
+import google.protobuf.internal.containers
+import google.protobuf.internal.enum_type_wrapper
+import google.protobuf.message
 import sys
-import typing as _typing
+import typing
 
-if sys.version_info >= (3, 11):
-    from typing import TypeAlias as _TypeAlias, Never as _Never
+if sys.version_info >= (3, 10):
+    import typing as typing_extensions
 else:
-    from typing_extensions import TypeAlias as _TypeAlias, Never as _Never
+    import typing_extensions
 
-if sys.version_info >= (3, 13):
-    from warnings import deprecated as _deprecated
-else:
-    from typing_extensions import deprecated as _deprecated
-
-DESCRIPTOR: _descriptor.FileDescriptor
+DESCRIPTOR: google.protobuf.descriptor.FileDescriptor
 
 class _Team:
-    ValueType = _typing.NewType("ValueType", _builtins.int)
-    V: _TypeAlias = ValueType  # noqa: Y015
+    ValueType = typing.NewType("ValueType", builtins.int)
+    V: typing_extensions.TypeAlias = ValueType
 
-class _TeamEnumTypeWrapper(_enum_type_wrapper._EnumTypeWrapper[_Team.ValueType], _builtins.type):
-    DESCRIPTOR: _descriptor.EnumDescriptor
+class _TeamEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[_Team.ValueType], builtins.type):
+    DESCRIPTOR: google.protobuf.descriptor.EnumDescriptor
     Unspecifed_Color: _Team.ValueType  # 0
     """
     Unspecifed
@@ -153,14 +148,14 @@ Brown: Team.ValueType  # 14
 """
 Brown
 """
-Global___Team: _TypeAlias = Team  # noqa: Y015
+global___Team = Team
 
 class _MemberRole:
-    ValueType = _typing.NewType("ValueType", _builtins.int)
-    V: _TypeAlias = ValueType  # noqa: Y015
+    ValueType = typing.NewType("ValueType", builtins.int)
+    V: typing_extensions.TypeAlias = ValueType
 
-class _MemberRoleEnumTypeWrapper(_enum_type_wrapper._EnumTypeWrapper[_MemberRole.ValueType], _builtins.type):
-    DESCRIPTOR: _descriptor.EnumDescriptor
+class _MemberRoleEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[_MemberRole.ValueType], builtins.type):
+    DESCRIPTOR: google.protobuf.descriptor.EnumDescriptor
     Unspecifed: _MemberRole.ValueType  # 0
     """
     Unspecifed
@@ -239,14 +234,14 @@ K9: MemberRole.ValueType  # 8
 """
 Doggo
 """
-Global___MemberRole: _TypeAlias = MemberRole  # noqa: Y015
+global___MemberRole = MemberRole
 
 class _CotHow:
-    ValueType = _typing.NewType("ValueType", _builtins.int)
-    V: _TypeAlias = ValueType  # noqa: Y015
+    ValueType = typing.NewType("ValueType", builtins.int)
+    V: typing_extensions.TypeAlias = ValueType
 
-class _CotHowEnumTypeWrapper(_enum_type_wrapper._EnumTypeWrapper[_CotHow.ValueType], _builtins.type):
-    DESCRIPTOR: _descriptor.EnumDescriptor
+class _CotHowEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[_CotHow.ValueType], builtins.type):
+    DESCRIPTOR: google.protobuf.descriptor.EnumDescriptor
     CotHow_Unspecified: _CotHow.ValueType  # 0
     """
     Unspecified
@@ -318,14 +313,14 @@ CotHow_m_s: CotHow.ValueType  # 7
 """
 Machine simulated
 """
-Global___CotHow: _TypeAlias = CotHow  # noqa: Y015
+global___CotHow = CotHow
 
 class _CotType:
-    ValueType = _typing.NewType("ValueType", _builtins.int)
-    V: _TypeAlias = ValueType  # noqa: Y015
+    ValueType = typing.NewType("ValueType", builtins.int)
+    V: typing_extensions.TypeAlias = ValueType
 
-class _CotTypeEnumTypeWrapper(_enum_type_wrapper._EnumTypeWrapper[_CotType.ValueType], _builtins.type):
-    DESCRIPTOR: _descriptor.EnumDescriptor
+class _CotTypeEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[_CotType.ValueType], builtins.type):
+    DESCRIPTOR: google.protobuf.descriptor.EnumDescriptor
     CotType_Other: _CotType.ValueType  # 0
     """
     Unknown or unmapped type, use cot_type_str
@@ -815,7 +810,7 @@ class _CotTypeEnumTypeWrapper(_enum_type_wrapper._EnumTypeWrapper[_CotType.Value
     CotType_m_t_t: _CotType.ValueType  # 125
     """-- TAKTALK plugin shapes --
     CoT types unique to the TAKTALK ATAK plugin. Note `y-` has a literal
-    trailing dash and no second atom — that's the wire format ATAK emits
+    trailing dash and no second atom - that's the wire format ATAK emits
     for TAKTALK room broadcasts. The CotType enum encodes the literal
     string verbatim (CotType_y -> "y-") so receivers reconstruct the
     original event type byte-for-byte without consulting cot_type_str.
@@ -829,7 +824,7 @@ class _CotTypeEnumTypeWrapper(_enum_type_wrapper._EnumTypeWrapper[_CotType.Value
     y-: TAKTALK room/membership broadcast. Payload carried via the
     TakTalkRoomData typed variant (sender_callsign, room_id, room_name,
     participants). The CoT type literally has a trailing dash and no
-    second atom — not a typo.
+    second atom - not a typo.
     """
 
 class CotType(_CotType, metaclass=_CotTypeEnumTypeWrapper):
@@ -1328,7 +1323,7 @@ TaskRequest typed variant.
 CotType_m_t_t: CotType.ValueType  # 125
 """-- TAKTALK plugin shapes --
 CoT types unique to the TAKTALK ATAK plugin. Note `y-` has a literal
-trailing dash and no second atom — that's the wire format ATAK emits
+trailing dash and no second atom - that's the wire format ATAK emits
 for TAKTALK room broadcasts. The CotType enum encodes the literal
 string verbatim (CotType_y -> "y-") so receivers reconstruct the
 original event type byte-for-byte without consulting cot_type_str.
@@ -1342,16 +1337,16 @@ CotType_y: CotType.ValueType  # 126
 y-: TAKTALK room/membership broadcast. Payload carried via the
 TakTalkRoomData typed variant (sender_callsign, room_id, room_name,
 participants). The CoT type literally has a trailing dash and no
-second atom — not a typo.
+second atom - not a typo.
 """
-Global___CotType: _TypeAlias = CotType  # noqa: Y015
+global___CotType = CotType
 
 class _GeoPointSource:
-    ValueType = _typing.NewType("ValueType", _builtins.int)
-    V: _TypeAlias = ValueType  # noqa: Y015
+    ValueType = typing.NewType("ValueType", builtins.int)
+    V: typing_extensions.TypeAlias = ValueType
 
-class _GeoPointSourceEnumTypeWrapper(_enum_type_wrapper._EnumTypeWrapper[_GeoPointSource.ValueType], _builtins.type):
-    DESCRIPTOR: _descriptor.EnumDescriptor
+class _GeoPointSourceEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[_GeoPointSource.ValueType], builtins.type):
+    DESCRIPTOR: google.protobuf.descriptor.EnumDescriptor
     GeoPointSource_Unspecified: _GeoPointSource.ValueType  # 0
     """
     Unspecified
@@ -1390,58 +1385,58 @@ GeoPointSource_NETWORK: GeoPointSource.ValueType  # 3
 """
 Network/external
 """
-Global___GeoPointSource: _TypeAlias = GeoPointSource  # noqa: Y015
+global___GeoPointSource = GeoPointSource
 
-@_typing.final
-class TAKPacket(_message.Message):
+@typing.final
+class TAKPacket(google.protobuf.message.Message):
     """
     Packets for the official ATAK Plugin
     """
 
-    DESCRIPTOR: _descriptor.Descriptor
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
 
-    IS_COMPRESSED_FIELD_NUMBER: _builtins.int
-    CONTACT_FIELD_NUMBER: _builtins.int
-    GROUP_FIELD_NUMBER: _builtins.int
-    STATUS_FIELD_NUMBER: _builtins.int
-    PLI_FIELD_NUMBER: _builtins.int
-    CHAT_FIELD_NUMBER: _builtins.int
-    DETAIL_FIELD_NUMBER: _builtins.int
-    is_compressed: _builtins.bool
+    IS_COMPRESSED_FIELD_NUMBER: builtins.int
+    CONTACT_FIELD_NUMBER: builtins.int
+    GROUP_FIELD_NUMBER: builtins.int
+    STATUS_FIELD_NUMBER: builtins.int
+    PLI_FIELD_NUMBER: builtins.int
+    CHAT_FIELD_NUMBER: builtins.int
+    DETAIL_FIELD_NUMBER: builtins.int
+    is_compressed: builtins.bool
     """
     Are the payloads strings compressed for LoRA transport?
     """
-    detail: _builtins.bytes
+    detail: builtins.bytes
     """
     Generic CoT detail XML
     May be compressed / truncated by the sender (EUD)
     """
-    @_builtins.property
-    def contact(self) -> Global___Contact:
+    @property
+    def contact(self) -> global___Contact:
         """
         The contact / callsign for ATAK user
         """
 
-    @_builtins.property
-    def group(self) -> Global___Group:
+    @property
+    def group(self) -> global___Group:
         """
         The group for ATAK user
         """
 
-    @_builtins.property
-    def status(self) -> Global___Status:
+    @property
+    def status(self) -> global___Status:
         """
         The status of the ATAK EUD
         """
 
-    @_builtins.property
-    def pli(self) -> Global___PLI:
+    @property
+    def pli(self) -> global___PLI:
         """
         TAK position report
         """
 
-    @_builtins.property
-    def chat(self) -> Global___GeoChat:
+    @property
+    def chat(self) -> global___GeoChat:
         """
         ATAK GeoChat message
         """
@@ -1449,38 +1444,34 @@ class TAKPacket(_message.Message):
     def __init__(
         self,
         *,
-        is_compressed: _builtins.bool = ...,
-        contact: Global___Contact | None = ...,
-        group: Global___Group | None = ...,
-        status: Global___Status | None = ...,
-        pli: Global___PLI | None = ...,
-        chat: Global___GeoChat | None = ...,
-        detail: _builtins.bytes = ...,
+        is_compressed: builtins.bool = ...,
+        contact: global___Contact | None = ...,
+        group: global___Group | None = ...,
+        status: global___Status | None = ...,
+        pli: global___PLI | None = ...,
+        chat: global___GeoChat | None = ...,
+        detail: builtins.bytes = ...,
     ) -> None: ...
-    _HasFieldArgType: _TypeAlias = _typing.Literal["chat", b"chat", "contact", b"contact", "detail", b"detail", "group", b"group", "payload_variant", b"payload_variant", "pli", b"pli", "status", b"status"]  # noqa: Y015
-    def HasField(self, field_name: _HasFieldArgType) -> _builtins.bool: ...
-    _ClearFieldArgType: _TypeAlias = _typing.Literal["chat", b"chat", "contact", b"contact", "detail", b"detail", "group", b"group", "is_compressed", b"is_compressed", "payload_variant", b"payload_variant", "pli", b"pli", "status", b"status"]  # noqa: Y015
-    def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
-    _WhichOneofReturnType_payload_variant: _TypeAlias = _typing.Literal["pli", "chat", "detail"]  # noqa: Y015
-    _WhichOneofArgType_payload_variant: _TypeAlias = _typing.Literal["payload_variant", b"payload_variant"]  # noqa: Y015
-    def WhichOneof(self, oneof_group: _WhichOneofArgType_payload_variant) -> _WhichOneofReturnType_payload_variant | None: ...
+    def HasField(self, field_name: typing.Literal["chat", b"chat", "contact", b"contact", "detail", b"detail", "group", b"group", "payload_variant", b"payload_variant", "pli", b"pli", "status", b"status"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing.Literal["chat", b"chat", "contact", b"contact", "detail", b"detail", "group", b"group", "is_compressed", b"is_compressed", "payload_variant", b"payload_variant", "pli", b"pli", "status", b"status"]) -> None: ...
+    def WhichOneof(self, oneof_group: typing.Literal["payload_variant", b"payload_variant"]) -> typing.Literal["pli", "chat", "detail"] | None: ...
 
-Global___TAKPacket: _TypeAlias = TAKPacket  # noqa: Y015
+global___TAKPacket = TAKPacket
 
-@_typing.final
-class GeoChat(_message.Message):
+@typing.final
+class GeoChat(google.protobuf.message.Message):
     """
     ATAK GeoChat message
     """
 
-    DESCRIPTOR: _descriptor.Descriptor
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
 
     class _ReceiptType:
-        ValueType = _typing.NewType("ValueType", _builtins.int)
-        V: _TypeAlias = ValueType  # noqa: Y015
+        ValueType = typing.NewType("ValueType", builtins.int)
+        V: typing_extensions.TypeAlias = ValueType
 
-    class _ReceiptTypeEnumTypeWrapper(_enum_type_wrapper._EnumTypeWrapper[GeoChat._ReceiptType.ValueType], _builtins.type):
-        DESCRIPTOR: _descriptor.EnumDescriptor
+    class _ReceiptTypeEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[GeoChat._ReceiptType.ValueType], builtins.type):
+        DESCRIPTOR: google.protobuf.descriptor.EnumDescriptor
         ReceiptType_None: GeoChat._ReceiptType.ValueType  # 0
         """normal chat message"""
         ReceiptType_Delivered: GeoChat._ReceiptType.ValueType  # 1
@@ -1505,39 +1496,39 @@ class GeoChat(_message.Message):
     ReceiptType_Read: GeoChat.ReceiptType.ValueType  # 2
     """b-t-f-r read receipt"""
 
-    MESSAGE_FIELD_NUMBER: _builtins.int
-    TO_FIELD_NUMBER: _builtins.int
-    TO_CALLSIGN_FIELD_NUMBER: _builtins.int
-    RECEIPT_FOR_UID_FIELD_NUMBER: _builtins.int
-    RECEIPT_TYPE_FIELD_NUMBER: _builtins.int
-    LANG_FIELD_NUMBER: _builtins.int
-    ROOM_ID_FIELD_NUMBER: _builtins.int
-    VOICE_PROFILE_ID_FIELD_NUMBER: _builtins.int
-    message: _builtins.str
+    MESSAGE_FIELD_NUMBER: builtins.int
+    TO_FIELD_NUMBER: builtins.int
+    TO_CALLSIGN_FIELD_NUMBER: builtins.int
+    RECEIPT_FOR_UID_FIELD_NUMBER: builtins.int
+    RECEIPT_TYPE_FIELD_NUMBER: builtins.int
+    LANG_FIELD_NUMBER: builtins.int
+    ROOM_ID_FIELD_NUMBER: builtins.int
+    VOICE_PROFILE_ID_FIELD_NUMBER: builtins.int
+    message: builtins.str
     """
     The text message. Empty for receipts.
     """
-    to: _builtins.str
+    to: builtins.str
     """
     Uid recipient of the message
     """
-    to_callsign: _builtins.str
+    to_callsign: builtins.str
     """
     Callsign of the recipient for the message
     """
-    receipt_for_uid: _builtins.str
+    receipt_for_uid: builtins.str
     """
     UID of the chat message this event is acknowledging. Empty for a
     normal chat message; set for delivered / read receipts. Paired with
     receipt_type so receivers can match the ack back to the original
     outbound GeoChat by its event uid.
     """
-    receipt_type: Global___GeoChat.ReceiptType.ValueType
+    receipt_type: global___GeoChat.ReceiptType.ValueType
     """
     Receipt kind discriminator. See ReceiptType doc. Default ReceiptType_None
     means this is a regular chat message, not a receipt.
     """
-    lang: _builtins.str
+    lang: builtins.str
     """
     --- TAKTALK-flavored b-t-f extensions ---
 
@@ -1557,13 +1548,13 @@ class GeoChat(_message.Message):
     BCP-47-ish language tag or human-readable name (e.g. "en", "English")
     that the originator's TAKTALK plugin recorded for the message.
     """
-    room_id: _builtins.str
+    room_id: builtins.str
     """
     TAKTALK chatroom UUID (e.g. "30b2755c-c547-44ef-a0cc-cdbd8a15616f") that
     the receiver's TAKTALK plugin uses to thread the message under the
     right room. Resolved to a friendly name via TakTalkRoomData broadcasts.
     """
-    voice_profile_id: _builtins.str
+    voice_profile_id: builtins.str
     """
     TAKTALK voice profile pointer. Often empty in practice (the empty
     marker `<voice_profile_id/>` still signals TAKTALK origination), so
@@ -1573,58 +1564,46 @@ class GeoChat(_message.Message):
     def __init__(
         self,
         *,
-        message: _builtins.str = ...,
-        to: _builtins.str | None = ...,
-        to_callsign: _builtins.str | None = ...,
-        receipt_for_uid: _builtins.str = ...,
-        receipt_type: Global___GeoChat.ReceiptType.ValueType = ...,
-        lang: _builtins.str | None = ...,
-        room_id: _builtins.str | None = ...,
-        voice_profile_id: _builtins.str | None = ...,
+        message: builtins.str = ...,
+        to: builtins.str | None = ...,
+        to_callsign: builtins.str | None = ...,
+        receipt_for_uid: builtins.str = ...,
+        receipt_type: global___GeoChat.ReceiptType.ValueType = ...,
+        lang: builtins.str | None = ...,
+        room_id: builtins.str | None = ...,
+        voice_profile_id: builtins.str | None = ...,
     ) -> None: ...
-    _HasFieldArgType: _TypeAlias = _typing.Literal["_lang", b"_lang", "_room_id", b"_room_id", "_to", b"_to", "_to_callsign", b"_to_callsign", "_voice_profile_id", b"_voice_profile_id", "lang", b"lang", "room_id", b"room_id", "to", b"to", "to_callsign", b"to_callsign", "voice_profile_id", b"voice_profile_id"]  # noqa: Y015
-    def HasField(self, field_name: _HasFieldArgType) -> _builtins.bool: ...
-    _ClearFieldArgType: _TypeAlias = _typing.Literal["_lang", b"_lang", "_room_id", b"_room_id", "_to", b"_to", "_to_callsign", b"_to_callsign", "_voice_profile_id", b"_voice_profile_id", "lang", b"lang", "message", b"message", "receipt_for_uid", b"receipt_for_uid", "receipt_type", b"receipt_type", "room_id", b"room_id", "to", b"to", "to_callsign", b"to_callsign", "voice_profile_id", b"voice_profile_id"]  # noqa: Y015
-    def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
-    _WhichOneofReturnType__lang: _TypeAlias = _typing.Literal["lang"]  # noqa: Y015
-    _WhichOneofArgType__lang: _TypeAlias = _typing.Literal["_lang", b"_lang"]  # noqa: Y015
-    _WhichOneofReturnType__room_id: _TypeAlias = _typing.Literal["room_id"]  # noqa: Y015
-    _WhichOneofArgType__room_id: _TypeAlias = _typing.Literal["_room_id", b"_room_id"]  # noqa: Y015
-    _WhichOneofReturnType__to: _TypeAlias = _typing.Literal["to"]  # noqa: Y015
-    _WhichOneofArgType__to: _TypeAlias = _typing.Literal["_to", b"_to"]  # noqa: Y015
-    _WhichOneofReturnType__to_callsign: _TypeAlias = _typing.Literal["to_callsign"]  # noqa: Y015
-    _WhichOneofArgType__to_callsign: _TypeAlias = _typing.Literal["_to_callsign", b"_to_callsign"]  # noqa: Y015
-    _WhichOneofReturnType__voice_profile_id: _TypeAlias = _typing.Literal["voice_profile_id"]  # noqa: Y015
-    _WhichOneofArgType__voice_profile_id: _TypeAlias = _typing.Literal["_voice_profile_id", b"_voice_profile_id"]  # noqa: Y015
-    @_typing.overload
-    def WhichOneof(self, oneof_group: _WhichOneofArgType__lang) -> _WhichOneofReturnType__lang | None: ...
-    @_typing.overload
-    def WhichOneof(self, oneof_group: _WhichOneofArgType__room_id) -> _WhichOneofReturnType__room_id | None: ...
-    @_typing.overload
-    def WhichOneof(self, oneof_group: _WhichOneofArgType__to) -> _WhichOneofReturnType__to | None: ...
-    @_typing.overload
-    def WhichOneof(self, oneof_group: _WhichOneofArgType__to_callsign) -> _WhichOneofReturnType__to_callsign | None: ...
-    @_typing.overload
-    def WhichOneof(self, oneof_group: _WhichOneofArgType__voice_profile_id) -> _WhichOneofReturnType__voice_profile_id | None: ...
+    def HasField(self, field_name: typing.Literal["_lang", b"_lang", "_room_id", b"_room_id", "_to", b"_to", "_to_callsign", b"_to_callsign", "_voice_profile_id", b"_voice_profile_id", "lang", b"lang", "room_id", b"room_id", "to", b"to", "to_callsign", b"to_callsign", "voice_profile_id", b"voice_profile_id"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing.Literal["_lang", b"_lang", "_room_id", b"_room_id", "_to", b"_to", "_to_callsign", b"_to_callsign", "_voice_profile_id", b"_voice_profile_id", "lang", b"lang", "message", b"message", "receipt_for_uid", b"receipt_for_uid", "receipt_type", b"receipt_type", "room_id", b"room_id", "to", b"to", "to_callsign", b"to_callsign", "voice_profile_id", b"voice_profile_id"]) -> None: ...
+    @typing.overload
+    def WhichOneof(self, oneof_group: typing.Literal["_lang", b"_lang"]) -> typing.Literal["lang"] | None: ...
+    @typing.overload
+    def WhichOneof(self, oneof_group: typing.Literal["_room_id", b"_room_id"]) -> typing.Literal["room_id"] | None: ...
+    @typing.overload
+    def WhichOneof(self, oneof_group: typing.Literal["_to", b"_to"]) -> typing.Literal["to"] | None: ...
+    @typing.overload
+    def WhichOneof(self, oneof_group: typing.Literal["_to_callsign", b"_to_callsign"]) -> typing.Literal["to_callsign"] | None: ...
+    @typing.overload
+    def WhichOneof(self, oneof_group: typing.Literal["_voice_profile_id", b"_voice_profile_id"]) -> typing.Literal["voice_profile_id"] | None: ...
 
-Global___GeoChat: _TypeAlias = GeoChat  # noqa: Y015
+global___GeoChat = GeoChat
 
-@_typing.final
-class Group(_message.Message):
+@typing.final
+class Group(google.protobuf.message.Message):
     """
     ATAK Group
     <__group role='Team Member' name='Cyan'/>
     """
 
-    DESCRIPTOR: _descriptor.Descriptor
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
 
-    ROLE_FIELD_NUMBER: _builtins.int
-    TEAM_FIELD_NUMBER: _builtins.int
-    role: Global___MemberRole.ValueType
+    ROLE_FIELD_NUMBER: builtins.int
+    TEAM_FIELD_NUMBER: builtins.int
+    role: global___MemberRole.ValueType
     """
     Role of the group member
     """
-    team: Global___Team.ValueType
+    team: global___Team.ValueType
     """
     Team (color)
     Default Cyan
@@ -1632,60 +1611,52 @@ class Group(_message.Message):
     def __init__(
         self,
         *,
-        role: Global___MemberRole.ValueType = ...,
-        team: Global___Team.ValueType = ...,
+        role: global___MemberRole.ValueType = ...,
+        team: global___Team.ValueType = ...,
     ) -> None: ...
-    _HasFieldArgType: _TypeAlias = _Never  # noqa: Y015
-    def HasField(self, field_name: _HasFieldArgType) -> _builtins.bool: ...
-    _ClearFieldArgType: _TypeAlias = _typing.Literal["role", b"role", "team", b"team"]  # noqa: Y015
-    def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
-    def WhichOneof(self, oneof_group: _Never) -> None: ...
+    def ClearField(self, field_name: typing.Literal["role", b"role", "team", b"team"]) -> None: ...
 
-Global___Group: _TypeAlias = Group  # noqa: Y015
+global___Group = Group
 
-@_typing.final
-class Status(_message.Message):
+@typing.final
+class Status(google.protobuf.message.Message):
     """
     ATAK EUD Status
     <status battery='100' />
     """
 
-    DESCRIPTOR: _descriptor.Descriptor
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
 
-    BATTERY_FIELD_NUMBER: _builtins.int
-    battery: _builtins.int
+    BATTERY_FIELD_NUMBER: builtins.int
+    battery: builtins.int
     """
     Battery level
     """
     def __init__(
         self,
         *,
-        battery: _builtins.int = ...,
+        battery: builtins.int = ...,
     ) -> None: ...
-    _HasFieldArgType: _TypeAlias = _Never  # noqa: Y015
-    def HasField(self, field_name: _HasFieldArgType) -> _builtins.bool: ...
-    _ClearFieldArgType: _TypeAlias = _typing.Literal["battery", b"battery"]  # noqa: Y015
-    def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
-    def WhichOneof(self, oneof_group: _Never) -> None: ...
+    def ClearField(self, field_name: typing.Literal["battery", b"battery"]) -> None: ...
 
-Global___Status: _TypeAlias = Status  # noqa: Y015
+global___Status = Status
 
-@_typing.final
-class Contact(_message.Message):
+@typing.final
+class Contact(google.protobuf.message.Message):
     """
     ATAK Contact
     <contact endpoint='0.0.0.0:4242:tcp' phone='+12345678' callsign='FALKE'/>
     """
 
-    DESCRIPTOR: _descriptor.Descriptor
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
 
-    CALLSIGN_FIELD_NUMBER: _builtins.int
-    DEVICE_CALLSIGN_FIELD_NUMBER: _builtins.int
-    callsign: _builtins.str
+    CALLSIGN_FIELD_NUMBER: builtins.int
+    DEVICE_CALLSIGN_FIELD_NUMBER: builtins.int
+    callsign: builtins.str
     """
     Callsign
     """
-    device_callsign: _builtins.str
+    device_callsign: builtins.str
     """
     Device callsign
 
@@ -1694,146 +1665,134 @@ class Contact(_message.Message):
     def __init__(
         self,
         *,
-        callsign: _builtins.str = ...,
-        device_callsign: _builtins.str = ...,
+        callsign: builtins.str = ...,
+        device_callsign: builtins.str = ...,
     ) -> None: ...
-    _HasFieldArgType: _TypeAlias = _Never  # noqa: Y015
-    def HasField(self, field_name: _HasFieldArgType) -> _builtins.bool: ...
-    _ClearFieldArgType: _TypeAlias = _typing.Literal["callsign", b"callsign", "device_callsign", b"device_callsign"]  # noqa: Y015
-    def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
-    def WhichOneof(self, oneof_group: _Never) -> None: ...
+    def ClearField(self, field_name: typing.Literal["callsign", b"callsign", "device_callsign", b"device_callsign"]) -> None: ...
 
-Global___Contact: _TypeAlias = Contact  # noqa: Y015
+global___Contact = Contact
 
-@_typing.final
-class PLI(_message.Message):
+@typing.final
+class PLI(google.protobuf.message.Message):
     """
     Position Location Information from ATAK
     """
 
-    DESCRIPTOR: _descriptor.Descriptor
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
 
-    LATITUDE_I_FIELD_NUMBER: _builtins.int
-    LONGITUDE_I_FIELD_NUMBER: _builtins.int
-    ALTITUDE_FIELD_NUMBER: _builtins.int
-    SPEED_FIELD_NUMBER: _builtins.int
-    COURSE_FIELD_NUMBER: _builtins.int
-    latitude_i: _builtins.int
+    LATITUDE_I_FIELD_NUMBER: builtins.int
+    LONGITUDE_I_FIELD_NUMBER: builtins.int
+    ALTITUDE_FIELD_NUMBER: builtins.int
+    SPEED_FIELD_NUMBER: builtins.int
+    COURSE_FIELD_NUMBER: builtins.int
+    latitude_i: builtins.int
     """
     The new preferred location encoding, multiply by 1e-7 to get degrees
     in floating point
     """
-    longitude_i: _builtins.int
+    longitude_i: builtins.int
     """
     The new preferred location encoding, multiply by 1e-7 to get degrees
     in floating point
     """
-    altitude: _builtins.int
+    altitude: builtins.int
     """
     Altitude (ATAK prefers HAE)
     """
-    speed: _builtins.int
+    speed: builtins.int
     """
     Speed
     """
-    course: _builtins.int
+    course: builtins.int
     """
     Course in degrees
     """
     def __init__(
         self,
         *,
-        latitude_i: _builtins.int = ...,
-        longitude_i: _builtins.int = ...,
-        altitude: _builtins.int = ...,
-        speed: _builtins.int = ...,
-        course: _builtins.int = ...,
+        latitude_i: builtins.int = ...,
+        longitude_i: builtins.int = ...,
+        altitude: builtins.int = ...,
+        speed: builtins.int = ...,
+        course: builtins.int = ...,
     ) -> None: ...
-    _HasFieldArgType: _TypeAlias = _Never  # noqa: Y015
-    def HasField(self, field_name: _HasFieldArgType) -> _builtins.bool: ...
-    _ClearFieldArgType: _TypeAlias = _typing.Literal["altitude", b"altitude", "course", b"course", "latitude_i", b"latitude_i", "longitude_i", b"longitude_i", "speed", b"speed"]  # noqa: Y015
-    def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
-    def WhichOneof(self, oneof_group: _Never) -> None: ...
+    def ClearField(self, field_name: typing.Literal["altitude", b"altitude", "course", b"course", "latitude_i", b"latitude_i", "longitude_i", b"longitude_i", "speed", b"speed"]) -> None: ...
 
-Global___PLI: _TypeAlias = PLI  # noqa: Y015
+global___PLI = PLI
 
-@_typing.final
-class AircraftTrack(_message.Message):
+@typing.final
+class AircraftTrack(google.protobuf.message.Message):
     """
     Aircraft track information from ADS-B or military air tracking.
     Covers the majority of observed real-world CoT traffic.
     """
 
-    DESCRIPTOR: _descriptor.Descriptor
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
 
-    ICAO_FIELD_NUMBER: _builtins.int
-    REGISTRATION_FIELD_NUMBER: _builtins.int
-    FLIGHT_FIELD_NUMBER: _builtins.int
-    AIRCRAFT_TYPE_FIELD_NUMBER: _builtins.int
-    SQUAWK_FIELD_NUMBER: _builtins.int
-    CATEGORY_FIELD_NUMBER: _builtins.int
-    RSSI_X10_FIELD_NUMBER: _builtins.int
-    GPS_FIELD_NUMBER: _builtins.int
-    COT_HOST_ID_FIELD_NUMBER: _builtins.int
-    icao: _builtins.str
+    ICAO_FIELD_NUMBER: builtins.int
+    REGISTRATION_FIELD_NUMBER: builtins.int
+    FLIGHT_FIELD_NUMBER: builtins.int
+    AIRCRAFT_TYPE_FIELD_NUMBER: builtins.int
+    SQUAWK_FIELD_NUMBER: builtins.int
+    CATEGORY_FIELD_NUMBER: builtins.int
+    RSSI_X10_FIELD_NUMBER: builtins.int
+    GPS_FIELD_NUMBER: builtins.int
+    COT_HOST_ID_FIELD_NUMBER: builtins.int
+    icao: builtins.str
     """
     ICAO hex identifier (e.g. "AD237C")
     """
-    registration: _builtins.str
+    registration: builtins.str
     """
     Aircraft registration (e.g. "N946AK")
     """
-    flight: _builtins.str
+    flight: builtins.str
     """
     Flight number/callsign (e.g. "ASA864")
     """
-    aircraft_type: _builtins.str
+    aircraft_type: builtins.str
     """
     ICAO aircraft type designator (e.g. "B39M")
     """
-    squawk: _builtins.int
+    squawk: builtins.int
     """
     Transponder squawk code (0-7777 octal)
     """
-    category: _builtins.str
+    category: builtins.str
     """
     ADS-B emitter category (e.g. "A3")
     """
-    rssi_x10: _builtins.int
+    rssi_x10: builtins.int
     """
     Received signal strength * 10 (e.g. -194 for -19.4 dBm)
     """
-    gps: _builtins.bool
+    gps: builtins.bool
     """
     Whether receiver has GPS fix
     """
-    cot_host_id: _builtins.str
+    cot_host_id: builtins.str
     """
     CoT host ID for source attribution
     """
     def __init__(
         self,
         *,
-        icao: _builtins.str = ...,
-        registration: _builtins.str = ...,
-        flight: _builtins.str = ...,
-        aircraft_type: _builtins.str = ...,
-        squawk: _builtins.int = ...,
-        category: _builtins.str = ...,
-        rssi_x10: _builtins.int = ...,
-        gps: _builtins.bool = ...,
-        cot_host_id: _builtins.str = ...,
+        icao: builtins.str = ...,
+        registration: builtins.str = ...,
+        flight: builtins.str = ...,
+        aircraft_type: builtins.str = ...,
+        squawk: builtins.int = ...,
+        category: builtins.str = ...,
+        rssi_x10: builtins.int = ...,
+        gps: builtins.bool = ...,
+        cot_host_id: builtins.str = ...,
     ) -> None: ...
-    _HasFieldArgType: _TypeAlias = _Never  # noqa: Y015
-    def HasField(self, field_name: _HasFieldArgType) -> _builtins.bool: ...
-    _ClearFieldArgType: _TypeAlias = _typing.Literal["aircraft_type", b"aircraft_type", "category", b"category", "cot_host_id", b"cot_host_id", "flight", b"flight", "gps", b"gps", "icao", b"icao", "registration", b"registration", "rssi_x10", b"rssi_x10", "squawk", b"squawk"]  # noqa: Y015
-    def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
-    def WhichOneof(self, oneof_group: _Never) -> None: ...
+    def ClearField(self, field_name: typing.Literal["aircraft_type", b"aircraft_type", "category", b"category", "cot_host_id", b"cot_host_id", "flight", b"flight", "gps", b"gps", "icao", b"icao", "registration", b"registration", "rssi_x10", b"rssi_x10", "squawk", b"squawk"]) -> None: ...
 
-Global___AircraftTrack: _TypeAlias = AircraftTrack  # noqa: Y015
+global___AircraftTrack = AircraftTrack
 
-@_typing.final
-class CotGeoPoint(_message.Message):
+@typing.final
+class CotGeoPoint(google.protobuf.message.Message):
     """
     Compact geographic vertex used by repeated vertex lists in TAK geometry
     payloads. Named with a `Cot` prefix to avoid a namespace collision with
@@ -1849,41 +1808,37 @@ class CotGeoPoint(_message.Message):
     hundred meters of the anchor has per-vertex deltas in the ±10^4 range.
     Under sint32+zigzag those encode as 2 bytes each (tag+varint), versus the
     4 bytes that sfixed32 would always require. At 32 vertices that is ~128
-    bytes of savings — the difference between fitting under the LoRa MTU or
+    bytes of savings - the difference between fitting under the LoRa MTU or
     not. Absolute coordinates (values ~10^9) would cost sint32 varint 5 bytes
     per field, which is why TAKPacketV2's top-level latitude_i / longitude_i
-    stay sfixed32 — only small values win with sint32.
+    stay sfixed32 - only small values win with sint32.
     """
 
-    DESCRIPTOR: _descriptor.Descriptor
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
 
-    LAT_DELTA_I_FIELD_NUMBER: _builtins.int
-    LON_DELTA_I_FIELD_NUMBER: _builtins.int
-    lat_delta_i: _builtins.int
+    LAT_DELTA_I_FIELD_NUMBER: builtins.int
+    LON_DELTA_I_FIELD_NUMBER: builtins.int
+    lat_delta_i: builtins.int
     """
     Latitude delta from TAKPacketV2.latitude_i, in 1e-7 degree units.
     Add to the enclosing event's latitude_i to recover the absolute latitude.
     """
-    lon_delta_i: _builtins.int
+    lon_delta_i: builtins.int
     """
     Longitude delta from TAKPacketV2.longitude_i, in 1e-7 degree units.
     """
     def __init__(
         self,
         *,
-        lat_delta_i: _builtins.int = ...,
-        lon_delta_i: _builtins.int = ...,
+        lat_delta_i: builtins.int = ...,
+        lon_delta_i: builtins.int = ...,
     ) -> None: ...
-    _HasFieldArgType: _TypeAlias = _Never  # noqa: Y015
-    def HasField(self, field_name: _HasFieldArgType) -> _builtins.bool: ...
-    _ClearFieldArgType: _TypeAlias = _typing.Literal["lat_delta_i", b"lat_delta_i", "lon_delta_i", b"lon_delta_i"]  # noqa: Y015
-    def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
-    def WhichOneof(self, oneof_group: _Never) -> None: ...
+    def ClearField(self, field_name: typing.Literal["lat_delta_i", b"lat_delta_i", "lon_delta_i", b"lon_delta_i"]) -> None: ...
 
-Global___CotGeoPoint: _TypeAlias = CotGeoPoint  # noqa: Y015
+global___CotGeoPoint = CotGeoPoint
 
-@_typing.final
-class DrawnShape(_message.Message):
+@typing.final
+class DrawnShape(google.protobuf.message.Message):
     """
     User-drawn tactical graphic: circle, rectangle, polygon, polyline, freehand
     telestration, ranging circle, or bullseye.
@@ -1898,14 +1853,14 @@ class DrawnShape(_message.Message):
     don't map to a palette entry.
     """
 
-    DESCRIPTOR: _descriptor.Descriptor
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
 
     class _Kind:
-        ValueType = _typing.NewType("ValueType", _builtins.int)
-        V: _TypeAlias = ValueType  # noqa: Y015
+        ValueType = typing.NewType("ValueType", builtins.int)
+        V: typing_extensions.TypeAlias = ValueType
 
-    class _KindEnumTypeWrapper(_enum_type_wrapper._EnumTypeWrapper[DrawnShape._Kind.ValueType], _builtins.type):
-        DESCRIPTOR: _descriptor.EnumDescriptor
+    class _KindEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[DrawnShape._Kind.ValueType], builtins.type):
+        DESCRIPTOR: google.protobuf.descriptor.EnumDescriptor
         Kind_Unspecified: DrawnShape._Kind.ValueType  # 0
         """
         Unspecified (do not use on the wire)
@@ -1941,7 +1896,7 @@ class DrawnShape(_message.Message):
         Kind_Ellipse: DrawnShape._Kind.ValueType  # 8
         """
         u-d-c-e: Ellipse with distinct major/minor axes (same storage as
-        Kind_Circle — uses major_cm/minor_cm/angle_deg — but receivers
+        Kind_Circle - uses major_cm/minor_cm/angle_deg - but receivers
         render it as a non-circular ellipse rather than a round circle).
         """
         Kind_Vehicle2D: DrawnShape._Kind.ValueType  # 9
@@ -1996,7 +1951,7 @@ class DrawnShape(_message.Message):
     Kind_Ellipse: DrawnShape.Kind.ValueType  # 8
     """
     u-d-c-e: Ellipse with distinct major/minor axes (same storage as
-    Kind_Circle — uses major_cm/minor_cm/angle_deg — but receivers
+    Kind_Circle - uses major_cm/minor_cm/angle_deg - but receivers
     render it as a non-circular ellipse rather than a round circle).
     """
     Kind_Vehicle2D: DrawnShape.Kind.ValueType  # 9
@@ -2011,14 +1966,14 @@ class DrawnShape(_message.Message):
     """
 
     class _StyleMode:
-        ValueType = _typing.NewType("ValueType", _builtins.int)
-        V: _TypeAlias = ValueType  # noqa: Y015
+        ValueType = typing.NewType("ValueType", builtins.int)
+        V: typing_extensions.TypeAlias = ValueType
 
-    class _StyleModeEnumTypeWrapper(_enum_type_wrapper._EnumTypeWrapper[DrawnShape._StyleMode.ValueType], _builtins.type):
-        DESCRIPTOR: _descriptor.EnumDescriptor
+    class _StyleModeEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[DrawnShape._StyleMode.ValueType], builtins.type):
+        DESCRIPTOR: google.protobuf.descriptor.EnumDescriptor
         StyleMode_Unspecified: DrawnShape._StyleMode.ValueType  # 0
         """
-        Unspecified — receiver infers from which color fields are non-zero.
+        Unspecified - receiver infers from which color fields are non-zero.
         """
         StyleMode_StrokeOnly: DrawnShape._StyleMode.ValueType  # 1
         """
@@ -2050,7 +2005,7 @@ class DrawnShape(_message.Message):
 
     StyleMode_Unspecified: DrawnShape.StyleMode.ValueType  # 0
     """
-    Unspecified — receiver infers from which color fields are non-zero.
+    Unspecified - receiver infers from which color fields are non-zero.
     """
     StyleMode_StrokeOnly: DrawnShape.StyleMode.ValueType  # 1
     """
@@ -2068,91 +2023,91 @@ class DrawnShape(_message.Message):
     polygon, ranging circle.
     """
 
-    KIND_FIELD_NUMBER: _builtins.int
-    STYLE_FIELD_NUMBER: _builtins.int
-    MAJOR_CM_FIELD_NUMBER: _builtins.int
-    MINOR_CM_FIELD_NUMBER: _builtins.int
-    ANGLE_DEG_FIELD_NUMBER: _builtins.int
-    STROKE_COLOR_FIELD_NUMBER: _builtins.int
-    STROKE_ARGB_FIELD_NUMBER: _builtins.int
-    STROKE_WEIGHT_X10_FIELD_NUMBER: _builtins.int
-    FILL_COLOR_FIELD_NUMBER: _builtins.int
-    FILL_ARGB_FIELD_NUMBER: _builtins.int
-    LABELS_ON_FIELD_NUMBER: _builtins.int
-    VERTEX_LAT_DELTAS_FIELD_NUMBER: _builtins.int
-    VERTEX_LON_DELTAS_FIELD_NUMBER: _builtins.int
-    TRUNCATED_FIELD_NUMBER: _builtins.int
-    BULLSEYE_DISTANCE_DM_FIELD_NUMBER: _builtins.int
-    BULLSEYE_BEARING_REF_FIELD_NUMBER: _builtins.int
-    BULLSEYE_FLAGS_FIELD_NUMBER: _builtins.int
-    BULLSEYE_UID_REF_FIELD_NUMBER: _builtins.int
-    kind: Global___DrawnShape.Kind.ValueType
+    KIND_FIELD_NUMBER: builtins.int
+    STYLE_FIELD_NUMBER: builtins.int
+    MAJOR_CM_FIELD_NUMBER: builtins.int
+    MINOR_CM_FIELD_NUMBER: builtins.int
+    ANGLE_DEG_FIELD_NUMBER: builtins.int
+    STROKE_COLOR_FIELD_NUMBER: builtins.int
+    STROKE_ARGB_FIELD_NUMBER: builtins.int
+    STROKE_WEIGHT_X10_FIELD_NUMBER: builtins.int
+    FILL_COLOR_FIELD_NUMBER: builtins.int
+    FILL_ARGB_FIELD_NUMBER: builtins.int
+    LABELS_ON_FIELD_NUMBER: builtins.int
+    VERTEX_LAT_DELTAS_FIELD_NUMBER: builtins.int
+    VERTEX_LON_DELTAS_FIELD_NUMBER: builtins.int
+    TRUNCATED_FIELD_NUMBER: builtins.int
+    BULLSEYE_DISTANCE_DM_FIELD_NUMBER: builtins.int
+    BULLSEYE_BEARING_REF_FIELD_NUMBER: builtins.int
+    BULLSEYE_FLAGS_FIELD_NUMBER: builtins.int
+    BULLSEYE_UID_REF_FIELD_NUMBER: builtins.int
+    kind: global___DrawnShape.Kind.ValueType
     """
     Shape kind (circle, rectangle, freeform, etc.)
     """
-    style: Global___DrawnShape.StyleMode.ValueType
+    style: global___DrawnShape.StyleMode.ValueType
     """
     Explicit stroke/fill/both discriminator. See StyleMode doc.
     """
-    major_cm: _builtins.int
+    major_cm: builtins.int
     """
     Ellipse major radius in centimeters. 0 for non-ellipse kinds.
     """
-    minor_cm: _builtins.int
+    minor_cm: builtins.int
     """
     Ellipse minor radius in centimeters. 0 for non-ellipse kinds.
     """
-    angle_deg: _builtins.int
+    angle_deg: builtins.int
     """
     Ellipse rotation angle in degrees. Valid values are 0..360 inclusive;
     0 and 360 are equivalent rotations. In proto3, an unset uint32 reads
     as 0, so senders should emit 0 when the angle is unspecified.
     """
-    stroke_color: Global___Team.ValueType
+    stroke_color: global___Team.ValueType
     """
     Stroke color as a named palette entry from the Team enum. If
     Unspecifed_Color, the exact ARGB is carried in stroke_argb.
     Valid only when style is StrokeOnly or StrokeAndFill.
     """
-    stroke_argb: _builtins.int
+    stroke_argb: builtins.int
     """
     Stroke color as an exact 32-bit ARGB bit pattern. Always populated
     on the wire; readers MUST use this value when stroke_color ==
     Unspecifed_Color and MAY use it to recover the exact original bytes
     even when a palette entry is set.
     """
-    stroke_weight_x10: _builtins.int
+    stroke_weight_x10: builtins.int
     """
     Stroke weight in tenths of a unit (e.g. 30 = 3.0). Typical ATAK
     range 10..60.
     """
-    fill_color: Global___Team.ValueType
+    fill_color: global___Team.ValueType
     """
     Fill color as a named palette entry. See stroke_color docs.
     Valid only when style is FillOnly or StrokeAndFill.
     """
-    fill_argb: _builtins.int
+    fill_argb: builtins.int
     """
     Fill color exact ARGB fallback. See stroke_argb docs.
     """
-    labels_on: _builtins.bool
+    labels_on: builtins.bool
     """
     Whether labels are rendered on this shape.
     """
-    truncated: _builtins.bool
+    truncated: builtins.bool
     """
     True if the sender truncated the vertex columns to fit the pool.
     --- Bullseye-only fields. All ignored unless kind == Kind_Bullseye. ---
     """
-    bullseye_distance_dm: _builtins.int
+    bullseye_distance_dm: builtins.int
     """
     Bullseye distance in meters * 10 (e.g. 3285 = 328.5 m). 0 = unset.
     """
-    bullseye_bearing_ref: _builtins.int
+    bullseye_bearing_ref: builtins.int
     """
     Bullseye bearing reference: 0 unset, 1 Magnetic, 2 True, 3 Grid.
     """
-    bullseye_flags: _builtins.int
+    bullseye_flags: builtins.int
     """
     Bullseye attribute bit flags:
       bit 0: rangeRingVisible
@@ -2160,46 +2115,42 @@ class DrawnShape(_message.Message):
       bit 2: edgeToCenter
       bit 3: mils
     """
-    bullseye_uid_ref: _builtins.str
+    bullseye_uid_ref: builtins.str
     """
     Bullseye reference UID (anchor marker). Empty = anchor is self.
     """
-    @_builtins.property
-    def vertex_lat_deltas(self) -> _containers.RepeatedScalarFieldContainer[_builtins.int]: ...
-    @_builtins.property
-    def vertex_lon_deltas(self) -> _containers.RepeatedScalarFieldContainer[_builtins.int]: ...
+    @property
+    def vertex_lat_deltas(self) -> google.protobuf.internal.containers.RepeatedScalarFieldContainer[builtins.int]: ...
+    @property
+    def vertex_lon_deltas(self) -> google.protobuf.internal.containers.RepeatedScalarFieldContainer[builtins.int]: ...
     def __init__(
         self,
         *,
-        kind: Global___DrawnShape.Kind.ValueType = ...,
-        style: Global___DrawnShape.StyleMode.ValueType = ...,
-        major_cm: _builtins.int = ...,
-        minor_cm: _builtins.int = ...,
-        angle_deg: _builtins.int = ...,
-        stroke_color: Global___Team.ValueType = ...,
-        stroke_argb: _builtins.int = ...,
-        stroke_weight_x10: _builtins.int = ...,
-        fill_color: Global___Team.ValueType = ...,
-        fill_argb: _builtins.int = ...,
-        labels_on: _builtins.bool = ...,
-        vertex_lat_deltas: _abc.Iterable[_builtins.int] | None = ...,
-        vertex_lon_deltas: _abc.Iterable[_builtins.int] | None = ...,
-        truncated: _builtins.bool = ...,
-        bullseye_distance_dm: _builtins.int = ...,
-        bullseye_bearing_ref: _builtins.int = ...,
-        bullseye_flags: _builtins.int = ...,
-        bullseye_uid_ref: _builtins.str = ...,
+        kind: global___DrawnShape.Kind.ValueType = ...,
+        style: global___DrawnShape.StyleMode.ValueType = ...,
+        major_cm: builtins.int = ...,
+        minor_cm: builtins.int = ...,
+        angle_deg: builtins.int = ...,
+        stroke_color: global___Team.ValueType = ...,
+        stroke_argb: builtins.int = ...,
+        stroke_weight_x10: builtins.int = ...,
+        fill_color: global___Team.ValueType = ...,
+        fill_argb: builtins.int = ...,
+        labels_on: builtins.bool = ...,
+        vertex_lat_deltas: collections.abc.Iterable[builtins.int] | None = ...,
+        vertex_lon_deltas: collections.abc.Iterable[builtins.int] | None = ...,
+        truncated: builtins.bool = ...,
+        bullseye_distance_dm: builtins.int = ...,
+        bullseye_bearing_ref: builtins.int = ...,
+        bullseye_flags: builtins.int = ...,
+        bullseye_uid_ref: builtins.str = ...,
     ) -> None: ...
-    _HasFieldArgType: _TypeAlias = _Never  # noqa: Y015
-    def HasField(self, field_name: _HasFieldArgType) -> _builtins.bool: ...
-    _ClearFieldArgType: _TypeAlias = _typing.Literal["angle_deg", b"angle_deg", "bullseye_bearing_ref", b"bullseye_bearing_ref", "bullseye_distance_dm", b"bullseye_distance_dm", "bullseye_flags", b"bullseye_flags", "bullseye_uid_ref", b"bullseye_uid_ref", "fill_argb", b"fill_argb", "fill_color", b"fill_color", "kind", b"kind", "labels_on", b"labels_on", "major_cm", b"major_cm", "minor_cm", b"minor_cm", "stroke_argb", b"stroke_argb", "stroke_color", b"stroke_color", "stroke_weight_x10", b"stroke_weight_x10", "style", b"style", "truncated", b"truncated", "vertex_lat_deltas", b"vertex_lat_deltas", "vertex_lon_deltas", b"vertex_lon_deltas"]  # noqa: Y015
-    def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
-    def WhichOneof(self, oneof_group: _Never) -> None: ...
+    def ClearField(self, field_name: typing.Literal["angle_deg", b"angle_deg", "bullseye_bearing_ref", b"bullseye_bearing_ref", "bullseye_distance_dm", b"bullseye_distance_dm", "bullseye_flags", b"bullseye_flags", "bullseye_uid_ref", b"bullseye_uid_ref", "fill_argb", b"fill_argb", "fill_color", b"fill_color", "kind", b"kind", "labels_on", b"labels_on", "major_cm", b"major_cm", "minor_cm", b"minor_cm", "stroke_argb", b"stroke_argb", "stroke_color", b"stroke_color", "stroke_weight_x10", b"stroke_weight_x10", "style", b"style", "truncated", b"truncated", "vertex_lat_deltas", b"vertex_lat_deltas", "vertex_lon_deltas", b"vertex_lon_deltas"]) -> None: ...
 
-Global___DrawnShape: _TypeAlias = DrawnShape  # noqa: Y015
+global___DrawnShape = DrawnShape
 
-@_typing.final
-class Marker(_message.Message):
+@typing.final
+class Marker(google.protobuf.message.Message):
     """
     Fixed point of interest: spot marker, waypoint, checkpoint, 2525 symbol,
     or custom icon.
@@ -2210,17 +2161,17 @@ class Marker(_message.Message):
     the marker-specific metadata.
     """
 
-    DESCRIPTOR: _descriptor.Descriptor
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
 
     class _Kind:
-        ValueType = _typing.NewType("ValueType", _builtins.int)
-        V: _TypeAlias = ValueType  # noqa: Y015
+        ValueType = typing.NewType("ValueType", builtins.int)
+        V: typing_extensions.TypeAlias = ValueType
 
-    class _KindEnumTypeWrapper(_enum_type_wrapper._EnumTypeWrapper[Marker._Kind.ValueType], _builtins.type):
-        DESCRIPTOR: _descriptor.EnumDescriptor
+    class _KindEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[Marker._Kind.ValueType], builtins.type):
+        DESCRIPTOR: google.protobuf.descriptor.EnumDescriptor
         Kind_Unspecified: Marker._Kind.ValueType  # 0
         """
-        Unspecified — fall back to TAKPacketV2.cot_type_id
+        Unspecified - fall back to TAKPacketV2.cot_type_id
         """
         Kind_Spot: Marker._Kind.ValueType  # 1
         """
@@ -2282,7 +2233,7 @@ class Marker(_message.Message):
 
     Kind_Unspecified: Marker.Kind.ValueType  # 0
     """
-    Unspecified — fall back to TAKPacketV2.cot_type_id
+    Unspecified - fall back to TAKPacketV2.cot_type_id
     """
     Kind_Spot: Marker.Kind.ValueType  # 1
     """
@@ -2335,45 +2286,45 @@ class Marker(_message.Message):
     does not ride on the LoRa wire.
     """
 
-    KIND_FIELD_NUMBER: _builtins.int
-    COLOR_FIELD_NUMBER: _builtins.int
-    COLOR_ARGB_FIELD_NUMBER: _builtins.int
-    READINESS_FIELD_NUMBER: _builtins.int
-    PARENT_UID_FIELD_NUMBER: _builtins.int
-    PARENT_TYPE_FIELD_NUMBER: _builtins.int
-    PARENT_CALLSIGN_FIELD_NUMBER: _builtins.int
-    ICONSET_FIELD_NUMBER: _builtins.int
-    kind: Global___Marker.Kind.ValueType
+    KIND_FIELD_NUMBER: builtins.int
+    COLOR_FIELD_NUMBER: builtins.int
+    COLOR_ARGB_FIELD_NUMBER: builtins.int
+    READINESS_FIELD_NUMBER: builtins.int
+    PARENT_UID_FIELD_NUMBER: builtins.int
+    PARENT_TYPE_FIELD_NUMBER: builtins.int
+    PARENT_CALLSIGN_FIELD_NUMBER: builtins.int
+    ICONSET_FIELD_NUMBER: builtins.int
+    kind: global___Marker.Kind.ValueType
     """
     Marker kind
     """
-    color: Global___Team.ValueType
+    color: global___Team.ValueType
     """
     Marker color as a named palette entry. If Unspecifed_Color, the exact
     ARGB is in color_argb.
     """
-    color_argb: _builtins.int
+    color_argb: builtins.int
     """
     Marker color exact ARGB bit pattern. Always populated on the wire.
     """
-    readiness: _builtins.bool
+    readiness: builtins.bool
     """
     Status readiness flag (ATAK <status readiness="true"/>).
     """
-    parent_uid: _builtins.str
+    parent_uid: builtins.str
     """
     Parent link UID (ATAK <link uid=... relation="p-p"/>). Empty = no parent.
     For spot/waypoint markers this is typically the producing TAK user's UID.
     """
-    parent_type: _builtins.str
+    parent_type: builtins.str
     """
     Parent CoT type (e.g. "a-f-G-U-C"). Usually the parent TAK user's type.
     """
-    parent_callsign: _builtins.str
+    parent_callsign: builtins.str
     """
     Parent callsign (e.g. "HOPE").
     """
-    iconset: _builtins.str
+    iconset: builtins.str
     """
     Iconset path stored verbatim. ATAK emits three flavors:
       Kind_Symbol2525    -> "COT_MAPPING_2525B/<cot-type-prefix>/<cot-type>"
@@ -2386,69 +2337,65 @@ class Marker(_message.Message):
     def __init__(
         self,
         *,
-        kind: Global___Marker.Kind.ValueType = ...,
-        color: Global___Team.ValueType = ...,
-        color_argb: _builtins.int = ...,
-        readiness: _builtins.bool = ...,
-        parent_uid: _builtins.str = ...,
-        parent_type: _builtins.str = ...,
-        parent_callsign: _builtins.str = ...,
-        iconset: _builtins.str = ...,
+        kind: global___Marker.Kind.ValueType = ...,
+        color: global___Team.ValueType = ...,
+        color_argb: builtins.int = ...,
+        readiness: builtins.bool = ...,
+        parent_uid: builtins.str = ...,
+        parent_type: builtins.str = ...,
+        parent_callsign: builtins.str = ...,
+        iconset: builtins.str = ...,
     ) -> None: ...
-    _HasFieldArgType: _TypeAlias = _Never  # noqa: Y015
-    def HasField(self, field_name: _HasFieldArgType) -> _builtins.bool: ...
-    _ClearFieldArgType: _TypeAlias = _typing.Literal["color", b"color", "color_argb", b"color_argb", "iconset", b"iconset", "kind", b"kind", "parent_callsign", b"parent_callsign", "parent_type", b"parent_type", "parent_uid", b"parent_uid", "readiness", b"readiness"]  # noqa: Y015
-    def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
-    def WhichOneof(self, oneof_group: _Never) -> None: ...
+    def ClearField(self, field_name: typing.Literal["color", b"color", "color_argb", b"color_argb", "iconset", b"iconset", "kind", b"kind", "parent_callsign", b"parent_callsign", "parent_type", b"parent_type", "parent_uid", b"parent_uid", "readiness", b"readiness"]) -> None: ...
 
-Global___Marker: _TypeAlias = Marker  # noqa: Y015
+global___Marker = Marker
 
-@_typing.final
-class RangeAndBearing(_message.Message):
+@typing.final
+class RangeAndBearing(google.protobuf.message.Message):
     """
     Range and bearing measurement line from the event anchor to a target point.
 
     Covers CoT type u-rb-a. The anchor position is on
     TAKPacketV2.latitude_i/longitude_i; the target endpoint is carried as a
-    CotGeoPoint — same delta-from-anchor encoding used by DrawnShape.vertices
+    CotGeoPoint - same delta-from-anchor encoding used by DrawnShape.vertices
     so a self-anchored RAB (common case) encodes in zero bytes.
     """
 
-    DESCRIPTOR: _descriptor.Descriptor
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
 
-    ANCHOR_FIELD_NUMBER: _builtins.int
-    ANCHOR_UID_FIELD_NUMBER: _builtins.int
-    RANGE_CM_FIELD_NUMBER: _builtins.int
-    BEARING_CDEG_FIELD_NUMBER: _builtins.int
-    STROKE_COLOR_FIELD_NUMBER: _builtins.int
-    STROKE_ARGB_FIELD_NUMBER: _builtins.int
-    STROKE_WEIGHT_X10_FIELD_NUMBER: _builtins.int
-    anchor_uid: _builtins.str
+    ANCHOR_FIELD_NUMBER: builtins.int
+    ANCHOR_UID_FIELD_NUMBER: builtins.int
+    RANGE_CM_FIELD_NUMBER: builtins.int
+    BEARING_CDEG_FIELD_NUMBER: builtins.int
+    STROKE_COLOR_FIELD_NUMBER: builtins.int
+    STROKE_ARGB_FIELD_NUMBER: builtins.int
+    STROKE_WEIGHT_X10_FIELD_NUMBER: builtins.int
+    anchor_uid: builtins.str
     """
     Anchor UID (from <link uid="anchor-1"/>). Empty = free-standing.
     """
-    range_cm: _builtins.int
+    range_cm: builtins.int
     """
     Range in centimeters (value * 100). Range 0..4294 km.
     """
-    bearing_cdeg: _builtins.int
+    bearing_cdeg: builtins.int
     """
     Bearing in degrees * 100 (0..36000).
     """
-    stroke_color: Global___Team.ValueType
+    stroke_color: global___Team.ValueType
     """
     Stroke color as a Team palette entry. See DrawnShape.stroke_color doc.
     """
-    stroke_argb: _builtins.int
+    stroke_argb: builtins.int
     """
     Stroke color exact ARGB fallback.
     """
-    stroke_weight_x10: _builtins.int
+    stroke_weight_x10: builtins.int
     """
     Stroke weight * 10 (e.g. 30 = 3.0).
     """
-    @_builtins.property
-    def anchor(self) -> Global___CotGeoPoint:
+    @property
+    def anchor(self) -> global___CotGeoPoint:
         """
         Target/anchor endpoint (delta-encoded from TAKPacketV2.latitude_i/longitude_i).
         """
@@ -2456,24 +2403,21 @@ class RangeAndBearing(_message.Message):
     def __init__(
         self,
         *,
-        anchor: Global___CotGeoPoint | None = ...,
-        anchor_uid: _builtins.str = ...,
-        range_cm: _builtins.int = ...,
-        bearing_cdeg: _builtins.int = ...,
-        stroke_color: Global___Team.ValueType = ...,
-        stroke_argb: _builtins.int = ...,
-        stroke_weight_x10: _builtins.int = ...,
+        anchor: global___CotGeoPoint | None = ...,
+        anchor_uid: builtins.str = ...,
+        range_cm: builtins.int = ...,
+        bearing_cdeg: builtins.int = ...,
+        stroke_color: global___Team.ValueType = ...,
+        stroke_argb: builtins.int = ...,
+        stroke_weight_x10: builtins.int = ...,
     ) -> None: ...
-    _HasFieldArgType: _TypeAlias = _typing.Literal["anchor", b"anchor"]  # noqa: Y015
-    def HasField(self, field_name: _HasFieldArgType) -> _builtins.bool: ...
-    _ClearFieldArgType: _TypeAlias = _typing.Literal["anchor", b"anchor", "anchor_uid", b"anchor_uid", "bearing_cdeg", b"bearing_cdeg", "range_cm", b"range_cm", "stroke_argb", b"stroke_argb", "stroke_color", b"stroke_color", "stroke_weight_x10", b"stroke_weight_x10"]  # noqa: Y015
-    def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
-    def WhichOneof(self, oneof_group: _Never) -> None: ...
+    def HasField(self, field_name: typing.Literal["anchor", b"anchor"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing.Literal["anchor", b"anchor", "anchor_uid", b"anchor_uid", "bearing_cdeg", b"bearing_cdeg", "range_cm", b"range_cm", "stroke_argb", b"stroke_argb", "stroke_color", b"stroke_color", "stroke_weight_x10", b"stroke_weight_x10"]) -> None: ...
 
-Global___RangeAndBearing: _TypeAlias = RangeAndBearing  # noqa: Y015
+global___RangeAndBearing = RangeAndBearing
 
-@_typing.final
-class Route(_message.Message):
+@typing.final
+class Route(google.protobuf.message.Message):
     """
     Named route consisting of ordered waypoints and control points.
 
@@ -2483,14 +2427,14 @@ class Route(_message.Message):
     MUST truncate longer routes and set `truncated = true`.
     """
 
-    DESCRIPTOR: _descriptor.Descriptor
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
 
     class _Method:
-        ValueType = _typing.NewType("ValueType", _builtins.int)
-        V: _TypeAlias = ValueType  # noqa: Y015
+        ValueType = typing.NewType("ValueType", builtins.int)
+        V: typing_extensions.TypeAlias = ValueType
 
-    class _MethodEnumTypeWrapper(_enum_type_wrapper._EnumTypeWrapper[Route._Method.ValueType], _builtins.type):
-        DESCRIPTOR: _descriptor.EnumDescriptor
+    class _MethodEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[Route._Method.ValueType], builtins.type):
+        DESCRIPTOR: google.protobuf.descriptor.EnumDescriptor
         Method_Unspecified: Route._Method.ValueType  # 0
         """
         Unspecified / unknown
@@ -2547,11 +2491,11 @@ class Route(_message.Message):
     """
 
     class _Direction:
-        ValueType = _typing.NewType("ValueType", _builtins.int)
-        V: _TypeAlias = ValueType  # noqa: Y015
+        ValueType = typing.NewType("ValueType", builtins.int)
+        V: typing_extensions.TypeAlias = ValueType
 
-    class _DirectionEnumTypeWrapper(_enum_type_wrapper._EnumTypeWrapper[Route._Direction.ValueType], _builtins.type):
-        DESCRIPTOR: _descriptor.EnumDescriptor
+    class _DirectionEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[Route._Direction.ValueType], builtins.type):
+        DESCRIPTOR: google.protobuf.descriptor.EnumDescriptor
         Direction_Unspecified: Route._Direction.ValueType  # 0
         """
         Unspecified
@@ -2583,33 +2527,33 @@ class Route(_message.Message):
     Exfiltration (egress)
     """
 
-    @_typing.final
-    class Link(_message.Message):
+    @typing.final
+    class Link(google.protobuf.message.Message):
         """
         Route waypoint or control point. Each link corresponds to one ATAK
         <link type=... point=...> entry inside the b-m-r event.
         """
 
-        DESCRIPTOR: _descriptor.Descriptor
+        DESCRIPTOR: google.protobuf.descriptor.Descriptor
 
-        POINT_FIELD_NUMBER: _builtins.int
-        UID_FIELD_NUMBER: _builtins.int
-        CALLSIGN_FIELD_NUMBER: _builtins.int
-        LINK_TYPE_FIELD_NUMBER: _builtins.int
-        uid: _builtins.str
+        POINT_FIELD_NUMBER: builtins.int
+        UID_FIELD_NUMBER: builtins.int
+        CALLSIGN_FIELD_NUMBER: builtins.int
+        LINK_TYPE_FIELD_NUMBER: builtins.int
+        uid: builtins.str
         """
         Optional UID (empty = receiver derives).
         """
-        callsign: _builtins.str
+        callsign: builtins.str
         """
         Optional display callsign (e.g. "CP1"). Empty for unnamed control points.
         """
-        link_type: _builtins.int
+        link_type: builtins.int
         """
         Link role: 0 = waypoint (b-m-p-w), 1 = checkpoint (b-m-p-c).
         """
-        @_builtins.property
-        def point(self) -> Global___CotGeoPoint:
+        @property
+        def point(self) -> global___CotGeoPoint:
             """
             Waypoint position (delta-encoded from TAKPacketV2.latitude_i/longitude_i).
             """
@@ -2617,45 +2561,42 @@ class Route(_message.Message):
         def __init__(
             self,
             *,
-            point: Global___CotGeoPoint | None = ...,
-            uid: _builtins.str = ...,
-            callsign: _builtins.str = ...,
-            link_type: _builtins.int = ...,
+            point: global___CotGeoPoint | None = ...,
+            uid: builtins.str = ...,
+            callsign: builtins.str = ...,
+            link_type: builtins.int = ...,
         ) -> None: ...
-        _HasFieldArgType: _TypeAlias = _typing.Literal["point", b"point"]  # noqa: Y015
-        def HasField(self, field_name: _HasFieldArgType) -> _builtins.bool: ...
-        _ClearFieldArgType: _TypeAlias = _typing.Literal["callsign", b"callsign", "link_type", b"link_type", "point", b"point", "uid", b"uid"]  # noqa: Y015
-        def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
-        def WhichOneof(self, oneof_group: _Never) -> None: ...
+        def HasField(self, field_name: typing.Literal["point", b"point"]) -> builtins.bool: ...
+        def ClearField(self, field_name: typing.Literal["callsign", b"callsign", "link_type", b"link_type", "point", b"point", "uid", b"uid"]) -> None: ...
 
-    METHOD_FIELD_NUMBER: _builtins.int
-    DIRECTION_FIELD_NUMBER: _builtins.int
-    PREFIX_FIELD_NUMBER: _builtins.int
-    STROKE_WEIGHT_X10_FIELD_NUMBER: _builtins.int
-    LINKS_FIELD_NUMBER: _builtins.int
-    TRUNCATED_FIELD_NUMBER: _builtins.int
-    method: Global___Route.Method.ValueType
+    METHOD_FIELD_NUMBER: builtins.int
+    DIRECTION_FIELD_NUMBER: builtins.int
+    PREFIX_FIELD_NUMBER: builtins.int
+    STROKE_WEIGHT_X10_FIELD_NUMBER: builtins.int
+    LINKS_FIELD_NUMBER: builtins.int
+    TRUNCATED_FIELD_NUMBER: builtins.int
+    method: global___Route.Method.ValueType
     """
     Travel method
     """
-    direction: Global___Route.Direction.ValueType
+    direction: global___Route.Direction.ValueType
     """
     Direction (infil/exfil)
     """
-    prefix: _builtins.str
+    prefix: builtins.str
     """
     Waypoint name prefix (e.g. "CP").
     """
-    stroke_weight_x10: _builtins.int
+    stroke_weight_x10: builtins.int
     """
     Stroke weight * 10 (e.g. 30 = 3.0). 0 = default.
     """
-    truncated: _builtins.bool
+    truncated: builtins.bool
     """
     True if the sender truncated `links` to fit the pool.
     """
-    @_builtins.property
-    def links(self) -> _containers.RepeatedCompositeFieldContainer[Global___Route.Link]:
+    @property
+    def links(self) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[global___Route.Link]:
         """
         Ordered list of route control points. Capped at 16.
         """
@@ -2663,23 +2604,19 @@ class Route(_message.Message):
     def __init__(
         self,
         *,
-        method: Global___Route.Method.ValueType = ...,
-        direction: Global___Route.Direction.ValueType = ...,
-        prefix: _builtins.str = ...,
-        stroke_weight_x10: _builtins.int = ...,
-        links: _abc.Iterable[Global___Route.Link] | None = ...,
-        truncated: _builtins.bool = ...,
+        method: global___Route.Method.ValueType = ...,
+        direction: global___Route.Direction.ValueType = ...,
+        prefix: builtins.str = ...,
+        stroke_weight_x10: builtins.int = ...,
+        links: collections.abc.Iterable[global___Route.Link] | None = ...,
+        truncated: builtins.bool = ...,
     ) -> None: ...
-    _HasFieldArgType: _TypeAlias = _Never  # noqa: Y015
-    def HasField(self, field_name: _HasFieldArgType) -> _builtins.bool: ...
-    _ClearFieldArgType: _TypeAlias = _typing.Literal["direction", b"direction", "links", b"links", "method", b"method", "prefix", b"prefix", "stroke_weight_x10", b"stroke_weight_x10", "truncated", b"truncated"]  # noqa: Y015
-    def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
-    def WhichOneof(self, oneof_group: _Never) -> None: ...
+    def ClearField(self, field_name: typing.Literal["direction", b"direction", "links", b"links", "method", b"method", "prefix", b"prefix", "stroke_weight_x10", b"stroke_weight_x10", "truncated", b"truncated"]) -> None: ...
 
-Global___Route: _TypeAlias = Route  # noqa: Y015
+global___Route = Route
 
-@_typing.final
-class CasevacReport(_message.Message):
+@typing.final
+class CasevacReport(google.protobuf.message.Message):
     """
     9-line MEDEVAC request (CoT type b-r-f-h-c).
 
@@ -2692,14 +2629,14 @@ class CasevacReport(_message.Message):
     in well under 100 bytes of proto on the wire.
     """
 
-    DESCRIPTOR: _descriptor.Descriptor
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
 
     class _Precedence:
-        ValueType = _typing.NewType("ValueType", _builtins.int)
-        V: _TypeAlias = ValueType  # noqa: Y015
+        ValueType = typing.NewType("ValueType", builtins.int)
+        V: typing_extensions.TypeAlias = ValueType
 
-    class _PrecedenceEnumTypeWrapper(_enum_type_wrapper._EnumTypeWrapper[CasevacReport._Precedence.ValueType], _builtins.type):
-        DESCRIPTOR: _descriptor.EnumDescriptor
+    class _PrecedenceEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[CasevacReport._Precedence.ValueType], builtins.type):
+        DESCRIPTOR: google.protobuf.descriptor.EnumDescriptor
         Precedence_Unspecified: CasevacReport._Precedence.ValueType  # 0
         Precedence_Urgent: CasevacReport._Precedence.ValueType  # 1
         """A - immediate, life-threatening"""
@@ -2730,11 +2667,11 @@ class CasevacReport(_message.Message):
     """E - convenience"""
 
     class _HlzMarking:
-        ValueType = _typing.NewType("ValueType", _builtins.int)
-        V: _TypeAlias = ValueType  # noqa: Y015
+        ValueType = typing.NewType("ValueType", builtins.int)
+        V: typing_extensions.TypeAlias = ValueType
 
-    class _HlzMarkingEnumTypeWrapper(_enum_type_wrapper._EnumTypeWrapper[CasevacReport._HlzMarking.ValueType], _builtins.type):
-        DESCRIPTOR: _descriptor.EnumDescriptor
+    class _HlzMarkingEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[CasevacReport._HlzMarking.ValueType], builtins.type):
+        DESCRIPTOR: google.protobuf.descriptor.EnumDescriptor
         HlzMarking_Unspecified: CasevacReport._HlzMarking.ValueType  # 0
         HlzMarking_Panels: CasevacReport._HlzMarking.ValueType  # 1
         HlzMarking_PyroSignal: CasevacReport._HlzMarking.ValueType  # 2
@@ -2755,11 +2692,11 @@ class CasevacReport(_message.Message):
     HlzMarking_Other: CasevacReport.HlzMarking.ValueType  # 5
 
     class _Security:
-        ValueType = _typing.NewType("ValueType", _builtins.int)
-        V: _TypeAlias = ValueType  # noqa: Y015
+        ValueType = typing.NewType("ValueType", builtins.int)
+        V: typing_extensions.TypeAlias = ValueType
 
-    class _SecurityEnumTypeWrapper(_enum_type_wrapper._EnumTypeWrapper[CasevacReport._Security.ValueType], _builtins.type):
-        DESCRIPTOR: _descriptor.EnumDescriptor
+    class _SecurityEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[CasevacReport._Security.ValueType], builtins.type):
+        DESCRIPTOR: google.protobuf.descriptor.EnumDescriptor
         Security_Unspecified: CasevacReport._Security.ValueType  # 0
         Security_NoEnemy: CasevacReport._Security.ValueType  # 1
         """N - no enemy activity"""
@@ -2785,44 +2722,44 @@ class CasevacReport(_message.Message):
     Security_EnemyInArmedContact: CasevacReport.Security.ValueType  # 4
     """X - armed escort required"""
 
-    PRECEDENCE_FIELD_NUMBER: _builtins.int
-    EQUIPMENT_FLAGS_FIELD_NUMBER: _builtins.int
-    LITTER_PATIENTS_FIELD_NUMBER: _builtins.int
-    AMBULATORY_PATIENTS_FIELD_NUMBER: _builtins.int
-    SECURITY_FIELD_NUMBER: _builtins.int
-    HLZ_MARKING_FIELD_NUMBER: _builtins.int
-    ZONE_MARKER_FIELD_NUMBER: _builtins.int
-    US_MILITARY_FIELD_NUMBER: _builtins.int
-    US_CIVILIAN_FIELD_NUMBER: _builtins.int
-    NON_US_MILITARY_FIELD_NUMBER: _builtins.int
-    NON_US_CIVILIAN_FIELD_NUMBER: _builtins.int
-    EPW_FIELD_NUMBER: _builtins.int
-    CHILD_FIELD_NUMBER: _builtins.int
-    TERRAIN_FLAGS_FIELD_NUMBER: _builtins.int
-    FREQUENCY_FIELD_NUMBER: _builtins.int
-    TITLE_FIELD_NUMBER: _builtins.int
-    MEDLINE_REMARKS_FIELD_NUMBER: _builtins.int
-    URGENT_COUNT_FIELD_NUMBER: _builtins.int
-    URGENT_SURGICAL_COUNT_FIELD_NUMBER: _builtins.int
-    PRIORITY_COUNT_FIELD_NUMBER: _builtins.int
-    ROUTINE_COUNT_FIELD_NUMBER: _builtins.int
-    CONVENIENCE_COUNT_FIELD_NUMBER: _builtins.int
-    EQUIPMENT_DETAIL_FIELD_NUMBER: _builtins.int
-    ZONE_PROTECTED_COORD_FIELD_NUMBER: _builtins.int
-    TERRAIN_SLOPE_DIR_FIELD_NUMBER: _builtins.int
-    TERRAIN_OTHER_DETAIL_FIELD_NUMBER: _builtins.int
-    MARKED_BY_FIELD_NUMBER: _builtins.int
-    OBSTACLES_FIELD_NUMBER: _builtins.int
-    WINDS_ARE_FROM_FIELD_NUMBER: _builtins.int
-    FRIENDLIES_FIELD_NUMBER: _builtins.int
-    ENEMY_FIELD_NUMBER: _builtins.int
-    HLZ_REMARKS_FIELD_NUMBER: _builtins.int
-    ZMIST_FIELD_NUMBER: _builtins.int
-    precedence: Global___CasevacReport.Precedence.ValueType
+    PRECEDENCE_FIELD_NUMBER: builtins.int
+    EQUIPMENT_FLAGS_FIELD_NUMBER: builtins.int
+    LITTER_PATIENTS_FIELD_NUMBER: builtins.int
+    AMBULATORY_PATIENTS_FIELD_NUMBER: builtins.int
+    SECURITY_FIELD_NUMBER: builtins.int
+    HLZ_MARKING_FIELD_NUMBER: builtins.int
+    ZONE_MARKER_FIELD_NUMBER: builtins.int
+    US_MILITARY_FIELD_NUMBER: builtins.int
+    US_CIVILIAN_FIELD_NUMBER: builtins.int
+    NON_US_MILITARY_FIELD_NUMBER: builtins.int
+    NON_US_CIVILIAN_FIELD_NUMBER: builtins.int
+    EPW_FIELD_NUMBER: builtins.int
+    CHILD_FIELD_NUMBER: builtins.int
+    TERRAIN_FLAGS_FIELD_NUMBER: builtins.int
+    FREQUENCY_FIELD_NUMBER: builtins.int
+    TITLE_FIELD_NUMBER: builtins.int
+    MEDLINE_REMARKS_FIELD_NUMBER: builtins.int
+    URGENT_COUNT_FIELD_NUMBER: builtins.int
+    URGENT_SURGICAL_COUNT_FIELD_NUMBER: builtins.int
+    PRIORITY_COUNT_FIELD_NUMBER: builtins.int
+    ROUTINE_COUNT_FIELD_NUMBER: builtins.int
+    CONVENIENCE_COUNT_FIELD_NUMBER: builtins.int
+    EQUIPMENT_DETAIL_FIELD_NUMBER: builtins.int
+    ZONE_PROTECTED_COORD_FIELD_NUMBER: builtins.int
+    TERRAIN_SLOPE_DIR_FIELD_NUMBER: builtins.int
+    TERRAIN_OTHER_DETAIL_FIELD_NUMBER: builtins.int
+    MARKED_BY_FIELD_NUMBER: builtins.int
+    OBSTACLES_FIELD_NUMBER: builtins.int
+    WINDS_ARE_FROM_FIELD_NUMBER: builtins.int
+    FRIENDLIES_FIELD_NUMBER: builtins.int
+    ENEMY_FIELD_NUMBER: builtins.int
+    HLZ_REMARKS_FIELD_NUMBER: builtins.int
+    ZMIST_FIELD_NUMBER: builtins.int
+    precedence: global___CasevacReport.Precedence.ValueType
     """
     Line 3: precedence / urgency.
     """
-    equipment_flags: _builtins.int
+    equipment_flags: builtins.int
     """
     Line 4: special equipment required, as a bitfield.
       bit 0: none
@@ -2831,36 +2768,36 @@ class CasevacReport(_message.Message):
       bit 3: ventilator
       bit 4: blood
     """
-    litter_patients: _builtins.int
+    litter_patients: builtins.int
     """
     Line 5: number of litter (stretcher-bound) patients.
     """
-    ambulatory_patients: _builtins.int
+    ambulatory_patients: builtins.int
     """
     Line 5: number of ambulatory (walking-wounded) patients.
     """
-    security: Global___CasevacReport.Security.ValueType
+    security: global___CasevacReport.Security.ValueType
     """
     Line 6: security situation at the PZ.
     """
-    hlz_marking: Global___CasevacReport.HlzMarking.ValueType
+    hlz_marking: global___CasevacReport.HlzMarking.ValueType
     """
     Line 7: HLZ marking method.
     """
-    zone_marker: _builtins.str
+    zone_marker: builtins.str
     """
     Line 7 supplementary: short free-text describing the zone marker
     (e.g. "Green smoke", "VS-17 panel west"). Capped tight in options.
     """
-    us_military: _builtins.int
+    us_military: builtins.int
     """--- Line 8: patient nationality counts ---"""
-    us_civilian: _builtins.int
-    non_us_military: _builtins.int
-    non_us_civilian: _builtins.int
-    epw: _builtins.int
+    us_civilian: builtins.int
+    non_us_military: builtins.int
+    non_us_civilian: builtins.int
+    epw: builtins.int
     """enemy prisoner of war"""
-    child: _builtins.int
-    terrain_flags: _builtins.int
+    child: builtins.int
+    terrain_flags: builtins.int
     """
     Line 9: terrain and obstacles at the PZ, as a bitfield.
       bit 0: slope
@@ -2870,13 +2807,13 @@ class CasevacReport(_message.Message):
       bit 4: wires
       bit 5: other
     """
-    frequency: _builtins.str
+    frequency: builtins.str
     """
     Line 2: radio frequency / callsign metadata (e.g. "38.90 Mhz" or
     "Victor 6"). Capped tight in options.
     """
-    title: _builtins.str
-    """--- v2.x medline extensions (tags 16–33) --------------------------------
+    title: builtins.str
+    """--- v2.x medline extensions (tags 16-33) --------------------------------
 
     Fields 16+ cost a 2-byte tag instead of 1 byte, but they're usually
     sparse so the on-wire delta is modest when most stay unset. A fully
@@ -2891,54 +2828,54 @@ class CasevacReport(_message.Message):
     same as the envelope callsign but ATAK sometimes carries a distinct
     ops-number here.
     """
-    medline_remarks: _builtins.str
+    medline_remarks: builtins.str
     """
-    Primary medline free-text — the single most clinically important line
+    Primary medline free-text - the single most clinically important line
     on a MEDLINE form (e.g. "2 urgent litter patients, smoke on approach").
     MUST be preserved under MTU pressure as long as any casevac is sent.
     """
-    urgent_count: _builtins.int
+    urgent_count: builtins.int
     """
     Line 3 (newer ATAK format): patient counts by precedence level.
-    Coexists with the enum-style `precedence` field (tag 1) — older ATAK
+    Coexists with the enum-style `precedence` field (tag 1) - older ATAK
     emits a single enum, newer ATAK emits these counts, and both can be
     set simultaneously. Senders populate whichever style(s) the source
     XML had; receivers prefer counts when non-zero.
     """
-    urgent_surgical_count: _builtins.int
-    priority_count: _builtins.int
-    routine_count: _builtins.int
-    convenience_count: _builtins.int
-    equipment_detail: _builtins.str
+    urgent_surgical_count: builtins.int
+    priority_count: builtins.int
+    routine_count: builtins.int
+    convenience_count: builtins.int
+    equipment_detail: builtins.str
     """
     Line 4 supplementary: free-text description of non-standard equipment
     (e.g. "Blood warmer"). Pairs with the `equipment_flags` bitfield.
     """
-    zone_protected_coord: _builtins.str
+    zone_protected_coord: builtins.str
     """
     Line 1 override: MGRS grid when distinct from the event anchor point
     (e.g. "34T CQ 12345 67890"). Event lat/lon/hae still carries the
     numeric location; this field preserves the exact MGRS string the
     medic entered.
     """
-    terrain_slope_dir: _builtins.str
+    terrain_slope_dir: builtins.str
     """
     Line 9 supplementary: slope direction (e.g. "N", "NE", "SSW") when
     `terrain_flags` bit 0 (slope) is set.
     """
-    terrain_other_detail: _builtins.str
+    terrain_other_detail: builtins.str
     """
     Line 9 supplementary: free-text description of "other" terrain hazards
     (e.g. "Loose debris on west edge") when `terrain_flags` bit 5 (other)
     is set. Tier-2 strippable under MTU pressure.
     """
-    marked_by: _builtins.str
+    marked_by: builtins.str
     """
     Line 7 supplementary: how the zone is being marked right now
     (e.g. "Orange smoke", "VS-17 panel"). Complements the structured
     `hlz_marking` enum with a specific human-readable description.
     """
-    obstacles: _builtins.str
+    obstacles: builtins.str
     """--- Tier-2 situational awareness (stripped first under MTU pressure) ---
     These fields are free-text context that helps the receiver plan the
     approach but aren't strictly required to evacuate the patient.
@@ -2946,30 +2883,30 @@ class CasevacReport(_message.Message):
 
     Nearby obstacles on the approach (e.g. "Power lines north of HLZ").
     """
-    winds_are_from: _builtins.str
+    winds_are_from: builtins.str
     """
     Wind direction and speed (e.g. "270 at 12 kts").
     """
-    friendlies: _builtins.str
+    friendlies: builtins.str
     """
     Friendly forces posture near the pickup zone
     (e.g. "Squad east of HLZ").
     """
-    enemy: _builtins.str
+    enemy: builtins.str
     """
     Known or suspected enemy positions near the pickup zone
     (e.g. "Possible enemy on south ridge").
     """
-    hlz_remarks: _builtins.str
+    hlz_remarks: builtins.str
     """
     Free-text description of the HLZ itself
     (e.g. "Primary HLZ is soccer field").
     """
-    @_builtins.property
-    def zmist(self) -> _containers.RepeatedCompositeFieldContainer[Global___ZMistEntry]:
+    @property
+    def zmist(self) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[global___ZMistEntry]:
         """
         Per-patient clinical records. Each entry is one patient's ZMIST card
-        (Zap number / Mechanism / Injuries / Signs / Treatment). Repeatable —
+        (Zap number / Mechanism / Injuries / Signs / Treatment). Repeatable -
         a mass-casualty event can carry 1-6 entries in practice, limited by
         the 237 B LoRa MTU.
         """
@@ -2977,109 +2914,101 @@ class CasevacReport(_message.Message):
     def __init__(
         self,
         *,
-        precedence: Global___CasevacReport.Precedence.ValueType = ...,
-        equipment_flags: _builtins.int = ...,
-        litter_patients: _builtins.int = ...,
-        ambulatory_patients: _builtins.int = ...,
-        security: Global___CasevacReport.Security.ValueType = ...,
-        hlz_marking: Global___CasevacReport.HlzMarking.ValueType = ...,
-        zone_marker: _builtins.str = ...,
-        us_military: _builtins.int = ...,
-        us_civilian: _builtins.int = ...,
-        non_us_military: _builtins.int = ...,
-        non_us_civilian: _builtins.int = ...,
-        epw: _builtins.int = ...,
-        child: _builtins.int = ...,
-        terrain_flags: _builtins.int = ...,
-        frequency: _builtins.str = ...,
-        title: _builtins.str = ...,
-        medline_remarks: _builtins.str = ...,
-        urgent_count: _builtins.int = ...,
-        urgent_surgical_count: _builtins.int = ...,
-        priority_count: _builtins.int = ...,
-        routine_count: _builtins.int = ...,
-        convenience_count: _builtins.int = ...,
-        equipment_detail: _builtins.str = ...,
-        zone_protected_coord: _builtins.str = ...,
-        terrain_slope_dir: _builtins.str = ...,
-        terrain_other_detail: _builtins.str = ...,
-        marked_by: _builtins.str = ...,
-        obstacles: _builtins.str = ...,
-        winds_are_from: _builtins.str = ...,
-        friendlies: _builtins.str = ...,
-        enemy: _builtins.str = ...,
-        hlz_remarks: _builtins.str = ...,
-        zmist: _abc.Iterable[Global___ZMistEntry] | None = ...,
+        precedence: global___CasevacReport.Precedence.ValueType = ...,
+        equipment_flags: builtins.int = ...,
+        litter_patients: builtins.int = ...,
+        ambulatory_patients: builtins.int = ...,
+        security: global___CasevacReport.Security.ValueType = ...,
+        hlz_marking: global___CasevacReport.HlzMarking.ValueType = ...,
+        zone_marker: builtins.str = ...,
+        us_military: builtins.int = ...,
+        us_civilian: builtins.int = ...,
+        non_us_military: builtins.int = ...,
+        non_us_civilian: builtins.int = ...,
+        epw: builtins.int = ...,
+        child: builtins.int = ...,
+        terrain_flags: builtins.int = ...,
+        frequency: builtins.str = ...,
+        title: builtins.str = ...,
+        medline_remarks: builtins.str = ...,
+        urgent_count: builtins.int = ...,
+        urgent_surgical_count: builtins.int = ...,
+        priority_count: builtins.int = ...,
+        routine_count: builtins.int = ...,
+        convenience_count: builtins.int = ...,
+        equipment_detail: builtins.str = ...,
+        zone_protected_coord: builtins.str = ...,
+        terrain_slope_dir: builtins.str = ...,
+        terrain_other_detail: builtins.str = ...,
+        marked_by: builtins.str = ...,
+        obstacles: builtins.str = ...,
+        winds_are_from: builtins.str = ...,
+        friendlies: builtins.str = ...,
+        enemy: builtins.str = ...,
+        hlz_remarks: builtins.str = ...,
+        zmist: collections.abc.Iterable[global___ZMistEntry] | None = ...,
     ) -> None: ...
-    _HasFieldArgType: _TypeAlias = _Never  # noqa: Y015
-    def HasField(self, field_name: _HasFieldArgType) -> _builtins.bool: ...
-    _ClearFieldArgType: _TypeAlias = _typing.Literal["ambulatory_patients", b"ambulatory_patients", "child", b"child", "convenience_count", b"convenience_count", "enemy", b"enemy", "epw", b"epw", "equipment_detail", b"equipment_detail", "equipment_flags", b"equipment_flags", "frequency", b"frequency", "friendlies", b"friendlies", "hlz_marking", b"hlz_marking", "hlz_remarks", b"hlz_remarks", "litter_patients", b"litter_patients", "marked_by", b"marked_by", "medline_remarks", b"medline_remarks", "non_us_civilian", b"non_us_civilian", "non_us_military", b"non_us_military", "obstacles", b"obstacles", "precedence", b"precedence", "priority_count", b"priority_count", "routine_count", b"routine_count", "security", b"security", "terrain_flags", b"terrain_flags", "terrain_other_detail", b"terrain_other_detail", "terrain_slope_dir", b"terrain_slope_dir", "title", b"title", "urgent_count", b"urgent_count", "urgent_surgical_count", b"urgent_surgical_count", "us_civilian", b"us_civilian", "us_military", b"us_military", "winds_are_from", b"winds_are_from", "zmist", b"zmist", "zone_marker", b"zone_marker", "zone_protected_coord", b"zone_protected_coord"]  # noqa: Y015
-    def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
-    def WhichOneof(self, oneof_group: _Never) -> None: ...
+    def ClearField(self, field_name: typing.Literal["ambulatory_patients", b"ambulatory_patients", "child", b"child", "convenience_count", b"convenience_count", "enemy", b"enemy", "epw", b"epw", "equipment_detail", b"equipment_detail", "equipment_flags", b"equipment_flags", "frequency", b"frequency", "friendlies", b"friendlies", "hlz_marking", b"hlz_marking", "hlz_remarks", b"hlz_remarks", "litter_patients", b"litter_patients", "marked_by", b"marked_by", "medline_remarks", b"medline_remarks", "non_us_civilian", b"non_us_civilian", "non_us_military", b"non_us_military", "obstacles", b"obstacles", "precedence", b"precedence", "priority_count", b"priority_count", "routine_count", b"routine_count", "security", b"security", "terrain_flags", b"terrain_flags", "terrain_other_detail", b"terrain_other_detail", "terrain_slope_dir", b"terrain_slope_dir", "title", b"title", "urgent_count", b"urgent_count", "urgent_surgical_count", b"urgent_surgical_count", "us_civilian", b"us_civilian", "us_military", b"us_military", "winds_are_from", b"winds_are_from", "zmist", b"zmist", "zone_marker", b"zone_marker", "zone_protected_coord", b"zone_protected_coord"]) -> None: ...
 
-Global___CasevacReport: _TypeAlias = CasevacReport  # noqa: Y015
+global___CasevacReport = CasevacReport
 
-@_typing.final
-class ZMistEntry(_message.Message):
+@typing.final
+class ZMistEntry(google.protobuf.message.Message):
     """
-    Per-patient clinical summary record — one entry per patient in a CASEVAC.
+    Per-patient clinical summary record - one entry per patient in a CASEVAC.
     Maps directly to ATAK's <zMist> child element inside <zMistsMap>.
     All fields are optional free-text; senders populate what they have.
     """
 
-    DESCRIPTOR: _descriptor.Descriptor
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
 
-    TITLE_FIELD_NUMBER: _builtins.int
-    Z_FIELD_NUMBER: _builtins.int
-    M_FIELD_NUMBER: _builtins.int
-    I_FIELD_NUMBER: _builtins.int
-    S_FIELD_NUMBER: _builtins.int
-    T_FIELD_NUMBER: _builtins.int
-    title: _builtins.str
+    TITLE_FIELD_NUMBER: builtins.int
+    Z_FIELD_NUMBER: builtins.int
+    M_FIELD_NUMBER: builtins.int
+    I_FIELD_NUMBER: builtins.int
+    S_FIELD_NUMBER: builtins.int
+    T_FIELD_NUMBER: builtins.int
+    title: builtins.str
     """
     Patient identifier / sequence label (e.g. "ZMIST-1", "ZMIST-2").
     """
-    z: _builtins.str
+    z: builtins.str
     """
-    Zap number — unique patient tracking ID (often a terse code like
+    Zap number - unique patient tracking ID (often a terse code like
     "Gunshot" or a serial).
     """
-    m: _builtins.str
+    m: builtins.str
     """
     Mechanism of injury (e.g. "Penetrating trauma", "Blast injury").
     """
-    i: _builtins.str
+    i: builtins.str
     """
     Injuries observed (e.g. "Left thigh", "Concussion").
     """
-    s: _builtins.str
+    s: builtins.str
     """
     Signs / vital stats (e.g. "Stable", "Priority", "BP 110/70").
     """
-    t: _builtins.str
+    t: builtins.str
     """
     Treatment given (e.g. "Tourniquet 1810Z", "O2 administered").
     """
     def __init__(
         self,
         *,
-        title: _builtins.str = ...,
-        z: _builtins.str = ...,
-        m: _builtins.str = ...,
-        i: _builtins.str = ...,
-        s: _builtins.str = ...,
-        t: _builtins.str = ...,
+        title: builtins.str = ...,
+        z: builtins.str = ...,
+        m: builtins.str = ...,
+        i: builtins.str = ...,
+        s: builtins.str = ...,
+        t: builtins.str = ...,
     ) -> None: ...
-    _HasFieldArgType: _TypeAlias = _Never  # noqa: Y015
-    def HasField(self, field_name: _HasFieldArgType) -> _builtins.bool: ...
-    _ClearFieldArgType: _TypeAlias = _typing.Literal["i", b"i", "m", b"m", "s", b"s", "t", b"t", "title", b"title", "z", b"z"]  # noqa: Y015
-    def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
-    def WhichOneof(self, oneof_group: _Never) -> None: ...
+    def ClearField(self, field_name: typing.Literal["i", b"i", "m", b"m", "s", b"s", "t", b"t", "title", b"title", "z", b"z"]) -> None: ...
 
-Global___ZMistEntry: _TypeAlias = ZMistEntry  # noqa: Y015
+global___ZMistEntry = ZMistEntry
 
-@_typing.final
-class EmergencyAlert(_message.Message):
+@typing.final
+class EmergencyAlert(google.protobuf.message.Message):
     """
     Emergency alert / 911 beacon (CoT types b-a-o-tbl, b-a-o-pan, b-a-o-opn,
     b-a-o-can, b-a-o-c, b-a-g).
@@ -3090,14 +3019,14 @@ class EmergencyAlert(_message.Message):
     the authoring unit and handle cancel-referencing without XML parsing.
     """
 
-    DESCRIPTOR: _descriptor.Descriptor
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
 
     class _Type:
-        ValueType = _typing.NewType("ValueType", _builtins.int)
-        V: _TypeAlias = ValueType  # noqa: Y015
+        ValueType = typing.NewType("ValueType", builtins.int)
+        V: typing_extensions.TypeAlias = ValueType
 
-    class _TypeEnumTypeWrapper(_enum_type_wrapper._EnumTypeWrapper[EmergencyAlert._Type.ValueType], _builtins.type):
-        DESCRIPTOR: _descriptor.EnumDescriptor
+    class _TypeEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[EmergencyAlert._Type.ValueType], builtins.type):
+        DESCRIPTOR: google.protobuf.descriptor.EnumDescriptor
         Type_Unspecified: EmergencyAlert._Type.ValueType  # 0
         Type_Alert911: EmergencyAlert._Type.ValueType  # 1
         """b-a-o-tbl"""
@@ -3127,20 +3056,20 @@ class EmergencyAlert(_message.Message):
     Type_Cancel: EmergencyAlert.Type.ValueType  # 6
     """b-a-o-can"""
 
-    TYPE_FIELD_NUMBER: _builtins.int
-    AUTHORING_UID_FIELD_NUMBER: _builtins.int
-    CANCEL_REFERENCE_UID_FIELD_NUMBER: _builtins.int
-    type: Global___EmergencyAlert.Type.ValueType
+    TYPE_FIELD_NUMBER: builtins.int
+    AUTHORING_UID_FIELD_NUMBER: builtins.int
+    CANCEL_REFERENCE_UID_FIELD_NUMBER: builtins.int
+    type: global___EmergencyAlert.Type.ValueType
     """
     Alert discriminator.
     """
-    authoring_uid: _builtins.str
+    authoring_uid: builtins.str
     """
     UID of the unit that raised the alert. Often the same as
     TAKPacketV2.uid but can be a parent device uid when a tracker raises
     an alert on behalf of a dismount.
     """
-    cancel_reference_uid: _builtins.str
+    cancel_reference_uid: builtins.str
     """
     For Type_Cancel: the uid of the alert being cancelled. Empty for
     non-cancel alert types.
@@ -3148,20 +3077,16 @@ class EmergencyAlert(_message.Message):
     def __init__(
         self,
         *,
-        type: Global___EmergencyAlert.Type.ValueType = ...,
-        authoring_uid: _builtins.str = ...,
-        cancel_reference_uid: _builtins.str = ...,
+        type: global___EmergencyAlert.Type.ValueType = ...,
+        authoring_uid: builtins.str = ...,
+        cancel_reference_uid: builtins.str = ...,
     ) -> None: ...
-    _HasFieldArgType: _TypeAlias = _Never  # noqa: Y015
-    def HasField(self, field_name: _HasFieldArgType) -> _builtins.bool: ...
-    _ClearFieldArgType: _TypeAlias = _typing.Literal["authoring_uid", b"authoring_uid", "cancel_reference_uid", b"cancel_reference_uid", "type", b"type"]  # noqa: Y015
-    def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
-    def WhichOneof(self, oneof_group: _Never) -> None: ...
+    def ClearField(self, field_name: typing.Literal["authoring_uid", b"authoring_uid", "cancel_reference_uid", b"cancel_reference_uid", "type", b"type"]) -> None: ...
 
-Global___EmergencyAlert: _TypeAlias = EmergencyAlert  # noqa: Y015
+global___EmergencyAlert = EmergencyAlert
 
-@_typing.final
-class TaskRequest(_message.Message):
+@typing.final
+class TaskRequest(google.protobuf.message.Message):
     """
     Task / engage request (CoT type t-s).
 
@@ -3170,18 +3095,18 @@ class TaskRequest(_message.Message):
     creation time; the fields below carry structured metadata the raw-detail
     fallback currently loses.
 
-    Fields are deliberately lean — this variant is closer to the MTU ceiling
+    Fields are deliberately lean - this variant is closer to the MTU ceiling
     than the others, so every string is capped in options.
     """
 
-    DESCRIPTOR: _descriptor.Descriptor
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
 
     class _Priority:
-        ValueType = _typing.NewType("ValueType", _builtins.int)
-        V: _TypeAlias = ValueType  # noqa: Y015
+        ValueType = typing.NewType("ValueType", builtins.int)
+        V: typing_extensions.TypeAlias = ValueType
 
-    class _PriorityEnumTypeWrapper(_enum_type_wrapper._EnumTypeWrapper[TaskRequest._Priority.ValueType], _builtins.type):
-        DESCRIPTOR: _descriptor.EnumDescriptor
+    class _PriorityEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[TaskRequest._Priority.ValueType], builtins.type):
+        DESCRIPTOR: google.protobuf.descriptor.EnumDescriptor
         Priority_Unspecified: TaskRequest._Priority.ValueType  # 0
         Priority_Low: TaskRequest._Priority.ValueType  # 1
         Priority_Normal: TaskRequest._Priority.ValueType  # 2
@@ -3196,11 +3121,11 @@ class TaskRequest(_message.Message):
     Priority_Critical: TaskRequest.Priority.ValueType  # 4
 
     class _Status:
-        ValueType = _typing.NewType("ValueType", _builtins.int)
-        V: _TypeAlias = ValueType  # noqa: Y015
+        ValueType = typing.NewType("ValueType", builtins.int)
+        V: typing_extensions.TypeAlias = ValueType
 
-    class _StatusEnumTypeWrapper(_enum_type_wrapper._EnumTypeWrapper[TaskRequest._Status.ValueType], _builtins.type):
-        DESCRIPTOR: _descriptor.EnumDescriptor
+    class _StatusEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[TaskRequest._Status.ValueType], builtins.type):
+        DESCRIPTOR: google.protobuf.descriptor.EnumDescriptor
         Status_Unspecified: TaskRequest._Status.ValueType  # 0
         Status_Pending: TaskRequest._Status.ValueType  # 1
         """assigned, not yet acknowledged"""
@@ -3226,29 +3151,29 @@ class TaskRequest(_message.Message):
     Status_Cancelled: TaskRequest.Status.ValueType  # 5
     """cancelled before completion"""
 
-    TASK_TYPE_FIELD_NUMBER: _builtins.int
-    TARGET_UID_FIELD_NUMBER: _builtins.int
-    ASSIGNEE_UID_FIELD_NUMBER: _builtins.int
-    PRIORITY_FIELD_NUMBER: _builtins.int
-    STATUS_FIELD_NUMBER: _builtins.int
-    NOTE_FIELD_NUMBER: _builtins.int
-    task_type: _builtins.str
+    TASK_TYPE_FIELD_NUMBER: builtins.int
+    TARGET_UID_FIELD_NUMBER: builtins.int
+    ASSIGNEE_UID_FIELD_NUMBER: builtins.int
+    PRIORITY_FIELD_NUMBER: builtins.int
+    STATUS_FIELD_NUMBER: builtins.int
+    NOTE_FIELD_NUMBER: builtins.int
+    task_type: builtins.str
     """
     Short tag for the task category (e.g. "engage", "observe", "recon",
     "rescue"). Free text on the wire so ATAK-specific task taxonomies
     don't need proto coordination; capped tight in options.
     """
-    target_uid: _builtins.str
+    target_uid: builtins.str
     """
     UID of the target / map item being tasked.
     """
-    assignee_uid: _builtins.str
+    assignee_uid: builtins.str
     """
     UID of the assigned unit. Empty = unassigned / broadcast task.
     """
-    priority: Global___TaskRequest.Priority.ValueType
-    status: Global___TaskRequest.Status.ValueType
-    note: _builtins.str
+    priority: global___TaskRequest.Priority.ValueType
+    status: global___TaskRequest.Status.ValueType
+    note: builtins.str
     """
     Optional short note (reason, constraints, grid reference). Capped
     tight in options to keep the worst-case under the LoRa MTU.
@@ -3256,27 +3181,23 @@ class TaskRequest(_message.Message):
     def __init__(
         self,
         *,
-        task_type: _builtins.str = ...,
-        target_uid: _builtins.str = ...,
-        assignee_uid: _builtins.str = ...,
-        priority: Global___TaskRequest.Priority.ValueType = ...,
-        status: Global___TaskRequest.Status.ValueType = ...,
-        note: _builtins.str = ...,
+        task_type: builtins.str = ...,
+        target_uid: builtins.str = ...,
+        assignee_uid: builtins.str = ...,
+        priority: global___TaskRequest.Priority.ValueType = ...,
+        status: global___TaskRequest.Status.ValueType = ...,
+        note: builtins.str = ...,
     ) -> None: ...
-    _HasFieldArgType: _TypeAlias = _Never  # noqa: Y015
-    def HasField(self, field_name: _HasFieldArgType) -> _builtins.bool: ...
-    _ClearFieldArgType: _TypeAlias = _typing.Literal["assignee_uid", b"assignee_uid", "note", b"note", "priority", b"priority", "status", b"status", "target_uid", b"target_uid", "task_type", b"task_type"]  # noqa: Y015
-    def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
-    def WhichOneof(self, oneof_group: _Never) -> None: ...
+    def ClearField(self, field_name: typing.Literal["assignee_uid", b"assignee_uid", "note", b"note", "priority", b"priority", "status", b"status", "target_uid", b"target_uid", "task_type", b"task_type"]) -> None: ...
 
-Global___TaskRequest: _TypeAlias = TaskRequest  # noqa: Y015
+global___TaskRequest = TaskRequest
 
-@_typing.final
-class TAKEnvironment(_message.Message):
+@typing.final
+class TAKEnvironment(google.protobuf.message.Message):
     """
     Weather annotation from <environment> CoT detail element.
 
-    Attaches to any TAKPacketV2 regardless of payload_variant — an Aircraft,
+    Attaches to any TAKPacketV2 regardless of payload_variant - an Aircraft,
     PLI, or Marker can all carry observed conditions at the emitting station.
     ATAK-CIV ships an XSD for <environment> but no dedicated handler, so the
     element round-trips through the generic detail pipeline; this message
@@ -3285,7 +3206,7 @@ class TAKEnvironment(_message.Message):
     Target wire cost: ~6-8 bytes compressed with a fully populated instance.
 
     Named `TAKEnvironment` (not just `Environment`) because the bare name
-    collides with `SwiftUI.Environment` — every SwiftUI view in a consuming
+    collides with `SwiftUI.Environment` - every SwiftUI view in a consuming
     iOS app uses the `@Environment` property wrapper, and importing the
     generated proto module would make `Environment` ambiguous in every one
     of those files. The `TAK` prefix matches the convention used by the
@@ -3293,24 +3214,24 @@ class TAKEnvironment(_message.Message):
     languages (Swift, Kotlin, Python, TypeScript, C#).
     """
 
-    DESCRIPTOR: _descriptor.Descriptor
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
 
-    TEMPERATURE_C_X10_FIELD_NUMBER: _builtins.int
-    WIND_DIRECTION_DEG_FIELD_NUMBER: _builtins.int
-    WIND_SPEED_CM_S_FIELD_NUMBER: _builtins.int
-    temperature_c_x10: _builtins.int
+    TEMPERATURE_C_X10_FIELD_NUMBER: builtins.int
+    WIND_DIRECTION_DEG_FIELD_NUMBER: builtins.int
+    WIND_SPEED_CM_S_FIELD_NUMBER: builtins.int
+    temperature_c_x10: builtins.int
     """
     Temperature in deci-degrees Celsius. 225 = 22.5°C.
     Range covers -50°C to +50°C (-500 to +500) which spans every realistic
     outdoor TAK deployment. sint32 because negative temps are common in
     cold-weather ops.
     """
-    wind_direction_deg: _builtins.int
+    wind_direction_deg: builtins.int
     """
     Wind direction in whole degrees, 0-359. "Direction FROM" per
     meteorological convention (matches CoT / ATAK).
     """
-    wind_speed_cm_s: _builtins.int
+    wind_speed_cm_s: builtins.int
     """
     Wind speed in cm/s. Matches the unit of TAKPacketV2.speed for
     consistency. 1200 = 12.00 m/s = ~27 mph.
@@ -3318,20 +3239,16 @@ class TAKEnvironment(_message.Message):
     def __init__(
         self,
         *,
-        temperature_c_x10: _builtins.int = ...,
-        wind_direction_deg: _builtins.int = ...,
-        wind_speed_cm_s: _builtins.int = ...,
+        temperature_c_x10: builtins.int = ...,
+        wind_direction_deg: builtins.int = ...,
+        wind_speed_cm_s: builtins.int = ...,
     ) -> None: ...
-    _HasFieldArgType: _TypeAlias = _Never  # noqa: Y015
-    def HasField(self, field_name: _HasFieldArgType) -> _builtins.bool: ...
-    _ClearFieldArgType: _TypeAlias = _typing.Literal["temperature_c_x10", b"temperature_c_x10", "wind_direction_deg", b"wind_direction_deg", "wind_speed_cm_s", b"wind_speed_cm_s"]  # noqa: Y015
-    def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
-    def WhichOneof(self, oneof_group: _Never) -> None: ...
+    def ClearField(self, field_name: typing.Literal["temperature_c_x10", b"temperature_c_x10", "wind_direction_deg", b"wind_direction_deg", "wind_speed_cm_s", b"wind_speed_cm_s"]) -> None: ...
 
-Global___TAKEnvironment: _TypeAlias = TAKEnvironment  # noqa: Y015
+global___TAKEnvironment = TAKEnvironment
 
-@_typing.final
-class SensorFov(_message.Message):
+@typing.final
+class SensorFov(google.protobuf.message.Message):
     """
     Sensor field-of-view cone from <sensor> CoT detail element.
 
@@ -3342,19 +3259,19 @@ class SensorFov(_message.Message):
     The receiving ATAK client restores those from its own defaults, same as
     every other CoT carried over Meshtastic today.
 
-    Attaches to any TAKPacketV2 — a PLI with a sensor on the operator's head,
+    Attaches to any TAKPacketV2 - a PLI with a sensor on the operator's head,
     an Aircraft with a FLIR turret, a Marker dropped on a UAV.
     Target wire cost: ~7-14 bytes compressed (dominated by model string).
     """
 
-    DESCRIPTOR: _descriptor.Descriptor
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
 
     class _SensorType:
-        ValueType = _typing.NewType("ValueType", _builtins.int)
-        V: _TypeAlias = ValueType  # noqa: Y015
+        ValueType = typing.NewType("ValueType", builtins.int)
+        V: typing_extensions.TypeAlias = ValueType
 
-    class _SensorTypeEnumTypeWrapper(_enum_type_wrapper._EnumTypeWrapper[SensorFov._SensorType.ValueType], _builtins.type):
-        DESCRIPTOR: _descriptor.EnumDescriptor
+    class _SensorTypeEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[SensorFov._SensorType.ValueType], builtins.type):
+        DESCRIPTOR: google.protobuf.descriptor.EnumDescriptor
         SensorType_Unspecified: SensorFov._SensorType.ValueType  # 0
         SensorType_Camera: SensorFov._SensorType.ValueType  # 1
         """daylight / general optical"""
@@ -3388,80 +3305,76 @@ class SensorFov(_message.Message):
     """radio/radar direction-finding"""
     SensorType_Other: SensorFov.SensorType.ValueType  # 6
 
-    TYPE_FIELD_NUMBER: _builtins.int
-    AZIMUTH_DEG_FIELD_NUMBER: _builtins.int
-    RANGE_M_FIELD_NUMBER: _builtins.int
-    FOV_HORIZONTAL_DEG_FIELD_NUMBER: _builtins.int
-    FOV_VERTICAL_DEG_FIELD_NUMBER: _builtins.int
-    ELEVATION_DEG_FIELD_NUMBER: _builtins.int
-    ROLL_DEG_FIELD_NUMBER: _builtins.int
-    MODEL_FIELD_NUMBER: _builtins.int
-    type: Global___SensorFov.SensorType.ValueType
-    azimuth_deg: _builtins.int
+    TYPE_FIELD_NUMBER: builtins.int
+    AZIMUTH_DEG_FIELD_NUMBER: builtins.int
+    RANGE_M_FIELD_NUMBER: builtins.int
+    FOV_HORIZONTAL_DEG_FIELD_NUMBER: builtins.int
+    FOV_VERTICAL_DEG_FIELD_NUMBER: builtins.int
+    ELEVATION_DEG_FIELD_NUMBER: builtins.int
+    ROLL_DEG_FIELD_NUMBER: builtins.int
+    MODEL_FIELD_NUMBER: builtins.int
+    type: global___SensorFov.SensorType.ValueType
+    azimuth_deg: builtins.int
     """
     Azimuth in whole degrees, 0-359. "Pointing direction" of the cone axis,
     measured clockwise from true north. Whole degrees match ATAK-CIV's
     SensorDetailHandler default (270°) and save varint bytes over centi-deg.
     """
-    range_m: _builtins.int
+    range_m: builtins.int
     """
     Maximum range of the cone in meters.
-    Optional — if unset, receivers should use the ATAK-CIV default of 100m.
+    Optional - if unset, receivers should use the ATAK-CIV default of 100m.
     """
-    fov_horizontal_deg: _builtins.int
+    fov_horizontal_deg: builtins.int
     """
     Horizontal field of view in whole degrees (cone's angular width).
     ATAK-CIV default is 45°.
     """
-    fov_vertical_deg: _builtins.int
+    fov_vertical_deg: builtins.int
     """
     Vertical field of view in whole degrees. ATAK-CIV default is 45°.
-    Optional — a value of 0 means "not set / use horizontal FOV".
+    Optional - a value of 0 means "not set / use horizontal FOV".
     """
-    elevation_deg: _builtins.int
+    elevation_deg: builtins.int
     """
     Elevation angle in whole degrees. Positive = up, negative = down.
     Range -90 to +90. sint32 for varint efficiency on small negatives.
     """
-    roll_deg: _builtins.int
+    roll_deg: builtins.int
     """
     Roll (camera tilt) in whole degrees, -180 to +180.
-    Optional — use 0 if the sensor doesn't track roll.
+    Optional - use 0 if the sensor doesn't track roll.
     """
-    model: _builtins.str
+    model: builtins.str
     """
     Free-form device model identifier, e.g. "FLIR-Boson-640", "SEEK".
-    Optional — empty string means "unknown model" (ATAK-CIV default).
+    Optional - empty string means "unknown model" (ATAK-CIV default).
     """
     def __init__(
         self,
         *,
-        type: Global___SensorFov.SensorType.ValueType = ...,
-        azimuth_deg: _builtins.int = ...,
-        range_m: _builtins.int | None = ...,
-        fov_horizontal_deg: _builtins.int = ...,
-        fov_vertical_deg: _builtins.int = ...,
-        elevation_deg: _builtins.int = ...,
-        roll_deg: _builtins.int = ...,
-        model: _builtins.str = ...,
+        type: global___SensorFov.SensorType.ValueType = ...,
+        azimuth_deg: builtins.int = ...,
+        range_m: builtins.int | None = ...,
+        fov_horizontal_deg: builtins.int = ...,
+        fov_vertical_deg: builtins.int = ...,
+        elevation_deg: builtins.int = ...,
+        roll_deg: builtins.int = ...,
+        model: builtins.str = ...,
     ) -> None: ...
-    _HasFieldArgType: _TypeAlias = _typing.Literal["_range_m", b"_range_m", "range_m", b"range_m"]  # noqa: Y015
-    def HasField(self, field_name: _HasFieldArgType) -> _builtins.bool: ...
-    _ClearFieldArgType: _TypeAlias = _typing.Literal["_range_m", b"_range_m", "azimuth_deg", b"azimuth_deg", "elevation_deg", b"elevation_deg", "fov_horizontal_deg", b"fov_horizontal_deg", "fov_vertical_deg", b"fov_vertical_deg", "model", b"model", "range_m", b"range_m", "roll_deg", b"roll_deg", "type", b"type"]  # noqa: Y015
-    def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
-    _WhichOneofReturnType__range_m: _TypeAlias = _typing.Literal["range_m"]  # noqa: Y015
-    _WhichOneofArgType__range_m: _TypeAlias = _typing.Literal["_range_m", b"_range_m"]  # noqa: Y015
-    def WhichOneof(self, oneof_group: _WhichOneofArgType__range_m) -> _WhichOneofReturnType__range_m | None: ...
+    def HasField(self, field_name: typing.Literal["_range_m", b"_range_m", "range_m", b"range_m"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing.Literal["_range_m", b"_range_m", "azimuth_deg", b"azimuth_deg", "elevation_deg", b"elevation_deg", "fov_horizontal_deg", b"fov_horizontal_deg", "fov_vertical_deg", b"fov_vertical_deg", "model", b"model", "range_m", b"range_m", "roll_deg", b"roll_deg", "type", b"type"]) -> None: ...
+    def WhichOneof(self, oneof_group: typing.Literal["_range_m", b"_range_m"]) -> typing.Literal["range_m"] | None: ...
 
-Global___SensorFov: _TypeAlias = SensorFov  # noqa: Y015
+global___SensorFov = SensorFov
 
-@_typing.final
-class TakTalkMessage(_message.Message):
+@typing.final
+class TakTalkMessage(google.protobuf.message.Message):
     """
     TAKTALK chat message payload (CoT type m-t-t).
 
     TAKTALK is an ATAK plugin for voice + text team messaging. The voice
-    audio stream goes over UDP/RTP and is NOT carried by the mesh — only
+    audio stream goes over UDP/RTP and is NOT carried by the mesh - only
     the text envelope (this message) is. `from_voice` marks messages sent
     via push-to-talk speech-to-text so receivers can render a mic icon
     next to the text.
@@ -3474,30 +3387,30 @@ class TakTalkMessage(_message.Message):
       <voice/>                        - presence sets from_voice = true
     """
 
-    DESCRIPTOR: _descriptor.Descriptor
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
 
-    TEXT_FIELD_NUMBER: _builtins.int
-    CHATROOM_ID_FIELD_NUMBER: _builtins.int
-    LANG_FIELD_NUMBER: _builtins.int
-    FROM_VOICE_FIELD_NUMBER: _builtins.int
-    text: _builtins.str
+    TEXT_FIELD_NUMBER: builtins.int
+    CHATROOM_ID_FIELD_NUMBER: builtins.int
+    LANG_FIELD_NUMBER: builtins.int
+    FROM_VOICE_FIELD_NUMBER: builtins.int
+    text: builtins.str
     """
     The text body of the TAKTALK message (speech-to-text transcript when
     from_voice = true, typed message otherwise).
     """
-    chatroom_id: _builtins.str
+    chatroom_id: builtins.str
     """
     TAKTALK chatroom identifier. May be a short id like "1" for the
     default room or a UUID like "30b2755c-c547-44ef-a0cc-cdbd8a15616f"
     for custom rooms (resolved by TakTalkRoomData broadcasts).
     Empty = broadcast room.
     """
-    lang: _builtins.str
+    lang: builtins.str
     """
     BCP-47-ish language tag or human-readable name (e.g. "en", "English").
     Empty = unspecified.
     """
-    from_voice: _builtins.bool
+    from_voice: builtins.bool
     """
     True when the source CoT carried a <voice/> marker, i.e. the message
     originated as push-to-talk speech-to-text. Lets receivers show a mic
@@ -3506,74 +3419,54 @@ class TakTalkMessage(_message.Message):
     def __init__(
         self,
         *,
-        text: _builtins.str = ...,
-        chatroom_id: _builtins.str = ...,
-        lang: _builtins.str = ...,
-        from_voice: _builtins.bool = ...,
+        text: builtins.str = ...,
+        chatroom_id: builtins.str = ...,
+        lang: builtins.str = ...,
+        from_voice: builtins.bool = ...,
     ) -> None: ...
-    _HasFieldArgType: _TypeAlias = _Never  # noqa: Y015
-    def HasField(self, field_name: _HasFieldArgType) -> _builtins.bool: ...
-    _ClearFieldArgType: _TypeAlias = _typing.Literal["chatroom_id", b"chatroom_id", "from_voice", b"from_voice", "lang", b"lang", "text", b"text"]  # noqa: Y015
-    def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
-    def WhichOneof(self, oneof_group: _Never) -> None: ...
+    def ClearField(self, field_name: typing.Literal["chatroom_id", b"chatroom_id", "from_voice", b"from_voice", "lang", b"lang", "text", b"text"]) -> None: ...
 
-Global___TakTalkMessage: _TypeAlias = TakTalkMessage  # noqa: Y015
+global___TakTalkMessage = TakTalkMessage
 
-@_typing.final
-class TakTalkRoomData(_message.Message):
+@typing.final
+class TakTalkRoomData(google.protobuf.message.Message):
     """
     TAKTALK room/membership broadcast (CoT type y-).
 
     Announces a TAKTALK chatroom's friendly name and roster so peers can
     resolve room UUIDs (used in TakTalkMessage.chatroom_id and
     GeoChat.room_id) to a display name and participant list. Not a chat
-    message itself — these events are emitted by TAKTALK when rooms are
+    message itself - these events are emitted by TAKTALK when rooms are
     created or memberships change.
     """
 
-    DESCRIPTOR: _descriptor.Descriptor
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
 
-    SENDER_CALLSIGN_FIELD_NUMBER: _builtins.int
-    ROOM_ID_FIELD_NUMBER: _builtins.int
-    ROOM_NAME_FIELD_NUMBER: _builtins.int
-    PARTICIPANTS_FIELD_NUMBER: _builtins.int
-    @_builtins.property
-    @_deprecated("""This field has been marked as deprecated using proto field options.""")
-    def sender_callsign(self) -> _builtins.str:
-        """
-        Callsign of the device broadcasting the room state (typically the
-        room owner / latest writer).
+    SENDER_CALLSIGN_FIELD_NUMBER: builtins.int
+    ROOM_ID_FIELD_NUMBER: builtins.int
+    ROOM_NAME_FIELD_NUMBER: builtins.int
+    PARTICIPANTS_FIELD_NUMBER: builtins.int
+    sender_callsign: builtins.str
+    """
+    Callsign of the device broadcasting the room state (typically the
+    room owner / latest writer).
 
-        DEPRECATED in v0.3.2: always equals TAKPacketV2.callsign, so the wire
-        byte was redundant. Builders stop emitting this field in v0.3.2;
-        parsers still read it for one release so v0.3.1-encoded packets decode
-        cleanly. To be removed entirely in v0.4.x.
-        """
-
-    @sender_callsign.setter
-    @_deprecated("""This field has been marked as deprecated using proto field options.""")
-    def sender_callsign(self, value: _builtins.str) -> None:
-        """
-        Callsign of the device broadcasting the room state (typically the
-        room owner / latest writer).
-
-        DEPRECATED in v0.3.2: always equals TAKPacketV2.callsign, so the wire
-        byte was redundant. Builders stop emitting this field in v0.3.2;
-        parsers still read it for one release so v0.3.1-encoded packets decode
-        cleanly. To be removed entirely in v0.4.x.
-        """
-
-    room_id: _builtins.str
+    DEPRECATED in v0.3.2: always equals TAKPacketV2.callsign, so the wire
+    byte was redundant. Builders stop emitting this field in v0.3.2;
+    parsers still read it for one release so v0.3.1-encoded packets decode
+    cleanly. To be removed entirely in v0.4.x.
+    """
+    room_id: builtins.str
     """
     Room UUID, matches TakTalkMessage.chatroom_id / GeoChat.room_id on
     messages routed into this room.
     """
-    room_name: _builtins.str
+    room_name: builtins.str
     """
     Friendly display name for the room (e.g. "test", "Alpha Team").
     """
-    @_builtins.property
-    def participants(self) -> _containers.RepeatedScalarFieldContainer[_builtins.str]:
+    @property
+    def participants(self) -> google.protobuf.internal.containers.RepeatedScalarFieldContainer[builtins.str]:
         """
         Member callsigns. Wire-encoded as repeated strings; the underlying
         CoT carries them as a single <chatroom-participants>A,B,C</> element
@@ -3583,21 +3476,17 @@ class TakTalkRoomData(_message.Message):
     def __init__(
         self,
         *,
-        sender_callsign: _builtins.str = ...,
-        room_id: _builtins.str = ...,
-        room_name: _builtins.str = ...,
-        participants: _abc.Iterable[_builtins.str] | None = ...,
+        sender_callsign: builtins.str = ...,
+        room_id: builtins.str = ...,
+        room_name: builtins.str = ...,
+        participants: collections.abc.Iterable[builtins.str] | None = ...,
     ) -> None: ...
-    _HasFieldArgType: _TypeAlias = _Never  # noqa: Y015
-    def HasField(self, field_name: _HasFieldArgType) -> _builtins.bool: ...
-    _ClearFieldArgType: _TypeAlias = _typing.Literal["participants", b"participants", "room_id", b"room_id", "room_name", b"room_name", "sender_callsign", b"sender_callsign"]  # noqa: Y015
-    def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
-    def WhichOneof(self, oneof_group: _Never) -> None: ...
+    def ClearField(self, field_name: typing.Literal["participants", b"participants", "room_id", b"room_id", "room_name", b"room_name", "sender_callsign", b"sender_callsign"]) -> None: ...
 
-Global___TakTalkRoomData: _TypeAlias = TakTalkRoomData  # noqa: Y015
+global___TakTalkRoomData = TakTalkRoomData
 
-@_typing.final
-class Marti(_message.Message):
+@typing.final
+class Marti(google.protobuf.message.Message):
     """
     ATAK directed-routing recipient list (CoT <marti><dest callsign='X'/>…</marti>).
 
@@ -3613,35 +3502,31 @@ class Marti(_message.Message):
     dest_callsign on emit.
     """
 
-    DESCRIPTOR: _descriptor.Descriptor
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
 
-    DEST_CALLSIGN_FIELD_NUMBER: _builtins.int
-    @_builtins.property
-    def dest_callsign(self) -> _containers.RepeatedScalarFieldContainer[_builtins.str]:
+    DEST_CALLSIGN_FIELD_NUMBER: builtins.int
+    @property
+    def dest_callsign(self) -> google.protobuf.internal.containers.RepeatedScalarFieldContainer[builtins.str]:
         """
         Recipient callsigns. Order is preserved end-to-end so receivers can show
         primary-vs-cc distinction the same way ATAK does.
 
         If dest_callsign is [TAKPacketV2.callsign] (self-addressed, unusual but
-        legal — e.g. ATAK echoing back to its own room), the builder still emits
+        legal - e.g. ATAK echoing back to its own room), the builder still emits
         the element so loopback shapes round-trip cleanly.
         """
 
     def __init__(
         self,
         *,
-        dest_callsign: _abc.Iterable[_builtins.str] | None = ...,
+        dest_callsign: collections.abc.Iterable[builtins.str] | None = ...,
     ) -> None: ...
-    _HasFieldArgType: _TypeAlias = _Never  # noqa: Y015
-    def HasField(self, field_name: _HasFieldArgType) -> _builtins.bool: ...
-    _ClearFieldArgType: _TypeAlias = _typing.Literal["dest_callsign", b"dest_callsign"]  # noqa: Y015
-    def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
-    def WhichOneof(self, oneof_group: _Never) -> None: ...
+    def ClearField(self, field_name: typing.Literal["dest_callsign", b"dest_callsign"]) -> None: ...
 
-Global___Marti: _TypeAlias = Marti  # noqa: Y015
+global___Marti = Marti
 
-@_typing.final
-class TAKPacketV2(_message.Message):
+@typing.final
+class TAKPacketV2(google.protobuf.message.Message):
     """
     ATAK v2 packet with expanded CoT field support and zstd dictionary compression.
     Sent on ATAK_PLUGIN_V2 port. The wire payload is:
@@ -3649,77 +3534,78 @@ class TAKPacketV2(_message.Message):
     Flags byte: bits 0-5 = dictionary ID, bits 6-7 = reserved.
     """
 
-    DESCRIPTOR: _descriptor.Descriptor
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
 
-    COT_TYPE_ID_FIELD_NUMBER: _builtins.int
-    HOW_FIELD_NUMBER: _builtins.int
-    CALLSIGN_FIELD_NUMBER: _builtins.int
-    TEAM_FIELD_NUMBER: _builtins.int
-    ROLE_FIELD_NUMBER: _builtins.int
-    LATITUDE_I_FIELD_NUMBER: _builtins.int
-    LONGITUDE_I_FIELD_NUMBER: _builtins.int
-    ALTITUDE_FIELD_NUMBER: _builtins.int
-    SPEED_FIELD_NUMBER: _builtins.int
-    COURSE_FIELD_NUMBER: _builtins.int
-    BATTERY_FIELD_NUMBER: _builtins.int
-    GEO_SRC_FIELD_NUMBER: _builtins.int
-    ALT_SRC_FIELD_NUMBER: _builtins.int
-    UID_FIELD_NUMBER: _builtins.int
-    DEVICE_CALLSIGN_FIELD_NUMBER: _builtins.int
-    STALE_SECONDS_FIELD_NUMBER: _builtins.int
-    TAK_VERSION_FIELD_NUMBER: _builtins.int
-    TAK_DEVICE_FIELD_NUMBER: _builtins.int
-    TAK_PLATFORM_FIELD_NUMBER: _builtins.int
-    TAK_OS_FIELD_NUMBER: _builtins.int
-    ENDPOINT_FIELD_NUMBER: _builtins.int
-    PHONE_FIELD_NUMBER: _builtins.int
-    COT_TYPE_STR_FIELD_NUMBER: _builtins.int
-    REMARKS_FIELD_NUMBER: _builtins.int
-    ENVIRONMENT_FIELD_NUMBER: _builtins.int
-    SENSOR_FOV_FIELD_NUMBER: _builtins.int
-    MARTI_FIELD_NUMBER: _builtins.int
-    CHAT_FIELD_NUMBER: _builtins.int
-    AIRCRAFT_FIELD_NUMBER: _builtins.int
-    RAW_DETAIL_FIELD_NUMBER: _builtins.int
-    SHAPE_FIELD_NUMBER: _builtins.int
-    MARKER_FIELD_NUMBER: _builtins.int
-    RAB_FIELD_NUMBER: _builtins.int
-    ROUTE_FIELD_NUMBER: _builtins.int
-    CASEVAC_FIELD_NUMBER: _builtins.int
-    EMERGENCY_FIELD_NUMBER: _builtins.int
-    TASK_FIELD_NUMBER: _builtins.int
-    TAKTALK_FIELD_NUMBER: _builtins.int
-    TAKTALK_ROOM_FIELD_NUMBER: _builtins.int
-    cot_type_id: Global___CotType.ValueType
+    COT_TYPE_ID_FIELD_NUMBER: builtins.int
+    HOW_FIELD_NUMBER: builtins.int
+    CALLSIGN_FIELD_NUMBER: builtins.int
+    TEAM_FIELD_NUMBER: builtins.int
+    ROLE_FIELD_NUMBER: builtins.int
+    LATITUDE_I_FIELD_NUMBER: builtins.int
+    LONGITUDE_I_FIELD_NUMBER: builtins.int
+    ALTITUDE_FIELD_NUMBER: builtins.int
+    SPEED_FIELD_NUMBER: builtins.int
+    COURSE_FIELD_NUMBER: builtins.int
+    BATTERY_FIELD_NUMBER: builtins.int
+    GEO_SRC_FIELD_NUMBER: builtins.int
+    ALT_SRC_FIELD_NUMBER: builtins.int
+    UID_FIELD_NUMBER: builtins.int
+    DEVICE_CALLSIGN_FIELD_NUMBER: builtins.int
+    STALE_SECONDS_FIELD_NUMBER: builtins.int
+    TAK_VERSION_FIELD_NUMBER: builtins.int
+    TAK_DEVICE_FIELD_NUMBER: builtins.int
+    TAK_PLATFORM_FIELD_NUMBER: builtins.int
+    TAK_OS_FIELD_NUMBER: builtins.int
+    ENDPOINT_FIELD_NUMBER: builtins.int
+    PHONE_FIELD_NUMBER: builtins.int
+    COT_TYPE_STR_FIELD_NUMBER: builtins.int
+    REMARKS_FIELD_NUMBER: builtins.int
+    ENVIRONMENT_FIELD_NUMBER: builtins.int
+    SENSOR_FOV_FIELD_NUMBER: builtins.int
+    START_EPOCH_LO14_FIELD_NUMBER: builtins.int
+    MARTI_FIELD_NUMBER: builtins.int
+    CHAT_FIELD_NUMBER: builtins.int
+    AIRCRAFT_FIELD_NUMBER: builtins.int
+    RAW_DETAIL_FIELD_NUMBER: builtins.int
+    SHAPE_FIELD_NUMBER: builtins.int
+    MARKER_FIELD_NUMBER: builtins.int
+    RAB_FIELD_NUMBER: builtins.int
+    ROUTE_FIELD_NUMBER: builtins.int
+    CASEVAC_FIELD_NUMBER: builtins.int
+    EMERGENCY_FIELD_NUMBER: builtins.int
+    TASK_FIELD_NUMBER: builtins.int
+    TAKTALK_FIELD_NUMBER: builtins.int
+    TAKTALK_ROOM_FIELD_NUMBER: builtins.int
+    cot_type_id: global___CotType.ValueType
     """
     Well-known CoT event type enum.
     Use CotType_Other with cot_type_str for unknown types.
     """
-    how: Global___CotHow.ValueType
+    how: global___CotHow.ValueType
     """
     How the coordinates were generated
     """
-    callsign: _builtins.str
+    callsign: builtins.str
     """
     Callsign
     """
-    team: Global___Team.ValueType
+    team: global___Team.ValueType
     """
     Team color assignment
     """
-    role: Global___MemberRole.ValueType
+    role: global___MemberRole.ValueType
     """
     Role of the group member
     """
-    latitude_i: _builtins.int
+    latitude_i: builtins.int
     """
     Latitude, multiply by 1e-7 to get degrees in floating point
     """
-    longitude_i: _builtins.int
+    longitude_i: builtins.int
     """
     Longitude, multiply by 1e-7 to get degrees in floating point
     """
-    altitude: _builtins.int
+    altitude: builtins.int
     """
     Altitude in meters (HAE). ATAK's "no altitude" sentinel is hae=9999999.0.
 
@@ -3730,67 +3616,67 @@ class TAKPacketV2(_message.Message):
     carry hae="0.0" or omit hae → parsed as 0) to encode explicitly (+2 bytes),
     which REGRESSED the worst-case route fixture. Kept as a plain field.
     """
-    speed: _builtins.int
+    speed: builtins.int
     """
     Speed in cm/s
     """
-    course: _builtins.int
+    course: builtins.int
     """
     Course in degrees * 100 (0-36000)
     """
-    battery: _builtins.int
+    battery: builtins.int
     """
     Battery level 0-100
     """
-    geo_src: Global___GeoPointSource.ValueType
+    geo_src: global___GeoPointSource.ValueType
     """
     Geopoint source
     """
-    alt_src: Global___GeoPointSource.ValueType
+    alt_src: global___GeoPointSource.ValueType
     """
     Altitude source
     """
-    uid: _builtins.str
+    uid: builtins.str
     """
     Device UID (UUID string or device ID like "ANDROID-xxxx")
     """
-    device_callsign: _builtins.str
+    device_callsign: builtins.str
     """
     Device callsign
     """
-    stale_seconds: _builtins.int
+    stale_seconds: builtins.int
     """
     Stale time as seconds offset from event time
     """
-    tak_version: _builtins.str
+    tak_version: builtins.str
     """
     TAK client version string
     """
-    tak_device: _builtins.str
+    tak_device: builtins.str
     """
     TAK device model
     """
-    tak_platform: _builtins.str
+    tak_platform: builtins.str
     """
     TAK platform (ATAK-CIV, WebTAK, etc.)
     """
-    tak_os: _builtins.str
+    tak_os: builtins.str
     """
     TAK OS version
     """
-    endpoint: _builtins.str
+    endpoint: builtins.str
     """
     Connection endpoint
     """
-    phone: _builtins.str
+    phone: builtins.str
     """
     Phone number
     """
-    cot_type_str: _builtins.str
+    cot_type_str: builtins.str
     """
     CoT event type string, only populated when cot_type_id is CotType_Other
     """
-    remarks: _builtins.str
+    remarks: builtins.str
     """
     Optional remarks / free-text annotation from the <remarks> element.
     Populated for non-GeoChat payload types (shapes, markers, routes, etc.)
@@ -3798,18 +3684,79 @@ class TAKPacketV2(_message.Message):
     GeoChat messages carry their text in GeoChat.message instead.
     Empty string (proto3 default) means no remarks were present.
     """
-    raw_detail: _builtins.bytes
+    start_epoch_lo14: builtins.int
+    """
+    Low 14 bits of the event's `start` time, as epoch seconds.
+
+    Restores a value the format otherwise drops entirely. The parser reads `time`
+    and `stale` only to derive `stale_seconds`, and never reads `start` at all, so
+    the builder has nothing to rebuild it from and sets `time = start = now` at
+    decode. A CoT that spent 40 s crossing the mesh therefore arrives stamped as
+    the freshest thing on the map, and no receiver can tell a 2-second-old
+    position from a 40-second-old one, which makes correct ordering of two
+    reports for one UID impossible.
+
+    14 bits rather than a full timestamp: any tag at 16 or above costs a 2-byte
+    key, and a value below 16384 fits a 2-byte varint where epoch seconds needs
+    five, so the field costs 4 bytes on the wire instead of 7.
+
+    SENDERS: populate this only when `start` is within 8192 s of transmission,
+    and omit it otherwise. The encoding cannot express an older start and a
+    receiver cannot detect one: an out-of-range value reconstructs silently as a
+    plausible recent time in the wrong window. Transit and clock skew spend part
+    of that budget, so treat roughly two hours as the practical limit.
+
+    RECEIVERS: rebuild the full value by selecting the candidate NEAREST your own
+    clock. Do not splice the low bits onto your current window.
+
+      delta = ((carried - now) % 16384 + 24576) % 16384 - 8192   // [-8192, 8191]
+      start = now + delta
+
+    (The + 24576 keeps the second remainder non-negative under both C and Python
+    remainder semantics.)
+
+    The naive `(now & ~0x3FFF) | carried` is wrong at a window boundary in BOTH
+    directions, not just one. For a boundary B, a sender `start` of B read by a
+    receiver whose clock is at B - 1 yields B - 16384: a fresh event that appears
+    4.55 hours old, which no future-side sanity check will catch. Nearest-
+    candidate is exact whenever the true start is within 8192 s of the receiver's
+    clock, which subsumes any realistic transit plus skew.
+
+    Treat the result as trustworthy for ORDERING packets from a single sender,
+    where a constant clock offset cancels out. Before using it as an absolute
+    age, bound it: reject a start more than a few seconds in the future, or more
+    than about an hour in the past, and fall back to decode time. Keep both
+    bounds well inside the 8192 s half-window, because past that the
+    reconstruction is wrong rather than merely implausible.
+
+    Ordering assumes the producer advances `start` on each emission, which ATAK
+    does because it sets `start = time`. A producer that holds `start` fixed
+    across updates cannot be ordered by this field.
+
+    `optional` is deliberate, despite the v0.4.0 `altitude` experiment above
+    finding `optional` net-negative: that regressed because a genuine 0 m
+    altitude is common, whereas `start` mod 16384 is 0 for one second in 16384.
+    Here explicit presence costs essentially nothing and distinguishes "sender
+    did not populate this" from a legitimate zero.
+
+    Tag 43 rather than the 27 held above for "future top-level annotations",
+    which is what this is: un-reserving 27 trips buf's RESERVED_MESSAGE_NO_DELETE
+    under the FILE breaking category this module enables, and every tag at 16 or
+    above costs the same 2-byte key, so the fresh tag is free. Move it to 27 if
+    you would rather except the rule.
+    """
+    raw_detail: builtins.bytes
     """
     Generic CoT detail XML for unmapped types. Kept as a fallback for CoT
     types not yet promoted to a typed variant; drawings, markers, ranging
     tools, and routes have dedicated variants below and should not land here.
     """
-    @_builtins.property
-    def environment(self) -> Global___TAKEnvironment:
+    @property
+    def environment(self) -> global___TAKEnvironment:
         """--- Sensor / environment annotations ----------------------------------
 
         Both fields are OPTIONAL and attach to any payload_variant. They
-        describe observed conditions at the emitting station — a PLI with
+        describe observed conditions at the emitting station - a PLI with
         environment data, an Aircraft with a sensor cone, a Marker with both.
         Absent by default; presence is signaled by the message being non-null.
 
@@ -3819,14 +3766,14 @@ class TAKPacketV2(_message.Message):
         SwiftUI's `@Environment` property wrapper in iOS consumers.
         """
 
-    @_builtins.property
-    def sensor_fov(self) -> Global___SensorFov:
+    @property
+    def sensor_fov(self) -> global___SensorFov:
         """
         Sensor field-of-view cone (camera, FLIR, laser, etc.). From <sensor>.
         """
 
-    @_builtins.property
-    def marti(self) -> Global___Marti:
+    @property
+    def marti(self) -> global___Marti:
         """
         Directed-routing recipient list (CoT <marti><dest callsign='X'/>…</marti>).
         Empty / unset = broadcast to all peers (the default for situational-awareness
@@ -3838,72 +3785,72 @@ class TAKPacketV2(_message.Message):
         See Marti.
         """
 
-    @_builtins.property
-    def chat(self) -> Global___GeoChat:
+    @property
+    def chat(self) -> global___GeoChat:
         """
         ATAK GeoChat message
         """
 
-    @_builtins.property
-    def aircraft(self) -> Global___AircraftTrack:
+    @property
+    def aircraft(self) -> global___AircraftTrack:
         """
         Aircraft track data (ADS-B, military air)
         """
 
-    @_builtins.property
-    def shape(self) -> Global___DrawnShape:
+    @property
+    def shape(self) -> global___DrawnShape:
         """
         User-drawn tactical graphic: circle, rectangle, polygon, polyline,
         telestration, ranging circle, or bullseye. See DrawnShape.
         """
 
-    @_builtins.property
-    def marker(self) -> Global___Marker:
+    @property
+    def marker(self) -> global___Marker:
         """
         Fixed point of interest: spot marker, waypoint, checkpoint, 2525
         symbol, or custom icon. See Marker.
         """
 
-    @_builtins.property
-    def rab(self) -> Global___RangeAndBearing:
+    @property
+    def rab(self) -> global___RangeAndBearing:
         """
         Range and bearing measurement line. See RangeAndBearing.
         """
 
-    @_builtins.property
-    def route(self) -> Global___Route:
+    @property
+    def route(self) -> global___Route:
         """
         Named route with ordered waypoints and control points. See Route.
         """
 
-    @_builtins.property
-    def casevac(self) -> Global___CasevacReport:
+    @property
+    def casevac(self) -> global___CasevacReport:
         """
         9-line MEDEVAC request. See CasevacReport.
         """
 
-    @_builtins.property
-    def emergency(self) -> Global___EmergencyAlert:
+    @property
+    def emergency(self) -> global___EmergencyAlert:
         """
         Emergency beacon / 911 alert. See EmergencyAlert.
         """
 
-    @_builtins.property
-    def task(self) -> Global___TaskRequest:
+    @property
+    def task(self) -> global___TaskRequest:
         """
         Task / engage request. See TaskRequest.
         """
 
-    @_builtins.property
-    def taktalk(self) -> Global___TakTalkMessage:
+    @property
+    def taktalk(self) -> global___TakTalkMessage:
         """
         TAKTALK chat message (CoT type m-t-t). See TakTalkMessage.
         Voice audio itself rides UDP/RTP outside the mesh; this carries the
         text envelope plus a from_voice marker for receiver UX.
         """
 
-    @_builtins.property
-    def taktalk_room(self) -> Global___TakTalkRoomData:
+    @property
+    def taktalk_room(self) -> global___TakTalkRoomData:
         """
         TAKTALK room/membership broadcast (CoT type y-). See TakTalkRoomData.
         Resolves room UUIDs (used in TakTalkMessage.chatroom_id and
@@ -3913,65 +3860,58 @@ class TAKPacketV2(_message.Message):
     def __init__(
         self,
         *,
-        cot_type_id: Global___CotType.ValueType = ...,
-        how: Global___CotHow.ValueType = ...,
-        callsign: _builtins.str = ...,
-        team: Global___Team.ValueType = ...,
-        role: Global___MemberRole.ValueType = ...,
-        latitude_i: _builtins.int = ...,
-        longitude_i: _builtins.int = ...,
-        altitude: _builtins.int = ...,
-        speed: _builtins.int = ...,
-        course: _builtins.int = ...,
-        battery: _builtins.int = ...,
-        geo_src: Global___GeoPointSource.ValueType = ...,
-        alt_src: Global___GeoPointSource.ValueType = ...,
-        uid: _builtins.str = ...,
-        device_callsign: _builtins.str = ...,
-        stale_seconds: _builtins.int = ...,
-        tak_version: _builtins.str = ...,
-        tak_device: _builtins.str = ...,
-        tak_platform: _builtins.str = ...,
-        tak_os: _builtins.str = ...,
-        endpoint: _builtins.str = ...,
-        phone: _builtins.str = ...,
-        cot_type_str: _builtins.str = ...,
-        remarks: _builtins.str = ...,
-        environment: Global___TAKEnvironment | None = ...,
-        sensor_fov: Global___SensorFov | None = ...,
-        marti: Global___Marti | None = ...,
-        chat: Global___GeoChat | None = ...,
-        aircraft: Global___AircraftTrack | None = ...,
-        raw_detail: _builtins.bytes = ...,
-        shape: Global___DrawnShape | None = ...,
-        marker: Global___Marker | None = ...,
-        rab: Global___RangeAndBearing | None = ...,
-        route: Global___Route | None = ...,
-        casevac: Global___CasevacReport | None = ...,
-        emergency: Global___EmergencyAlert | None = ...,
-        task: Global___TaskRequest | None = ...,
-        taktalk: Global___TakTalkMessage | None = ...,
-        taktalk_room: Global___TakTalkRoomData | None = ...,
+        cot_type_id: global___CotType.ValueType = ...,
+        how: global___CotHow.ValueType = ...,
+        callsign: builtins.str = ...,
+        team: global___Team.ValueType = ...,
+        role: global___MemberRole.ValueType = ...,
+        latitude_i: builtins.int = ...,
+        longitude_i: builtins.int = ...,
+        altitude: builtins.int = ...,
+        speed: builtins.int = ...,
+        course: builtins.int = ...,
+        battery: builtins.int = ...,
+        geo_src: global___GeoPointSource.ValueType = ...,
+        alt_src: global___GeoPointSource.ValueType = ...,
+        uid: builtins.str = ...,
+        device_callsign: builtins.str = ...,
+        stale_seconds: builtins.int = ...,
+        tak_version: builtins.str = ...,
+        tak_device: builtins.str = ...,
+        tak_platform: builtins.str = ...,
+        tak_os: builtins.str = ...,
+        endpoint: builtins.str = ...,
+        phone: builtins.str = ...,
+        cot_type_str: builtins.str = ...,
+        remarks: builtins.str = ...,
+        environment: global___TAKEnvironment | None = ...,
+        sensor_fov: global___SensorFov | None = ...,
+        start_epoch_lo14: builtins.int | None = ...,
+        marti: global___Marti | None = ...,
+        chat: global___GeoChat | None = ...,
+        aircraft: global___AircraftTrack | None = ...,
+        raw_detail: builtins.bytes = ...,
+        shape: global___DrawnShape | None = ...,
+        marker: global___Marker | None = ...,
+        rab: global___RangeAndBearing | None = ...,
+        route: global___Route | None = ...,
+        casevac: global___CasevacReport | None = ...,
+        emergency: global___EmergencyAlert | None = ...,
+        task: global___TaskRequest | None = ...,
+        taktalk: global___TakTalkMessage | None = ...,
+        taktalk_room: global___TakTalkRoomData | None = ...,
     ) -> None: ...
-    _HasFieldArgType: _TypeAlias = _typing.Literal["_environment", b"_environment", "_marti", b"_marti", "_sensor_fov", b"_sensor_fov", "aircraft", b"aircraft", "casevac", b"casevac", "chat", b"chat", "emergency", b"emergency", "environment", b"environment", "marker", b"marker", "marti", b"marti", "payload_variant", b"payload_variant", "rab", b"rab", "raw_detail", b"raw_detail", "route", b"route", "sensor_fov", b"sensor_fov", "shape", b"shape", "taktalk", b"taktalk", "taktalk_room", b"taktalk_room", "task", b"task"]  # noqa: Y015
-    def HasField(self, field_name: _HasFieldArgType) -> _builtins.bool: ...
-    _ClearFieldArgType: _TypeAlias = _typing.Literal["_environment", b"_environment", "_marti", b"_marti", "_sensor_fov", b"_sensor_fov", "aircraft", b"aircraft", "alt_src", b"alt_src", "altitude", b"altitude", "battery", b"battery", "callsign", b"callsign", "casevac", b"casevac", "chat", b"chat", "cot_type_id", b"cot_type_id", "cot_type_str", b"cot_type_str", "course", b"course", "device_callsign", b"device_callsign", "emergency", b"emergency", "endpoint", b"endpoint", "environment", b"environment", "geo_src", b"geo_src", "how", b"how", "latitude_i", b"latitude_i", "longitude_i", b"longitude_i", "marker", b"marker", "marti", b"marti", "payload_variant", b"payload_variant", "phone", b"phone", "rab", b"rab", "raw_detail", b"raw_detail", "remarks", b"remarks", "role", b"role", "route", b"route", "sensor_fov", b"sensor_fov", "shape", b"shape", "speed", b"speed", "stale_seconds", b"stale_seconds", "tak_device", b"tak_device", "tak_os", b"tak_os", "tak_platform", b"tak_platform", "tak_version", b"tak_version", "taktalk", b"taktalk", "taktalk_room", b"taktalk_room", "task", b"task", "team", b"team", "uid", b"uid"]  # noqa: Y015
-    def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
-    _WhichOneofReturnType__environment: _TypeAlias = _typing.Literal["environment"]  # noqa: Y015
-    _WhichOneofArgType__environment: _TypeAlias = _typing.Literal["_environment", b"_environment"]  # noqa: Y015
-    _WhichOneofReturnType__marti: _TypeAlias = _typing.Literal["marti"]  # noqa: Y015
-    _WhichOneofArgType__marti: _TypeAlias = _typing.Literal["_marti", b"_marti"]  # noqa: Y015
-    _WhichOneofReturnType__sensor_fov: _TypeAlias = _typing.Literal["sensor_fov"]  # noqa: Y015
-    _WhichOneofArgType__sensor_fov: _TypeAlias = _typing.Literal["_sensor_fov", b"_sensor_fov"]  # noqa: Y015
-    _WhichOneofReturnType_payload_variant: _TypeAlias = _typing.Literal["chat", "aircraft", "raw_detail", "shape", "marker", "rab", "route", "casevac", "emergency", "task", "taktalk", "taktalk_room"]  # noqa: Y015
-    _WhichOneofArgType_payload_variant: _TypeAlias = _typing.Literal["payload_variant", b"payload_variant"]  # noqa: Y015
-    @_typing.overload
-    def WhichOneof(self, oneof_group: _WhichOneofArgType__environment) -> _WhichOneofReturnType__environment | None: ...
-    @_typing.overload
-    def WhichOneof(self, oneof_group: _WhichOneofArgType__marti) -> _WhichOneofReturnType__marti | None: ...
-    @_typing.overload
-    def WhichOneof(self, oneof_group: _WhichOneofArgType__sensor_fov) -> _WhichOneofReturnType__sensor_fov | None: ...
-    @_typing.overload
-    def WhichOneof(self, oneof_group: _WhichOneofArgType_payload_variant) -> _WhichOneofReturnType_payload_variant | None: ...
+    def HasField(self, field_name: typing.Literal["_environment", b"_environment", "_marti", b"_marti", "_sensor_fov", b"_sensor_fov", "_start_epoch_lo14", b"_start_epoch_lo14", "aircraft", b"aircraft", "casevac", b"casevac", "chat", b"chat", "emergency", b"emergency", "environment", b"environment", "marker", b"marker", "marti", b"marti", "payload_variant", b"payload_variant", "rab", b"rab", "raw_detail", b"raw_detail", "route", b"route", "sensor_fov", b"sensor_fov", "shape", b"shape", "start_epoch_lo14", b"start_epoch_lo14", "taktalk", b"taktalk", "taktalk_room", b"taktalk_room", "task", b"task"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing.Literal["_environment", b"_environment", "_marti", b"_marti", "_sensor_fov", b"_sensor_fov", "_start_epoch_lo14", b"_start_epoch_lo14", "aircraft", b"aircraft", "alt_src", b"alt_src", "altitude", b"altitude", "battery", b"battery", "callsign", b"callsign", "casevac", b"casevac", "chat", b"chat", "cot_type_id", b"cot_type_id", "cot_type_str", b"cot_type_str", "course", b"course", "device_callsign", b"device_callsign", "emergency", b"emergency", "endpoint", b"endpoint", "environment", b"environment", "geo_src", b"geo_src", "how", b"how", "latitude_i", b"latitude_i", "longitude_i", b"longitude_i", "marker", b"marker", "marti", b"marti", "payload_variant", b"payload_variant", "phone", b"phone", "rab", b"rab", "raw_detail", b"raw_detail", "remarks", b"remarks", "role", b"role", "route", b"route", "sensor_fov", b"sensor_fov", "shape", b"shape", "speed", b"speed", "stale_seconds", b"stale_seconds", "start_epoch_lo14", b"start_epoch_lo14", "tak_device", b"tak_device", "tak_os", b"tak_os", "tak_platform", b"tak_platform", "tak_version", b"tak_version", "taktalk", b"taktalk", "taktalk_room", b"taktalk_room", "task", b"task", "team", b"team", "uid", b"uid"]) -> None: ...
+    @typing.overload
+    def WhichOneof(self, oneof_group: typing.Literal["_environment", b"_environment"]) -> typing.Literal["environment"] | None: ...
+    @typing.overload
+    def WhichOneof(self, oneof_group: typing.Literal["_marti", b"_marti"]) -> typing.Literal["marti"] | None: ...
+    @typing.overload
+    def WhichOneof(self, oneof_group: typing.Literal["_sensor_fov", b"_sensor_fov"]) -> typing.Literal["sensor_fov"] | None: ...
+    @typing.overload
+    def WhichOneof(self, oneof_group: typing.Literal["_start_epoch_lo14", b"_start_epoch_lo14"]) -> typing.Literal["start_epoch_lo14"] | None: ...
+    @typing.overload
+    def WhichOneof(self, oneof_group: typing.Literal["payload_variant", b"payload_variant"]) -> typing.Literal["chat", "aircraft", "raw_detail", "shape", "marker", "rab", "route", "casevac", "emergency", "task", "taktalk", "taktalk_room"] | None: ...
 
-Global___TAKPacketV2: _TypeAlias = TAKPacketV2  # noqa: Y015
+global___TAKPacketV2 = TAKPacketV2
