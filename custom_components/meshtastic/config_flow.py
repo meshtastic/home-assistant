@@ -51,10 +51,11 @@ from .const import (
     ConfigOptionNotifyPlatformNodes,
     ConnectionType,
 )
+from .renumber import is_same_gateway, node_public_key
 
 if TYPE_CHECKING:
     import asyncio
-    from collections.abc import Mapping
+    from collections.abc import Callable, Mapping
     from typing import Any
 
     from habluetooth import BluetoothServiceInfo
@@ -66,6 +67,13 @@ if TYPE_CHECKING:
     from homeassistant.data_entry_flow import FlowResult
 
 _LOGGER = LOGGER.getChild(__name__)
+
+CONNECTION_DATA_KEYS = (
+    CONF_CONNECTION_TCP_HOST,
+    CONF_CONNECTION_TCP_PORT,
+    CONF_CONNECTION_SERIAL_PORT,
+    CONF_CONNECTION_BLUETOOTH_ADDRESS,
+)
 
 
 def _step_user_data_connection_tcp_schema_factory(host: str = "", port: int | None = None) -> vol.Schema:
@@ -572,18 +580,91 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     def async_get_options_flow(config_entry: ConfigEntry) -> OptionsFlowHandler:
         return OptionsFlowHandler(config_entry)
 
-    async def async_step_reconfigure(self, user_input: dict[str, Any] | None = None) -> FlowResult:  # noqa: ARG002
-        config_entry = self.hass.config_entries.async_get_entry(self.context.get("entry_id"))
+    async def async_step_reconfigure(
+        self,
+        user_input: dict[str, Any] | None = None,  # noqa: ARG002
+    ) -> ConfigFlowResult:
+        return self.async_show_menu(
+            step_id="reconfigure",
+            menu_options=["reconfigure_tcp", "reconfigure_bluetooth", "reconfigure_serial"],
+        )
 
-        self.data.update(config_entry.data)
-        connection_type = config_entry.data[CONF_CONNECTION_TYPE]
-        if connection_type == ConnectionType.TCP.value:
-            return await self.async_step_manual_tcp()
-        if connection_type == ConnectionType.BLUETOOTH.value:
-            return await self.async_step_manual_bluetooth()
-        if connection_type == ConnectionType.SERIAL.value:
-            return await self.async_step_manual_serial()
-        return self.async_abort(reason="invalid_connection_type")
+    async def async_step_reconfigure_tcp(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
+        return await self._async_reconfigure_connection(
+            ConnectionType.TCP,
+            "reconfigure_tcp",
+            lambda d: _step_user_data_connection_tcp_schema_factory(
+                d.get(CONF_CONNECTION_TCP_HOST, ""), d.get(CONF_CONNECTION_TCP_PORT)
+            ),
+            user_input,
+        )
+
+    async def async_step_reconfigure_bluetooth(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
+        return await self._async_reconfigure_connection(
+            ConnectionType.BLUETOOTH,
+            "reconfigure_bluetooth",
+            lambda d: _step_user_data_connection_bluetooth_schema_factory(d.get(CONF_CONNECTION_BLUETOOTH_ADDRESS, "")),
+            user_input,
+        )
+
+    async def async_step_reconfigure_serial(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
+        return await self._async_reconfigure_connection(
+            ConnectionType.SERIAL,
+            "reconfigure_serial",
+            lambda d: _step_user_data_connection_serial_schema_factory(d.get(CONF_CONNECTION_SERIAL_PORT, "")),
+            user_input,
+        )
+
+    async def _async_reconfigure_connection(
+        self,
+        connection_type: ConnectionType,
+        step_id: str,
+        schema_factory: Callable[[Mapping[str, Any]], vol.Schema],
+        user_input: dict[str, Any] | None,
+    ) -> ConfigFlowResult:
+        entry = self._get_reconfigure_entry()
+        errors: dict[str, str] = {}
+        if user_input is not None:
+            # stale keys of the previous connection type must not survive a switch
+            new_data = {k: v for k, v in entry.data.items() if k not in CONNECTION_DATA_KEYS}
+            new_data |= {CONF_CONNECTION_TYPE: connection_type.value, **user_input}
+            try:
+                # the entry's own client may hold the only API connection, so this can fail until it is released
+                gateway_node, _ = await validate_input_for_connection(self.hass, new_data, no_nodes=True)
+                if not gateway_node.get("num"):
+                    raise CannotConnectError  # noqa: TRY301
+            except CannotConnectError:
+                errors["base"] = "cannot_connect"
+            except:  # noqa: E722
+                _LOGGER.warning("Unexpected exception", exc_info=True)
+                errors["base"] = "unknown"
+            else:
+                known_num, known_key = _known_gateway_identity(entry)
+                if not is_same_gateway(known_num, known_key, gateway_node):
+                    return self.async_abort(reason="different_device")
+                return self.async_update_reload_and_abort(entry, data=new_data)
+
+        return self.async_show_form(
+            step_id=step_id,
+            data_schema=schema_factory(user_input or entry.data),
+            errors=errors,
+        )
+
+
+def _known_gateway_identity(entry: ConfigEntry) -> tuple[int | None, str | None]:
+    """Return the gateway node number and public key last seen by the entry, where known."""
+    runtime_data = getattr(entry, "runtime_data", None)
+    live_node = runtime_data.gateway_node if runtime_data else None
+    known_num = live_node.get("num") if live_node else None
+    if known_num is None and entry.unique_id and entry.unique_id.isdigit():
+        known_num = int(entry.unique_id)
+    known_key = node_public_key(live_node)
+    if known_key is None:
+        known_key = next(
+            (el.get("public_key") for el in entry.options.get(CONF_OPTION_FILTER_NODES, []) if el["id"] == known_num),
+            None,
+        )
+    return known_num, known_key
 
 
 class CannotConnectError(HomeAssistantError):
