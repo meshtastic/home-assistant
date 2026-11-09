@@ -63,11 +63,13 @@ from .entity import (
     GatewayChannelEntity,
     GatewayDirectMessageEntity,
     GatewayEntity,
+    MeshtasticDeviceClass,
     MeshtasticEntity,
 )
 from .helpers import fetch_meshtastic_hardware_names
 from .logbook import async_setup_message_logger
 from .meshtastic_tcp import async_setup_tcp_proxy, async_unload_tcp_proxy
+from .renumber import find_renumbered_nodes, node_public_key, rewrite_unique_id
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Mapping, MutableMapping
@@ -160,6 +162,7 @@ async def _async_setup_connected_entry(
     coordinator: MeshtasticDataUpdateCoordinator,
 ) -> None:
     gateway_node = await client.async_get_own_node()
+    await _async_follow_renumbered_nodes(hass, entry, client, gateway_node)
     entry.runtime_data = MeshtasticData(
         client=client,
         integration=async_get_loaded_integration(hass, entry.domain),
@@ -191,6 +194,74 @@ async def _async_setup_connected_entry(
         CONF_OPTION_TCP_PROXY_ENABLE, CONF_OPTION_TCP_PROXY_ENABLE_DEFAULT
     ):
         await async_setup_tcp_proxy(hass, entry)
+
+
+async def _async_follow_renumbered_nodes(
+    hass: HomeAssistant,
+    entry: MeshtasticConfigEntry,
+    client: MeshtasticApiClient,
+    gateway_node: Mapping[str, Any],
+) -> None:
+    nodes = await client.async_get_all_nodes()
+    entity_registry = er.async_get(hass)
+    device_registry = dr.async_get(hass)
+    entries = er.async_entries_for_config_entry(entity_registry, entry.entry_id)
+    filter_nodes = entry.options.get(CONF_OPTION_FILTER_NODES, [])
+
+    renumbered = find_renumbered_nodes({el["id"]: el.get("public_key") for el in filter_nodes}, nodes)
+
+    # the gateway is this entry's own connection, so continuity holds whatever its key does
+    gateway_num = gateway_node.get("num")
+    gateway_prefix = f"{entry.entry_id}_{MeshtasticDeviceClass.GATEWAY}_"
+    old_gateway_num = next(
+        (
+            int(e.unique_id[len(gateway_prefix) :].split("_")[0])
+            for e in entries
+            if e.unique_id.startswith(gateway_prefix)
+        ),
+        None,
+    )
+    if gateway_num is not None and old_gateway_num is not None and old_gateway_num != gateway_num:
+        renumbered[old_gateway_num] = gateway_num
+
+    for old_num, new_num in renumbered.items():
+        if device_registry.async_get_device(identifiers={(DOMAIN, str(new_num))}) is not None:
+            LOGGER.warning("Node %s renumbered to %s, which already has a device; not merging", old_num, new_num)
+            continue
+        device = device_registry.async_get_device(identifiers={(DOMAIN, str(old_num))})
+        if device is not None:
+            device_registry.async_update_device(device.id, new_identifiers={(DOMAIN, str(new_num))})
+        LOGGER.info("Node %s renumbered to %s, moved its device and entities", old_num, new_num)
+
+    if renumbered:
+        node_unique_ids = {f"meshtastic_node_{old}": f"meshtastic_node_{new}" for old, new in renumbered.items()}
+        candidates = list(entries) + [
+            e for e in entity_registry.entities.values() if e.platform == DOMAIN and e.unique_id in node_unique_ids
+        ]
+        for registry_entry in candidates:
+            new_unique_id = node_unique_ids.get(registry_entry.unique_id) or rewrite_unique_id(
+                registry_entry.unique_id, renumbered
+            )
+            if new_unique_id == registry_entry.unique_id or entity_registry.async_get_entity_id(
+                registry_entry.domain, registry_entry.platform, new_unique_id
+            ):
+                continue
+            entity_registry.async_update_entity(registry_entry.entity_id, new_unique_id=new_unique_id)
+
+    # keep each selected node's key so a later renumber is followed even after the radio forgets the old entry
+    new_filter_nodes = []
+    for el in filter_nodes:
+        num = renumbered.get(el["id"], el["id"])
+        key = node_public_key(nodes.get(num)) or el.get("public_key")
+        new_filter_nodes.append({**el, "id": num} | ({"public_key": key} if key else {}))
+
+    updates: dict[str, Any] = {}
+    if new_filter_nodes != filter_nodes:
+        updates["options"] = {**entry.options, CONF_OPTION_FILTER_NODES: new_filter_nodes}
+    if old_gateway_num is not None and entry.unique_id == str(old_gateway_num) and gateway_num != old_gateway_num:
+        updates["unique_id"] = str(gateway_num)
+    if updates:
+        hass.config_entries.async_update_entry(entry, **updates)
 
 
 async def _setup_meshtastic_devices(
