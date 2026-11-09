@@ -26,6 +26,7 @@ coordinator.py the node database as coordinator data, keyed by node number
 | `api.py` | the bridge from the client to Home Assistant: one listener per port number, each firing a `meshtastic_api_*` event |
 | `coordinator.py` | `DataUpdateCoordinator` over the node DB; mostly pushed, the 1 hour poll is a fallback |
 | `entity.py` | base entities and the unique id builders |
+| `meshtastic.py` | the `meshtastic` entity platform: gateway, channel and direct message entities, added through `EntityComponent.async_setup_entry` so they belong to the config entry |
 | `sensor.py`, `binary_sensor.py`, `device_tracker.py`, `notify.py`, `text.py` | the platforms |
 | `device_trigger.py`, `device_action.py`, `logbook.py`, `services.py` | automation surface |
 | `renumber.py` | following nodes whose number changed (firmware 2.8) |
