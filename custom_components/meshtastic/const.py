@@ -1,4 +1,5 @@
 # SPDX-FileCopyrightText: 2024-2025 Pascal Brogle @broglep
+# SPDX-FileCopyrightText: 2025 Ovidiu D. Nițan @ov1d1u
 #
 # SPDX-License-Identifier: MIT
 
@@ -65,6 +66,7 @@ ATTR_SERVICE_DATA_TO = "to"
 ATTR_SERVICE_DATA_CHANNEL = "channel"
 ATTR_SERVICE_DATA_FROM = "from"
 ATTR_SERVICE_DATA_ACK = "ack"
+ATTR_SERVICE_DATA_REPLY_ID = "reply_id"
 
 
 ATTR_SERVICE_SEND_TEXT_DATA_TEXT = "text"

@@ -17,6 +17,41 @@ else:
 
 DESCRIPTOR: google.protobuf.descriptor.FileDescriptor
 
+class _CompassMode:
+    ValueType = typing.NewType("ValueType", builtins.int)
+    V: typing_extensions.TypeAlias = ValueType
+
+class _CompassModeEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[_CompassMode.ValueType], builtins.type):
+    DESCRIPTOR: google.protobuf.descriptor.EnumDescriptor
+    DYNAMIC: _CompassMode.ValueType  # 0
+    """
+    Compass with dynamic ring and heading
+    """
+    FIXED_RING: _CompassMode.ValueType  # 1
+    """
+    Compass with fixed ring and heading
+    """
+    FREEZE_HEADING: _CompassMode.ValueType  # 2
+    """
+    Compass with heading and freeze option
+    """
+
+class CompassMode(_CompassMode, metaclass=_CompassModeEnumTypeWrapper): ...
+
+DYNAMIC: CompassMode.ValueType  # 0
+"""
+Compass with dynamic ring and heading
+"""
+FIXED_RING: CompassMode.ValueType  # 1
+"""
+Compass with fixed ring and heading
+"""
+FREEZE_HEADING: CompassMode.ValueType  # 2
+"""
+Compass with heading and freeze option
+"""
+global___CompassMode = CompassMode
+
 class _Theme:
     ValueType = typing.NewType("ValueType", builtins.int)
     V: typing_extensions.TypeAlias = ValueType
@@ -122,6 +157,14 @@ class _LanguageEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._EnumT
     """
     Slovenian
     """
+    UKRAINIAN: _Language.ValueType  # 16
+    """
+    Ukrainian
+    """
+    BULGARIAN: _Language.ValueType  # 17
+    """
+    Bulgarian
+    """
     SIMPLIFIED_CHINESE: _Language.ValueType  # 30
     """
     Simplified Chinese (experimental)
@@ -200,6 +243,14 @@ SLOVENIAN: Language.ValueType  # 15
 """
 Slovenian
 """
+UKRAINIAN: Language.ValueType  # 16
+"""
+Ukrainian
+"""
+BULGARIAN: Language.ValueType  # 17
+"""
+Bulgarian
+"""
 SIMPLIFIED_CHINESE: Language.ValueType  # 30
 """
 Simplified Chinese (experimental)
@@ -232,6 +283,10 @@ class DeviceUIConfig(google.protobuf.message.Message):
     NODE_FILTER_FIELD_NUMBER: builtins.int
     NODE_HIGHLIGHT_FIELD_NUMBER: builtins.int
     CALIBRATION_DATA_FIELD_NUMBER: builtins.int
+    MAP_DATA_FIELD_NUMBER: builtins.int
+    COMPASS_MODE_FIELD_NUMBER: builtins.int
+    SCREEN_RGB_COLOR_FIELD_NUMBER: builtins.int
+    IS_CLOCKFACE_ANALOG_FIELD_NUMBER: builtins.int
     version: builtins.int
     """
     A version integer used to invalidate saved files when we make incompatible changes.
@@ -268,6 +323,20 @@ class DeviceUIConfig(google.protobuf.message.Message):
     """
     8 integers for screen calibration data
     """
+    compass_mode: global___CompassMode.ValueType
+    """
+    Compass mode
+    """
+    screen_rgb_color: builtins.int
+    """
+    RGB color for BaseUI
+    0xRRGGBB format, e.g. 0xFF0000 for red
+    """
+    is_clockface_analog: builtins.bool
+    """
+    Clockface analog style
+    true for analog clockface, false for digital clockface
+    """
     @property
     def node_filter(self) -> global___NodeFilter:
         """
@@ -278,6 +347,12 @@ class DeviceUIConfig(google.protobuf.message.Message):
     def node_highlight(self) -> global___NodeHighlight:
         """
         Node list highlightening
+        """
+
+    @property
+    def map_data(self) -> global___Map:
+        """
+        Map related data
         """
 
     def __init__(
@@ -297,9 +372,13 @@ class DeviceUIConfig(google.protobuf.message.Message):
         node_filter: global___NodeFilter | None = ...,
         node_highlight: global___NodeHighlight | None = ...,
         calibration_data: builtins.bytes = ...,
+        map_data: global___Map | None = ...,
+        compass_mode: global___CompassMode.ValueType = ...,
+        screen_rgb_color: builtins.int = ...,
+        is_clockface_analog: builtins.bool = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing.Literal["node_filter", b"node_filter", "node_highlight", b"node_highlight"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["alert_enabled", b"alert_enabled", "banner_enabled", b"banner_enabled", "calibration_data", b"calibration_data", "language", b"language", "node_filter", b"node_filter", "node_highlight", b"node_highlight", "pin_code", b"pin_code", "ring_tone_id", b"ring_tone_id", "screen_brightness", b"screen_brightness", "screen_lock", b"screen_lock", "screen_timeout", b"screen_timeout", "settings_lock", b"settings_lock", "theme", b"theme", "version", b"version"]) -> None: ...
+    def HasField(self, field_name: typing.Literal["map_data", b"map_data", "node_filter", b"node_filter", "node_highlight", b"node_highlight"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing.Literal["alert_enabled", b"alert_enabled", "banner_enabled", b"banner_enabled", "calibration_data", b"calibration_data", "compass_mode", b"compass_mode", "is_clockface_analog", b"is_clockface_analog", "language", b"language", "map_data", b"map_data", "node_filter", b"node_filter", "node_highlight", b"node_highlight", "pin_code", b"pin_code", "ring_tone_id", b"ring_tone_id", "screen_brightness", b"screen_brightness", "screen_lock", b"screen_lock", "screen_rgb_color", b"screen_rgb_color", "screen_timeout", b"screen_timeout", "settings_lock", b"settings_lock", "theme", b"theme", "version", b"version"]) -> None: ...
 
 global___DeviceUIConfig = DeviceUIConfig
 
@@ -398,3 +477,66 @@ class NodeHighlight(google.protobuf.message.Message):
     def ClearField(self, field_name: typing.Literal["chat_switch", b"chat_switch", "iaq_switch", b"iaq_switch", "node_name", b"node_name", "position_switch", b"position_switch", "telemetry_switch", b"telemetry_switch"]) -> None: ...
 
 global___NodeHighlight = NodeHighlight
+
+@typing.final
+class GeoPoint(google.protobuf.message.Message):
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
+
+    ZOOM_FIELD_NUMBER: builtins.int
+    LATITUDE_FIELD_NUMBER: builtins.int
+    LONGITUDE_FIELD_NUMBER: builtins.int
+    zoom: builtins.int
+    """
+    Zoom level
+    """
+    latitude: builtins.int
+    """
+    Coordinate: latitude
+    """
+    longitude: builtins.int
+    """
+    Coordinate: longitude
+    """
+    def __init__(
+        self,
+        *,
+        zoom: builtins.int = ...,
+        latitude: builtins.int = ...,
+        longitude: builtins.int = ...,
+    ) -> None: ...
+    def ClearField(self, field_name: typing.Literal["latitude", b"latitude", "longitude", b"longitude", "zoom", b"zoom"]) -> None: ...
+
+global___GeoPoint = GeoPoint
+
+@typing.final
+class Map(google.protobuf.message.Message):
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
+
+    HOME_FIELD_NUMBER: builtins.int
+    STYLE_FIELD_NUMBER: builtins.int
+    FOLLOW_GPS_FIELD_NUMBER: builtins.int
+    style: builtins.str
+    """
+    Map tile style
+    """
+    follow_gps: builtins.bool
+    """
+    Map scroll follows GPS
+    """
+    @property
+    def home(self) -> global___GeoPoint:
+        """
+        Home coordinates
+        """
+
+    def __init__(
+        self,
+        *,
+        home: global___GeoPoint | None = ...,
+        style: builtins.str = ...,
+        follow_gps: builtins.bool = ...,
+    ) -> None: ...
+    def HasField(self, field_name: typing.Literal["home", b"home"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing.Literal["follow_gps", b"follow_gps", "home", b"home", "style", b"style"]) -> None: ...
+
+global___Map = Map
