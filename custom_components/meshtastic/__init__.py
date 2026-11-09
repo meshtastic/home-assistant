@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import asyncio
 import base64
+import contextlib
 import datetime
 from collections import defaultdict
 from collections.abc import Callable
@@ -139,6 +140,23 @@ async def async_setup_entry(
     except Exception as e:
         raise ConfigEntryNotReady from e
 
+    try:
+        await _async_setup_connected_entry(hass, entry, client, coordinator)
+    except BaseException:
+        # unload never runs for a failed setup, and many radios accept only one API connection
+        with contextlib.suppress(Exception):
+            await client.disconnect()
+        raise
+
+    return True
+
+
+async def _async_setup_connected_entry(
+    hass: HomeAssistant,
+    entry: MeshtasticConfigEntry,
+    client: MeshtasticApiClient,
+    coordinator: MeshtasticDataUpdateCoordinator,
+) -> None:
     gateway_node = await client.async_get_own_node()
     entry.runtime_data = MeshtasticData(
         client=client,
@@ -171,8 +189,6 @@ async def async_setup_entry(
         CONF_OPTION_TCP_PROXY_ENABLE, CONF_OPTION_TCP_PROXY_ENABLE_DEFAULT
     ):
         await async_setup_tcp_proxy(hass, entry)
-
-    return True
 
 
 async def _setup_meshtastic_devices(
