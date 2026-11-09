@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 [![GitHub Release][releases-shield]][releases]
 [![License][license-shield]](LICENSE)
 
-[![hacs](https://img.shields.io/badge/HACS-Custom-orange.svg?style=for-the-badge)](https://hacs.xyz/docs/faq/custom_repositories)
+[![Marketplace and HACS](https://img.shields.io/badge/Marketplace%20%7C%20HACS-Custom-orange.svg?style=for-the-badge)](https://my.home-assistant.io/redirect/hacs_repository/?owner=meshtastic&repository=home-assistant&category=integration)
 [![HA Analytics](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fanalytics.home-assistant.io%2Fcustom_integrations.json&query=%24.meshtastic.total&style=for-the-badge&label=Active%20Installations&color=red)](https://analytics.home-assistant.io/custom_integrations.json)
 
 
@@ -34,10 +34,12 @@ For more details, see check the [documentation](#documentation).
 
 ## Installation
 
-### Recommended: [HACS](https://www.hacs.xyz)
+### Recommended: Marketplace or HACS
 
-1. Add this repository as a custom repository to HACS: [![Add Repository](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=meshtastic&repository=home-assistant&category=integration)
-2. Use HACS to install the integration.
+Home Assistant 2026.11 and newer include the Marketplace (**Settings** > **Marketplace**), which replaces HACS. On 2026.10 and older, use [HACS](https://www.hacs.xyz). The minimum Home Assistant version is 2026.8.0.
+
+1. Add this repository as a custom repository. On 2026.11 and newer, open the Marketplace, select **Add from link** and enter `meshtastic/home-assistant`, or use the Marketplace link: [![Open the repository in the Marketplace](https://my.home-assistant.io/badges/marketplace_repository.svg)](https://my.home-assistant.io/redirect/marketplace_repository/?owner=meshtastic&repository=home-assistant&category=integration) On any version, this link opens the Marketplace (2026.11 and newer) or HACS (older): [![Add Repository](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=meshtastic&repository=home-assistant&category=integration)
+2. Install the integration from the Marketplace or HACS.
 3. Restart Home Assistant.
 4. Set up the integration using the UI: [![Add Integration](https://my.home-assistant.io/badges/config_flow_start.svg)](https://my.home-assistant.io/redirect/config_flow_start/?domain=meshtastic)
 
@@ -63,12 +65,25 @@ To change how a gateway is reached (a new IP address, serial port or Bluetooth a
 
 # Documentation
 
+## Supported devices
+
+A gateway is any Meshtastic radio the integration can reach with the phone API, over one of three connections:
+
+| Connection | Reaches |
+| --- | --- |
+| TCP | Radios with Wi-Fi or Ethernet (ESP32 and similar), and `meshtasticd` |
+| Bluetooth LE | Any radio with Bluetooth, directly or through a [Bluetooth Proxy](https://esphome.io/components/bluetooth_proxy.html) |
+| Serial (USB) | Radios on a USB port of the Home Assistant host, including nRF52 boards that have no TCP |
+
+USB auto-discovery matches the common nRF52, ESP32, RP2040 and CH340 based radios. Other radios are added by entering the serial port by hand. Firmware 2.8 renumbering is handled, see [Node numbers on firmware 2.8](#node-numbers-on-firmware-28). The minimum Home Assistant version is 2026.8.0.
+
+
 ## Supported Platforms
 ### Sensor / Binary Sensor
 For nodes selected as part of the configuration, metrics are exposed as corresponding sensors.
 
-Even though integration is classified as `local_polling` it predominantly operates as `local_push` and home assistant is notified
-as soon as new state is available. Polling is only used as fallback should the push mechanism stop working.
+The integration is classified as `local_push`: Home Assistant is notified as soon as new state is available.
+Polling is only a fallback should the push mechanism stop working.
 
 ### [Notification](https://www.home-assistant.io/integrations/notify/)
 Using notification platform and the generated `notify.mesh_*` entities is the recommended way to send messages to the mesh when you don't need control over all the details 
@@ -408,9 +423,41 @@ Inside the Meshtastic Web Client:
 4. Press "New Connection" - the correct hostname is already populated
 5. Press "Connect"
 
+## Known limitations
+
+- A radio serves one phone-API client at a time. The Meshtastic phone apps and other tools can only connect while this integration is not using the radio, unless you enable the [web client](#meshtastic-web-client) or the TCP proxy and connect through it.
+- Messages are sent and received through the gateway radio only. Nodes the gateway does not hear are not reachable.
+- Waypoint geofence enter and exit are evaluated by the device and are not reported as events.
+- The web client has no authentication, see its security note above.
+
+## Troubleshooting
+
+- **Gateway keeps disconnecting or fails to connect:** another client, such as a phone app or script, holds the radio's single API connection. Close it, or share the connection through the TCP proxy or web client.
+- **Node moved or shows twice after a firmware upgrade:** see [Node numbers on firmware 2.8](#node-numbers-on-firmware-28). A reset or key change creates a new node.
+- **Different address for the same radio:** use **Reconfigure** on the entry, see above.
+- **Logs:** Home Assistant writes them to **Settings** > **System** > **Logs**. Turn on debug logging for the integration and its libraries in `configuration.yaml`, then restart:
+
+  ```yaml
+  logger:
+    default: warning
+    logs:
+      custom_components.meshtastic: debug
+      serialx: debug
+      aiomqtt: debug
+      bleak: debug
+  ```
+
+- **Diagnostics:** download them from the gateway entry, see below.
+
 ## Reporting a bug
 
 Attach the [diagnostics](https://www.home-assistant.io/integrations/diagnostics/) file (Settings -> Devices & services -> Meshtastic -> the three dots on the gateway entry -> Download diagnostics) together with debug logs. It holds the gateway firmware and hardware, the node and module config, the channel names and roles, and the data of the selected nodes. Channel keys, node keys, MQTT and Wi-Fi credentials, MAC addresses, hosts and positions are redacted; check the file before you post it.
+
+## Removal
+
+1. Go to **Settings** > **Devices & services** > **Meshtastic**, open the menu of each gateway entry and select **Delete**. This removes its devices and entities and disconnects from the radio.
+2. Uninstall the integration: **Settings** > **Marketplace** on 2026.11 and newer, or HACS on older versions. Restart Home Assistant. Without the Marketplace or HACS, delete the `custom_components/meshtastic` folder and restart.
+3. Remove any `meshtastic` entries you added to `logger:` in `configuration.yaml`.
 
 ## Contributions are welcome!
 
