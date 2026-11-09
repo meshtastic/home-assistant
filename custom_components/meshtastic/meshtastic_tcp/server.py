@@ -17,6 +17,13 @@ from custom_components.meshtastic.const import LOGGER
 
 _LOGGER = LOGGER.getChild(__name__)
 
+# a client that cannot take a frame within this time is not reading and gets disconnected
+_WRITE_TIMEOUT_S = 30.0
+# FromRadio messages buffered per client; a full bootstrap of a large mesh is a few hundred
+_CLIENT_QUEUE_SIZE = 1024
+# wait_closed() can hang on a peer that does not read, or raise on a broken one
+_CLOSE_TIMEOUT_S = 5.0
+
 
 class ClientProxyTransport(StreamingClientTransport):
     def __init__(self, reader: StreamReader, writer: StreamWriter) -> None:
@@ -48,6 +55,7 @@ class ClientProxyTransport(StreamingClientTransport):
 
     async def _write_bytes(self, data: bytes) -> bool:
         self._writer.write(data)
+        await asyncio.wait_for(self._writer.drain(), _WRITE_TIMEOUT_S)
         return True
 
     def _can_read(self) -> bool:
@@ -64,20 +72,30 @@ class ClientProxyTransport(StreamingClientTransport):
 
     async def _disconnect(self) -> None:
         self._writer.close()
-        await self._writer.wait_closed()
+        closed = False
+        try:
+            await asyncio.wait_for(self._writer.wait_closed(), _CLOSE_TIMEOUT_S)
+            closed = True
+        except Exception:  # noqa: BLE001
+            self._logger.debug("Graceful close of proxy client failed, aborting", exc_info=True)
+        finally:
+            if not closed:
+                self._writer.transport.abort()
 
     @property
     def is_connected(self) -> bool:
-        return True
+        return not self._writer.is_closing()
 
 
 class MeshtasticTcpProxy:
     def __init__(self, interface: MeshInterface, host: str | None = None, port: int | None = None) -> None:
-        self._client_queues: set[asyncio.Queue] = set()
-        self._clients = {}
+        # per-client live queue -> that client's disconnect event and peer name
+        self._clients: dict[asyncio.Queue, tuple[asyncio.Event, str]] = {}
+        self._handlers: set[asyncio.Task] = set()
         self._forward_task = None
         self._interface = interface
         self._should_stop = False
+        self._stopping = False
         self._host = host
         self._port = port or 4403
         self._server: asyncio.Server | None = None
@@ -94,6 +112,7 @@ class MeshtasticTcpProxy:
         await self.stop()
 
     async def start(self) -> None:
+        self._stopping = False
         if not self._interface.is_running:
             self._should_stop = True
             await self._interface.start()
@@ -102,23 +121,38 @@ class MeshtasticTcpProxy:
         self._forward_task = asyncio.create_task(self._forward_from_radio(), name="tcp_proxy_read_from_gateway")
 
     async def stop(self) -> None:
-        self._forward_task.cancel()
-
+        # a handler that first runs after the snapshot below would otherwise never be cancelled
+        self._stopping = True
         if self._server:
             self._server.close()
+
+        tasks = [task for task in (self._forward_task, *self._handlers) if task is not None]
+        for task in tasks:
+            task.cancel()
+        if tasks:
+            # each handler's close is itself bounded, so this only guards against the unexpected
+            _, pending = await asyncio.wait(tasks, timeout=2 * _CLOSE_TIMEOUT_S)
+            if pending:
+                _LOGGER.warning("%d tcp proxy tasks did not stop in time", len(pending))
 
         if self._should_stop:
             await self._interface.stop()
             self._should_stop = False
 
     async def _handle_client(self, reader: StreamReader, writer: StreamWriter) -> None:
-        queue = asyncio.Queue()
-        self._client_queues.add(queue)
         client_connection = ClientProxyTransport(reader, writer)
+        if self._stopping or self._forward_task is None or self._forward_task.done():
+            # without the forwarder this client would never receive anything
+            await client_connection.disconnect()
+            return
+
+        handler = asyncio.current_task()
+        self._handlers.add(handler)
+        queue = asyncio.Queue(maxsize=_CLIENT_QUEUE_SIZE)
         disconnect_event = asyncio.Event()
         try:
-            peer = writer.transport.get_extra_info("peername", (None, None, None, None))
-            peer_name = "{}:{}".format(*peer[0:2])
+            peer_name = "{}:{}".format(*writer.transport.get_extra_info("peername", (None, None))[0:2])
+            self._clients[queue] = (disconnect_event, peer_name)
 
             async def forward_to_radio() -> None:
                 while True:
@@ -136,10 +170,10 @@ class MeshtasticTcpProxy:
                     _LOGGER.debug(
                         "Forwarding from %s to gateway: %s",
                         peer_name,
-                        ClientApiConnection._protobuf_log(packet[1]),  # noqa: SLF001
+                        ClientApiConnection._protobuf_log(to_radio),  # noqa: SLF001
                     )
 
-                    await self._interface._connection._send_packet(packet[0])  # noqa: SLF001
+                    await self._interface._connection._send_packet(packet_bytes)  # noqa: SLF001
 
             async def forward_from_radio() -> None:
                 while client_connection.is_connected:
@@ -160,23 +194,46 @@ class MeshtasticTcpProxy:
             try:
                 await asyncio.wait([task_wait_disconnect, task_read, task_write], return_when=asyncio.FIRST_COMPLETED)
             finally:
-                task_read.cancel()
-                task_write.cancel()
-                task_wait_disconnect.cancel()
-            _LOGGER.debug("Closed proxy connection %s", peer_name)
-        except:  # noqa: E722
-            _LOGGER.warning("Failed handling proxy connection")
+                tasks = (task_read, task_write, task_wait_disconnect)
+                for task in tasks:
+                    task.cancel()
+                results = await asyncio.gather(*tasks, return_exceptions=True)
+            if isinstance(results[1], TimeoutError):
+                _LOGGER.warning(
+                    "Proxy client %s did not take a frame within %s s, disconnecting it", peer_name, _WRITE_TIMEOUT_S
+                )
+            _LOGGER.debug(
+                "Closed proxy connection %s: %s",
+                peer_name,
+                [r for r in results if isinstance(r, Exception)],
+            )
+        except Exception:  # noqa: BLE001
+            _LOGGER.warning("Failed handling proxy connection", exc_info=True)
         finally:
-            self._client_queues.remove(queue)
-            await client_connection.disconnect()
+            self._clients.pop(queue, None)
+            try:
+                await client_connection.disconnect()
+            finally:
+                self._handlers.discard(handler)
 
     async def _forward_from_radio(self) -> None:
         try:
             while True:
                 async for packet in self._interface.from_radio_stream():
-                    for queue in self._client_queues:
-                        await queue.put(packet)
+                    # never await here: one client that does not keep up must not hold up the others
+                    for queue, (disconnect_event, peer_name) in self._clients.items():
+                        try:
+                            queue.put_nowait(packet)
+                        except asyncio.QueueFull:
+                            if not disconnect_event.is_set():
+                                _LOGGER.warning("Proxy client %s is not keeping up, disconnecting it", peer_name)
+                                disconnect_event.set()
         except asyncio.CancelledError:
             pass
-        except:  # noqa: E722
-            _LOGGER.warning("Failuring during forwarding from gateway", exc_info=True)
+        except Exception:
+            # without this task no client receives anything, so stop pretending to serve
+            _LOGGER.exception("Forwarding from gateway failed, closing tcp proxy and its clients")
+            if self._server:
+                self._server.close()
+            for disconnect_event, _ in self._clients.values():
+                disconnect_event.set()

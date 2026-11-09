@@ -9,6 +9,9 @@ import google.protobuf.descriptor
 import google.protobuf.internal.containers
 import google.protobuf.internal.enum_type_wrapper
 import google.protobuf.message
+from . import atak_pb2
+from . import channel_pb2
+from . import config_pb2
 import sys
 import typing
 
@@ -112,7 +115,7 @@ class ModuleConfig(google.protobuf.message.Message):
         """
         json_enabled: builtins.bool
         """
-        Whether to send / consume json packets on MQTT
+        Deprecated: JSON packet support on MQTT was removed, and this field is ignored.
         """
         tls_enabled: builtins.bool
         """
@@ -165,6 +168,7 @@ class ModuleConfig(google.protobuf.message.Message):
 
         PUBLISH_INTERVAL_SECS_FIELD_NUMBER: builtins.int
         POSITION_PRECISION_FIELD_NUMBER: builtins.int
+        SHOULD_REPORT_LOCATION_FIELD_NUMBER: builtins.int
         publish_interval_secs: builtins.int
         """
         How often we should report our info to the map (in seconds)
@@ -173,13 +177,18 @@ class ModuleConfig(google.protobuf.message.Message):
         """
         Bits of precision for the location sent (default of 32 is full precision).
         """
+        should_report_location: builtins.bool
+        """
+        Whether we have opted-in to report our location to the map
+        """
         def __init__(
             self,
             *,
             publish_interval_secs: builtins.int = ...,
             position_precision: builtins.int = ...,
+            should_report_location: builtins.bool = ...,
         ) -> None: ...
-        def ClearField(self, field_name: typing.Literal["position_precision", b"position_precision", "publish_interval_secs", b"publish_interval_secs"]) -> None: ...
+        def ClearField(self, field_name: typing.Literal["position_precision", b"position_precision", "publish_interval_secs", b"publish_interval_secs", "should_report_location", b"should_report_location"]) -> None: ...
 
     @typing.final
     class RemoteHardwareConfig(google.protobuf.message.Message):
@@ -382,7 +391,19 @@ class ModuleConfig(google.protobuf.message.Message):
             CODEC2_1300: ModuleConfig.AudioConfig._Audio_Baud.ValueType  # 5
             CODEC2_1200: ModuleConfig.AudioConfig._Audio_Baud.ValueType  # 6
             CODEC2_700: ModuleConfig.AudioConfig._Audio_Baud.ValueType  # 7
+            """
+            Removed from libcodec2 upstream. A device configured to one of these
+            falls back to CODEC2_700C.
+            """
             CODEC2_700B: ModuleConfig.AudioConfig._Audio_Baud.ValueType  # 8
+            CODEC2_700C: ModuleConfig.AudioConfig._Audio_Baud.ValueType  # 9
+            """
+            Replaces CODEC2_700. Default for new configurations.
+            """
+            CODEC2_450: ModuleConfig.AudioConfig._Audio_Baud.ValueType  # 10
+            """
+            Lowest rate, and the only one usable on slower modem presets.
+            """
 
         class Audio_Baud(_Audio_Baud, metaclass=_Audio_BaudEnumTypeWrapper):
             """
@@ -397,7 +418,19 @@ class ModuleConfig(google.protobuf.message.Message):
         CODEC2_1300: ModuleConfig.AudioConfig.Audio_Baud.ValueType  # 5
         CODEC2_1200: ModuleConfig.AudioConfig.Audio_Baud.ValueType  # 6
         CODEC2_700: ModuleConfig.AudioConfig.Audio_Baud.ValueType  # 7
+        """
+        Removed from libcodec2 upstream. A device configured to one of these
+        falls back to CODEC2_700C.
+        """
         CODEC2_700B: ModuleConfig.AudioConfig.Audio_Baud.ValueType  # 8
+        CODEC2_700C: ModuleConfig.AudioConfig.Audio_Baud.ValueType  # 9
+        """
+        Replaces CODEC2_700. Default for new configurations.
+        """
+        CODEC2_450: ModuleConfig.AudioConfig.Audio_Baud.ValueType  # 10
+        """
+        Lowest rate, and the only one usable on slower modem presets.
+        """
 
         CODEC2_ENABLED_FIELD_NUMBER: builtins.int
         PTT_PIN_FIELD_NUMBER: builtins.int
@@ -416,7 +449,7 @@ class ModuleConfig(google.protobuf.message.Message):
         """
         bitrate: global___ModuleConfig.AudioConfig.Audio_Baud.ValueType
         """
-        The audio sample rate to use for codec2
+        The codec2 bitrate to encode at. Sample rate is always 8 kHz.
         """
         i2s_ws: builtins.int
         """
@@ -487,6 +520,62 @@ class ModuleConfig(google.protobuf.message.Message):
         def ClearField(self, field_name: typing.Literal["ble_threshold", b"ble_threshold", "enabled", b"enabled", "paxcounter_update_interval", b"paxcounter_update_interval", "wifi_threshold", b"wifi_threshold"]) -> None: ...
 
     @typing.final
+    class TrafficManagementConfig(google.protobuf.message.Message):
+        """
+        Config for the Traffic Management module.
+        Provides packet inspection and traffic shaping to help reduce channel utilization.
+        Every field uses the proto3 zero value to mean "disabled"; there is no
+        "use the firmware default" sentinel. Firmware installs its own defaults when it
+        first creates this config, and a client that writes 0 turns that feature off.
+        """
+
+        DESCRIPTOR: google.protobuf.descriptor.Descriptor
+
+        POSITION_MIN_INTERVAL_SECS_FIELD_NUMBER: builtins.int
+        NODEINFO_DIRECT_RESPONSE_MAX_HOPS_FIELD_NUMBER: builtins.int
+        RATE_LIMIT_WINDOW_SECS_FIELD_NUMBER: builtins.int
+        RATE_LIMIT_MAX_PACKETS_FIELD_NUMBER: builtins.int
+        UNKNOWN_PACKET_THRESHOLD_FIELD_NUMBER: builtins.int
+        position_min_interval_secs: builtins.int
+        """
+        Minimum interval in seconds between position updates from the same node.
+        A non-zero value implicitly enables the suppression window; 0 disables it.
+        Firmware default: 18000 (5 hours), installed when this config is first created.
+        """
+        nodeinfo_direct_response_max_hops: builtins.int
+        """
+        Maximum hop distance from the requestor at which direct NodeInfo responses
+        are served from the local cache. A non-zero value implicitly enables direct
+        response; 0 disables it.
+        """
+        rate_limit_window_secs: builtins.int
+        """
+        Time window in seconds for per-node rate limiting.
+        A non-zero value implicitly enables rate limiting; 0 disables it.
+        """
+        rate_limit_max_packets: builtins.int
+        """
+        Maximum packets allowed per node within the rate limit window.
+        A non-zero value implicitly enables rate limiting; 0 disables it.
+        """
+        unknown_packet_threshold: builtins.int
+        """
+        Maximum unknown/undecryptable packets per 5 minutes before the source
+        is dropped. A non-zero value implicitly enables unknown-packet filtering;
+        0 disables it.
+        """
+        def __init__(
+            self,
+            *,
+            position_min_interval_secs: builtins.int = ...,
+            nodeinfo_direct_response_max_hops: builtins.int = ...,
+            rate_limit_window_secs: builtins.int = ...,
+            rate_limit_max_packets: builtins.int = ...,
+            unknown_packet_threshold: builtins.int = ...,
+        ) -> None: ...
+        def ClearField(self, field_name: typing.Literal["nodeinfo_direct_response_max_hops", b"nodeinfo_direct_response_max_hops", "position_min_interval_secs", b"position_min_interval_secs", "rate_limit_max_packets", b"rate_limit_max_packets", "rate_limit_window_secs", b"rate_limit_window_secs", "unknown_packet_threshold", b"unknown_packet_threshold"]) -> None: ...
+
+    @typing.final
     class SerialConfig(google.protobuf.message.Message):
         """
         Serial Config
@@ -554,6 +643,22 @@ class ModuleConfig(google.protobuf.message.Message):
             """NMEA messages specifically tailored for CalTopo"""
             WS85: ModuleConfig.SerialConfig._Serial_Mode.ValueType  # 6
             """Ecowitt WS85 weather station"""
+            VE_DIRECT: ModuleConfig.SerialConfig._Serial_Mode.ValueType  # 7
+            """VE.Direct is a serial protocol used by Victron Energy products
+            https://beta.ivc.no/wiki/index.php/Victron_VE_Direct_DIY_Cable
+            """
+            MS_CONFIG: ModuleConfig.SerialConfig._Serial_Mode.ValueType  # 8
+            """Used to configure and view some parameters of MeshSolar.
+            https://heltec.org/project/meshsolar/
+            """
+            LOG: ModuleConfig.SerialConfig._Serial_Mode.ValueType  # 9
+            """Logs mesh traffic to the serial pins, ideal for logging via openLog or similar.
+            includes other packets
+            """
+            LOGTEXT: ModuleConfig.SerialConfig._Serial_Mode.ValueType  # 10
+            """only text (channel & DM)"""
+            MODBUS: ModuleConfig.SerialConfig._Serial_Mode.ValueType  # 11
+            """Modbus-RTU master, polls an RS485 sensor and sends telemetry"""
 
         class Serial_Mode(_Serial_Mode, metaclass=_Serial_ModeEnumTypeWrapper):
             """
@@ -569,6 +674,22 @@ class ModuleConfig(google.protobuf.message.Message):
         """NMEA messages specifically tailored for CalTopo"""
         WS85: ModuleConfig.SerialConfig.Serial_Mode.ValueType  # 6
         """Ecowitt WS85 weather station"""
+        VE_DIRECT: ModuleConfig.SerialConfig.Serial_Mode.ValueType  # 7
+        """VE.Direct is a serial protocol used by Victron Energy products
+        https://beta.ivc.no/wiki/index.php/Victron_VE_Direct_DIY_Cable
+        """
+        MS_CONFIG: ModuleConfig.SerialConfig.Serial_Mode.ValueType  # 8
+        """Used to configure and view some parameters of MeshSolar.
+        https://heltec.org/project/meshsolar/
+        """
+        LOG: ModuleConfig.SerialConfig.Serial_Mode.ValueType  # 9
+        """Logs mesh traffic to the serial pins, ideal for logging via openLog or similar.
+        includes other packets
+        """
+        LOGTEXT: ModuleConfig.SerialConfig.Serial_Mode.ValueType  # 10
+        """only text (channel & DM)"""
+        MODBUS: ModuleConfig.SerialConfig.Serial_Mode.ValueType  # 11
+        """Modbus-RTU master, polls an RS485 sensor and sends telemetry"""
 
         ENABLED_FIELD_NUMBER: builtins.int
         ECHO_FIELD_NUMBER: builtins.int
@@ -802,6 +923,7 @@ class ModuleConfig(google.protobuf.message.Message):
         ENABLED_FIELD_NUMBER: builtins.int
         SENDER_FIELD_NUMBER: builtins.int
         SAVE_FIELD_NUMBER: builtins.int
+        CLEAR_ON_REBOOT_FIELD_NUMBER: builtins.int
         enabled: builtins.bool
         """
         Enable the Range Test Module
@@ -815,14 +937,20 @@ class ModuleConfig(google.protobuf.message.Message):
         Bool value indicating that this node should save a RangeTest.csv file.
         ESP32 Only
         """
+        clear_on_reboot: builtins.bool
+        """
+        Bool indicating that the node should cleanup / destroy it's RangeTest.csv file.
+        ESP32 Only
+        """
         def __init__(
             self,
             *,
             enabled: builtins.bool = ...,
             sender: builtins.int = ...,
             save: builtins.bool = ...,
+            clear_on_reboot: builtins.bool = ...,
         ) -> None: ...
-        def ClearField(self, field_name: typing.Literal["enabled", b"enabled", "save", b"save", "sender", b"sender"]) -> None: ...
+        def ClearField(self, field_name: typing.Literal["clear_on_reboot", b"clear_on_reboot", "enabled", b"enabled", "save", b"save", "sender", b"sender"]) -> None: ...
 
     @typing.final
     class TelemetryConfig(google.protobuf.message.Message):
@@ -845,6 +973,8 @@ class ModuleConfig(google.protobuf.message.Message):
         HEALTH_MEASUREMENT_ENABLED_FIELD_NUMBER: builtins.int
         HEALTH_UPDATE_INTERVAL_FIELD_NUMBER: builtins.int
         HEALTH_SCREEN_ENABLED_FIELD_NUMBER: builtins.int
+        DEVICE_TELEMETRY_ENABLED_FIELD_NUMBER: builtins.int
+        AIR_QUALITY_SCREEN_ENABLED_FIELD_NUMBER: builtins.int
         device_update_interval: builtins.int
         """
         Interval in seconds of how often we should try to send our
@@ -905,6 +1035,15 @@ class ModuleConfig(google.protobuf.message.Message):
         """
         Enable/Disable the health telemetry module on-device display
         """
+        device_telemetry_enabled: builtins.bool
+        """
+        Enable/Disable the device telemetry module to send metrics to the mesh
+        Note: We will still send telemtry to the connected phone / client every minute over the API
+        """
+        air_quality_screen_enabled: builtins.bool
+        """
+        Enable/Disable the air quality telemetry measurement module on-device display
+        """
         def __init__(
             self,
             *,
@@ -921,13 +1060,15 @@ class ModuleConfig(google.protobuf.message.Message):
             health_measurement_enabled: builtins.bool = ...,
             health_update_interval: builtins.int = ...,
             health_screen_enabled: builtins.bool = ...,
+            device_telemetry_enabled: builtins.bool = ...,
+            air_quality_screen_enabled: builtins.bool = ...,
         ) -> None: ...
-        def ClearField(self, field_name: typing.Literal["air_quality_enabled", b"air_quality_enabled", "air_quality_interval", b"air_quality_interval", "device_update_interval", b"device_update_interval", "environment_display_fahrenheit", b"environment_display_fahrenheit", "environment_measurement_enabled", b"environment_measurement_enabled", "environment_screen_enabled", b"environment_screen_enabled", "environment_update_interval", b"environment_update_interval", "health_measurement_enabled", b"health_measurement_enabled", "health_screen_enabled", b"health_screen_enabled", "health_update_interval", b"health_update_interval", "power_measurement_enabled", b"power_measurement_enabled", "power_screen_enabled", b"power_screen_enabled", "power_update_interval", b"power_update_interval"]) -> None: ...
+        def ClearField(self, field_name: typing.Literal["air_quality_enabled", b"air_quality_enabled", "air_quality_interval", b"air_quality_interval", "air_quality_screen_enabled", b"air_quality_screen_enabled", "device_telemetry_enabled", b"device_telemetry_enabled", "device_update_interval", b"device_update_interval", "environment_display_fahrenheit", b"environment_display_fahrenheit", "environment_measurement_enabled", b"environment_measurement_enabled", "environment_screen_enabled", b"environment_screen_enabled", "environment_update_interval", b"environment_update_interval", "health_measurement_enabled", b"health_measurement_enabled", "health_screen_enabled", b"health_screen_enabled", "health_update_interval", b"health_update_interval", "power_measurement_enabled", b"power_measurement_enabled", "power_screen_enabled", b"power_screen_enabled", "power_update_interval", b"power_update_interval"]) -> None: ...
 
     @typing.final
     class CannedMessageConfig(google.protobuf.message.Message):
         """
-        TODO: REPLACE
+        Canned Messages Module Config
         """
 
         DESCRIPTOR: google.protobuf.descriptor.Descriptor
@@ -1128,6 +1269,248 @@ class ModuleConfig(google.protobuf.message.Message):
         ) -> None: ...
         def ClearField(self, field_name: typing.Literal["blue", b"blue", "current", b"current", "green", b"green", "led_state", b"led_state", "red", b"red"]) -> None: ...
 
+    @typing.final
+    class StatusMessageConfig(google.protobuf.message.Message):
+        """
+        StatusMessage config - Allows setting a status message for a node to periodically rebroadcast
+        """
+
+        DESCRIPTOR: google.protobuf.descriptor.Descriptor
+
+        NODE_STATUS_FIELD_NUMBER: builtins.int
+        node_status: builtins.str
+        """
+        The actual status string
+        """
+        def __init__(
+            self,
+            *,
+            node_status: builtins.str = ...,
+        ) -> None: ...
+        def ClearField(self, field_name: typing.Literal["node_status", b"node_status"]) -> None: ...
+
+    @typing.final
+    class MeshBeaconConfig(google.protobuf.message.Message):
+        """
+        MeshBeacon module config
+        """
+
+        DESCRIPTOR: google.protobuf.descriptor.Descriptor
+
+        class _Flags:
+            ValueType = typing.NewType("ValueType", builtins.int)
+            V: typing_extensions.TypeAlias = ValueType
+
+        class _FlagsEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[ModuleConfig.MeshBeaconConfig._Flags.ValueType], builtins.type):
+            DESCRIPTOR: google.protobuf.descriptor.EnumDescriptor
+            FLAG_NONE: ModuleConfig.MeshBeaconConfig._Flags.ValueType  # 0
+            """
+            No options enabled.
+            """
+            FLAG_LISTEN_ENABLED: ModuleConfig.MeshBeaconConfig._Flags.ValueType  # 1
+            """
+            Enable receiving MESH_BEACON_APP packets from other nodes.
+            The text portion is delivered to the local message inbox.
+            Offered channel/preset are stored for the client app to act on.
+            """
+            FLAG_BROADCAST_ENABLED: ModuleConfig.MeshBeaconConfig._Flags.ValueType  # 2
+            """
+            Enable periodically broadcasting MESH_BEACON_APP packets from this node.
+            """
+            FLAG_LEGACY_SPLIT: ModuleConfig.MeshBeaconConfig._Flags.ValueType  # 4
+            """
+            When both text and offer content are present, split the beacon into a separate
+            MESH_BEACON_APP (offer only) and TEXT_MESSAGE_APP (text only) packet, so firmware
+            that only decodes TEXT_MESSAGE_APP still receives the human-readable text.
+            """
+
+        class Flags(_Flags, metaclass=_FlagsEnumTypeWrapper):
+            """
+            Boolean options for the beacon module, packed into the `flags` bitfield below.
+            OR the FLAG_* values together; a flag is on when its bit is set.
+            """
+
+        FLAG_NONE: ModuleConfig.MeshBeaconConfig.Flags.ValueType  # 0
+        """
+        No options enabled.
+        """
+        FLAG_LISTEN_ENABLED: ModuleConfig.MeshBeaconConfig.Flags.ValueType  # 1
+        """
+        Enable receiving MESH_BEACON_APP packets from other nodes.
+        The text portion is delivered to the local message inbox.
+        Offered channel/preset are stored for the client app to act on.
+        """
+        FLAG_BROADCAST_ENABLED: ModuleConfig.MeshBeaconConfig.Flags.ValueType  # 2
+        """
+        Enable periodically broadcasting MESH_BEACON_APP packets from this node.
+        """
+        FLAG_LEGACY_SPLIT: ModuleConfig.MeshBeaconConfig.Flags.ValueType  # 4
+        """
+        When both text and offer content are present, split the beacon into a separate
+        MESH_BEACON_APP (offer only) and TEXT_MESSAGE_APP (text only) packet, so firmware
+        that only decodes TEXT_MESSAGE_APP still receives the human-readable text.
+        """
+
+        @typing.final
+        class BroadcastTarget(google.protobuf.message.Message):
+            """
+            One entry in the broadcast destination list.
+            Each entry names one set of radio settings to send a beacon copy on.
+            """
+
+            DESCRIPTOR: google.protobuf.descriptor.Descriptor
+
+            PRESET_FIELD_NUMBER: builtins.int
+            REGION_FIELD_NUMBER: builtins.int
+            CHANNEL_INDEX_FIELD_NUMBER: builtins.int
+            FREQUENCY_SLOT_FIELD_NUMBER: builtins.int
+            preset: config_pb2.Config.LoRaConfig.ModemPreset.ValueType
+            """
+            Modem preset to use for this target.
+            Falls back to the running config preset if unset.
+            """
+            region: config_pb2.Config.LoRaConfig.RegionCode.ValueType
+            """
+            Region to use for this target. UNSET means use the running config region.
+            """
+            channel_index: builtins.int
+            """Tag 3 was an embedded ChannelSettings; replaced by channel_index (tag 4) to keep
+            ModuleConfig within the BLE FromRadio size budget. Branch unreleased, so tag 3 is a gap.
+
+
+            Index into the device's channel table (0..MAX_NUM_CHANNELS-1) of the channel to
+            transmit this target's beacon on. The referenced channel must already be configured
+            on the node (its key is needed to encrypt). If unset, the default channel for the
+            preset is used.
+            """
+            frequency_slot: builtins.int
+            """
+            Frequency slot to transmit this target's beacon on, 1-based, matching
+            Config.LoRaConfig.channel_num. Unset means derive it the way any node on this
+            channel would: the region's override slot if it has one, otherwise the hash of the
+            target channel's name. Do not send 0 - it is the same as unset.
+            """
+            def __init__(
+                self,
+                *,
+                preset: config_pb2.Config.LoRaConfig.ModemPreset.ValueType | None = ...,
+                region: config_pb2.Config.LoRaConfig.RegionCode.ValueType = ...,
+                channel_index: builtins.int | None = ...,
+                frequency_slot: builtins.int | None = ...,
+            ) -> None: ...
+            def HasField(self, field_name: typing.Literal["_channel_index", b"_channel_index", "_frequency_slot", b"_frequency_slot", "_preset", b"_preset", "channel_index", b"channel_index", "frequency_slot", b"frequency_slot", "preset", b"preset"]) -> builtins.bool: ...
+            def ClearField(self, field_name: typing.Literal["_channel_index", b"_channel_index", "_frequency_slot", b"_frequency_slot", "_preset", b"_preset", "channel_index", b"channel_index", "frequency_slot", b"frequency_slot", "preset", b"preset", "region", b"region"]) -> None: ...
+            @typing.overload
+            def WhichOneof(self, oneof_group: typing.Literal["_channel_index", b"_channel_index"]) -> typing.Literal["channel_index"] | None: ...
+            @typing.overload
+            def WhichOneof(self, oneof_group: typing.Literal["_frequency_slot", b"_frequency_slot"]) -> typing.Literal["frequency_slot"] | None: ...
+            @typing.overload
+            def WhichOneof(self, oneof_group: typing.Literal["_preset", b"_preset"]) -> typing.Literal["preset"] | None: ...
+
+        FLAGS_FIELD_NUMBER: builtins.int
+        BROADCAST_OFFER_FREQUENCY_SLOT_FIELD_NUMBER: builtins.int
+        BROADCAST_MESSAGE_FIELD_NUMBER: builtins.int
+        BROADCAST_OFFER_CHANNEL_FIELD_NUMBER: builtins.int
+        BROADCAST_OFFER_REGION_FIELD_NUMBER: builtins.int
+        BROADCAST_OFFER_PRESET_FIELD_NUMBER: builtins.int
+        BROADCAST_INTERVAL_SECS_FIELD_NUMBER: builtins.int
+        BROADCAST_TARGETS_FIELD_NUMBER: builtins.int
+        flags: builtins.int
+        """
+        Bitwise-OR of Flags values (listen / broadcast / legacy-split toggles).
+        """
+        broadcast_offer_frequency_slot: builtins.int
+        """
+        Frequency slot to advertise, 1-based, matching Config.LoRaConfig.channel_num.
+        Unset means the receiver derives it from the advertised region, channel name and
+        preset, which covers a region that mandates a slot and a mesh on the default hash.
+        Set it only where the mesh deliberately pins a non-default slot. Do not send 0.
+        """
+        broadcast_message: builtins.str
+        """
+        Message to include in each beacon broadcast.
+        Every beacon copy carries this on the air, so it is the largest single cost in both
+        this config and the packet it produces. Held to 60 bytes for that reason. The nanopb
+        max_size is 61 because it counts the terminator, which is what leaves a client a
+        round 60.
+        """
+        broadcast_offer_region: config_pb2.Config.LoRaConfig.RegionCode.ValueType
+        """
+        Optional region to advertise in the MeshBeacon offer_region field.
+        """
+        broadcast_offer_preset: config_pb2.Config.LoRaConfig.ModemPreset.ValueType
+        """
+        Optional modem preset to advertise in the MeshBeacon offer_preset field.
+        """
+        broadcast_interval_secs: builtins.int
+        """
+        How often to broadcast, in seconds. Min 3600 (1 h), default 3600.
+        """
+        @property
+        def broadcast_offer_channel(self) -> channel_pb2.ChannelSettings:
+            """
+            Optional channel (name + PSK) to advertise in the MeshBeacon offer_channel field.
+            """
+
+        @property
+        def broadcast_targets(self) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[global___ModuleConfig.MeshBeaconConfig.BroadcastTarget]:
+            """
+            Broadcast destination list.
+            The broadcaster sends one beacon copy per distinct destination, in sequence, temporarily
+            switching the radio to that entry's preset/region/channel for each.
+            When empty, a single beacon is sent on the node's running preset and region over the
+            primary channel.
+            Entries that resolve to the same effective preset, region and channel are deduplicated, so
+            a duplicate entry does not produce a second transmission.
+            """
+
+        def __init__(
+            self,
+            *,
+            flags: builtins.int = ...,
+            broadcast_offer_frequency_slot: builtins.int | None = ...,
+            broadcast_message: builtins.str = ...,
+            broadcast_offer_channel: channel_pb2.ChannelSettings | None = ...,
+            broadcast_offer_region: config_pb2.Config.LoRaConfig.RegionCode.ValueType = ...,
+            broadcast_offer_preset: config_pb2.Config.LoRaConfig.ModemPreset.ValueType | None = ...,
+            broadcast_interval_secs: builtins.int = ...,
+            broadcast_targets: collections.abc.Iterable[global___ModuleConfig.MeshBeaconConfig.BroadcastTarget] | None = ...,
+        ) -> None: ...
+        def HasField(self, field_name: typing.Literal["_broadcast_offer_frequency_slot", b"_broadcast_offer_frequency_slot", "_broadcast_offer_preset", b"_broadcast_offer_preset", "broadcast_offer_channel", b"broadcast_offer_channel", "broadcast_offer_frequency_slot", b"broadcast_offer_frequency_slot", "broadcast_offer_preset", b"broadcast_offer_preset"]) -> builtins.bool: ...
+        def ClearField(self, field_name: typing.Literal["_broadcast_offer_frequency_slot", b"_broadcast_offer_frequency_slot", "_broadcast_offer_preset", b"_broadcast_offer_preset", "broadcast_interval_secs", b"broadcast_interval_secs", "broadcast_message", b"broadcast_message", "broadcast_offer_channel", b"broadcast_offer_channel", "broadcast_offer_frequency_slot", b"broadcast_offer_frequency_slot", "broadcast_offer_preset", b"broadcast_offer_preset", "broadcast_offer_region", b"broadcast_offer_region", "broadcast_targets", b"broadcast_targets", "flags", b"flags"]) -> None: ...
+        @typing.overload
+        def WhichOneof(self, oneof_group: typing.Literal["_broadcast_offer_frequency_slot", b"_broadcast_offer_frequency_slot"]) -> typing.Literal["broadcast_offer_frequency_slot"] | None: ...
+        @typing.overload
+        def WhichOneof(self, oneof_group: typing.Literal["_broadcast_offer_preset", b"_broadcast_offer_preset"]) -> typing.Literal["broadcast_offer_preset"] | None: ...
+
+    @typing.final
+    class TAKConfig(google.protobuf.message.Message):
+        """
+        TAK team/role configuration
+        """
+
+        DESCRIPTOR: google.protobuf.descriptor.Descriptor
+
+        TEAM_FIELD_NUMBER: builtins.int
+        ROLE_FIELD_NUMBER: builtins.int
+        team: atak_pb2.Team.ValueType
+        """
+        Team color.
+        Default Unspecifed_Color -> firmware uses Cyan
+        """
+        role: atak_pb2.MemberRole.ValueType
+        """
+        Member role.
+        Default Unspecifed -> firmware uses TeamMember
+        """
+        def __init__(
+            self,
+            *,
+            team: atak_pb2.Team.ValueType = ...,
+            role: atak_pb2.MemberRole.ValueType = ...,
+        ) -> None: ...
+        def ClearField(self, field_name: typing.Literal["role", b"role", "team", b"team"]) -> None: ...
+
     MQTT_FIELD_NUMBER: builtins.int
     SERIAL_FIELD_NUMBER: builtins.int
     EXTERNAL_NOTIFICATION_FIELD_NUMBER: builtins.int
@@ -1141,6 +1524,10 @@ class ModuleConfig(google.protobuf.message.Message):
     AMBIENT_LIGHTING_FIELD_NUMBER: builtins.int
     DETECTION_SENSOR_FIELD_NUMBER: builtins.int
     PAXCOUNTER_FIELD_NUMBER: builtins.int
+    STATUSMESSAGE_FIELD_NUMBER: builtins.int
+    TRAFFIC_MANAGEMENT_FIELD_NUMBER: builtins.int
+    TAK_FIELD_NUMBER: builtins.int
+    MESH_BEACON_FIELD_NUMBER: builtins.int
     @property
     def mqtt(self) -> global___ModuleConfig.MQTTConfig:
         """
@@ -1219,6 +1606,30 @@ class ModuleConfig(google.protobuf.message.Message):
         TODO: REPLACE
         """
 
+    @property
+    def statusmessage(self) -> global___ModuleConfig.StatusMessageConfig:
+        """
+        TODO: REPLACE
+        """
+
+    @property
+    def traffic_management(self) -> global___ModuleConfig.TrafficManagementConfig:
+        """
+        Traffic management module config for mesh network optimization
+        """
+
+    @property
+    def tak(self) -> global___ModuleConfig.TAKConfig:
+        """
+        TAK team/role configuration for TAK_TRACKER
+        """
+
+    @property
+    def mesh_beacon(self) -> global___ModuleConfig.MeshBeaconConfig:
+        """
+        MeshBeacon module config
+        """
+
     def __init__(
         self,
         *,
@@ -1235,10 +1646,14 @@ class ModuleConfig(google.protobuf.message.Message):
         ambient_lighting: global___ModuleConfig.AmbientLightingConfig | None = ...,
         detection_sensor: global___ModuleConfig.DetectionSensorConfig | None = ...,
         paxcounter: global___ModuleConfig.PaxcounterConfig | None = ...,
+        statusmessage: global___ModuleConfig.StatusMessageConfig | None = ...,
+        traffic_management: global___ModuleConfig.TrafficManagementConfig | None = ...,
+        tak: global___ModuleConfig.TAKConfig | None = ...,
+        mesh_beacon: global___ModuleConfig.MeshBeaconConfig | None = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing.Literal["ambient_lighting", b"ambient_lighting", "audio", b"audio", "canned_message", b"canned_message", "detection_sensor", b"detection_sensor", "external_notification", b"external_notification", "mqtt", b"mqtt", "neighbor_info", b"neighbor_info", "paxcounter", b"paxcounter", "payload_variant", b"payload_variant", "range_test", b"range_test", "remote_hardware", b"remote_hardware", "serial", b"serial", "store_forward", b"store_forward", "telemetry", b"telemetry"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["ambient_lighting", b"ambient_lighting", "audio", b"audio", "canned_message", b"canned_message", "detection_sensor", b"detection_sensor", "external_notification", b"external_notification", "mqtt", b"mqtt", "neighbor_info", b"neighbor_info", "paxcounter", b"paxcounter", "payload_variant", b"payload_variant", "range_test", b"range_test", "remote_hardware", b"remote_hardware", "serial", b"serial", "store_forward", b"store_forward", "telemetry", b"telemetry"]) -> None: ...
-    def WhichOneof(self, oneof_group: typing.Literal["payload_variant", b"payload_variant"]) -> typing.Literal["mqtt", "serial", "external_notification", "store_forward", "range_test", "telemetry", "canned_message", "audio", "remote_hardware", "neighbor_info", "ambient_lighting", "detection_sensor", "paxcounter"] | None: ...
+    def HasField(self, field_name: typing.Literal["ambient_lighting", b"ambient_lighting", "audio", b"audio", "canned_message", b"canned_message", "detection_sensor", b"detection_sensor", "external_notification", b"external_notification", "mesh_beacon", b"mesh_beacon", "mqtt", b"mqtt", "neighbor_info", b"neighbor_info", "paxcounter", b"paxcounter", "payload_variant", b"payload_variant", "range_test", b"range_test", "remote_hardware", b"remote_hardware", "serial", b"serial", "statusmessage", b"statusmessage", "store_forward", b"store_forward", "tak", b"tak", "telemetry", b"telemetry", "traffic_management", b"traffic_management"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing.Literal["ambient_lighting", b"ambient_lighting", "audio", b"audio", "canned_message", b"canned_message", "detection_sensor", b"detection_sensor", "external_notification", b"external_notification", "mesh_beacon", b"mesh_beacon", "mqtt", b"mqtt", "neighbor_info", b"neighbor_info", "paxcounter", b"paxcounter", "payload_variant", b"payload_variant", "range_test", b"range_test", "remote_hardware", b"remote_hardware", "serial", b"serial", "statusmessage", b"statusmessage", "store_forward", b"store_forward", "tak", b"tak", "telemetry", b"telemetry", "traffic_management", b"traffic_management"]) -> None: ...
+    def WhichOneof(self, oneof_group: typing.Literal["payload_variant", b"payload_variant"]) -> typing.Literal["mqtt", "serial", "external_notification", "store_forward", "range_test", "telemetry", "canned_message", "audio", "remote_hardware", "neighbor_info", "ambient_lighting", "detection_sensor", "paxcounter", "statusmessage", "traffic_management", "tak", "mesh_beacon"] | None: ...
 
 global___ModuleConfig = ModuleConfig
 

@@ -1,9 +1,9 @@
-colorlog==6.9.0
+colorlog==6.10.1
 homeassistant==2024.11.0
-pip>=21.3.1
-ruff==0.11.8
+pip>=26.1.2
+ruff==0.15.15
 
 bleak~=0.22.3
-serialx==1.8.0
+serialx>=1.15.1
 
-aiomqtt>=1.2.0
+aiomqtt>=2.5.1

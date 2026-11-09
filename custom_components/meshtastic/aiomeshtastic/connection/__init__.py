@@ -1,4 +1,5 @@
 # SPDX-FileCopyrightText: 2024-2025 Pascal Brogle @broglep
+# SPDX-FileCopyrightText: 2025 Ovidiu D. Nițan @ov1d1u
 #
 # SPDX-License-Identifier: MIT
 
@@ -10,6 +11,7 @@ from abc import abstractmethod
 from collections.abc import AsyncIterable, Awaitable, Callable, Coroutine
 from contextlib import asynccontextmanager
 from types import TracebackType
+from typing import Self
 
 import google
 from google.protobuf.message import Message
@@ -97,7 +99,7 @@ class ClientApiConnection:
     def is_connected(self) -> bool:
         pass
 
-    async def __aenter__(self) -> "ClientApiConnection":
+    async def __aenter__(self) -> Self:
         if not self.is_connected:
             await self.connect()
         return self
@@ -250,7 +252,10 @@ class ClientApiConnection:
         *,
         from_node: int | None = None,
         ack: bool = False,
+        reply_id: int | None = None,
+        emoji: bool = False,
         want_response: bool = False,
+        out_callback: Callable[[Packet], Awaitable[None]] | None = None,
         ack_callback: Callable[[Packet[mesh_pb2.Routing]], Awaitable[None]] | None = None,
         response_callback: Callable[[Packet], Awaitable[None]] | None = None,
     ) -> None | Packet:
@@ -262,6 +267,10 @@ class ClientApiConnection:
         )
         mesh_packet.decoded.portnum = port_num
         mesh_packet.decoded.want_response = want_response
+        if reply_id is not None:
+            mesh_packet.decoded.reply_id = reply_id
+        if emoji:
+            mesh_packet.decoded.emoji = 1
         mesh_packet.id = self._generate_packet_id()
         if from_node is not None:
             mesh_packet.__setattr__("from", from_node)
@@ -274,10 +283,19 @@ class ClientApiConnection:
 
         if not ack and not want_response:
             await self.send_packet(to_radio)
+            if out_callback is not None:
+                try:
+                    await out_callback(Packet(to_radio))
+                except:  # noqa: E722
+                    self._logger.debug("Out callback failed", exc_info=True)
             return None
 
         return await self._send_await_response(
-            to_radio, want_response=want_response, ack_callback=ack_callback, response_callback=response_callback
+            to_radio,
+            want_response=want_response,
+            out_callback=out_callback,
+            ack_callback=ack_callback,
+            response_callback=response_callback,
         )
 
     async def _send_await_response(
@@ -285,12 +303,22 @@ class ClientApiConnection:
         to_radio: mesh_pb2.ToRadio,
         *,
         want_response: bool = False,
+        out_callback: Callable[[Packet], Awaitable[None]] | None = None,
         ack_callback: Callable[[Packet[mesh_pb2.Routing]], Awaitable[None]] | None = None,
         response_callback: Callable[[Packet], Awaitable[None]] | None = None,
     ) -> None | Packet:
         ack_packet = None
         response_packet = None
-        async for from_radio in self.listen(on_start=self.send_packet(to_radio)):
+
+        async def on_start() -> None:
+            await self.send_packet(to_radio)
+            if out_callback is not None:
+                try:
+                    await out_callback(Packet(to_radio))
+                except:  # noqa: E722
+                    self._logger.debug("Out callback failed", exc_info=True)
+
+        async for from_radio in self.listen(on_start=on_start()):
             packet = Packet(from_radio)
             if packet.data is None:
                 continue
@@ -443,7 +471,7 @@ class ClientApiConnection:
             self._logger.debug("Reconnect in progress, waiting")
             complete_task = asyncio.create_task(self._reconnect_completed.wait())
             failed_task = asyncio.create_task(self._reconnect_failed.wait())
-            done, pending = await asyncio.wait([complete_task, failed_task], return_when=asyncio.FIRST_COMPLETED)
+            done, _ = await asyncio.wait([complete_task, failed_task], return_when=asyncio.FIRST_COMPLETED)
             if done == {failed_task}:
                 msg = "Already ongoing reconnect failed"
                 raise ClientApiConnectionError(msg)

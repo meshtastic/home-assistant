@@ -5,7 +5,7 @@
   "description": "Meshtastic web app",
   "icons": [
     {
-      "src": "/icon.svg",
+      "src": "icon.svg",
       "sizes": "any",
       "type": "image/svg+xml"
     }

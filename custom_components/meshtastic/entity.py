@@ -57,6 +57,14 @@ class MeshtasticEntity(Entity):
 MESHTASTIC_CLASS_SCHEMA = vol.All(vol.Lower, vol.Coerce(MeshtasticDeviceClass))
 
 
+def _gateway_short_prefix(short_name: str, long_name: str) -> str:
+    ascii_only = short_name.encode("ascii", "ignore")
+    if len(ascii_only) == 0 or len(ascii_only) == 1:
+        return long_name[0:3].lower()
+
+    return ascii_only.decode("ascii", "ignore").lower()
+
+
 class GatewayEntity(MeshtasticEntity):
     _attr_icon = "mdi:radio-handheld"
 
@@ -64,7 +72,7 @@ class GatewayEntity(MeshtasticEntity):
         self,
         config_entry_id: str,
         node: int,
-        long_name: str,  # noqa: ARG002
+        long_name: str,
         short_name: str,
         local_config: dict,
         module_config: dict,
@@ -72,6 +80,7 @@ class GatewayEntity(MeshtasticEntity):
         super().__init__(config_entry_id, node, MeshtasticDeviceClass.GATEWAY, None)
         self._local_config = local_config
         self._module_config = module_config
+        self._long_name = long_name
         self._short_name = short_name
 
         self._attr_name = None
@@ -99,7 +108,8 @@ class GatewayEntity(MeshtasticEntity):
 
     @property
     def suggested_object_id(self) -> str | None:
-        return f"{self.device_class} {self._short_name}"
+        name = _gateway_short_prefix(self._short_name, self._long_name)
+        return f"{self.device_class} {name}"
 
 
 class GatewayChannelEntity(MeshtasticEntity):
@@ -251,8 +261,10 @@ class MeshtasticNodeEntity(MeshtasticCoordinatorEntity, ABC):
         self._node_id = node_id
         self.entity_description = entity_description
 
-        gateway_short_name = gateway.get("user", {}).get("shortName", None)
-        gateway_prefix = "" if gateway_short_name is None else f"{gateway_short_name.lower()}_"
+        gateway_short_name = gateway.get("user", {}).get("shortName", "")
+        gateway_long_name = gateway.get("user", {}).get("longName", "")
+        gateway_short_prefix = _gateway_short_prefix(gateway_short_name, gateway_long_name)
+        gateway_prefix = f"{gateway_short_prefix}_"
 
         self.entity_id = f"{platform}.{DOMAIN}_{gateway_prefix}{self.node_id}_{self.entity_description.key}"
 

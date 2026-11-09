@@ -11,7 +11,7 @@ SPDX-License-Identifier: MIT
 [![License][license-shield]](LICENSE)
 
 [![hacs](https://img.shields.io/badge/HACS-Custom-orange.svg?style=for-the-badge)](https://hacs.xyz/docs/faq/custom_repositories)
-[![HA Analytics](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fanalytics.home-assistant.io%2Fcustom_integrations.json&query=%24.meshtastic.total&style=for-the-badge&label=Active%20Installations&color=red)](https://buymeacoffee.com/broglep)
+[![HA Analytics](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fanalytics.home-assistant.io%2Fcustom_integrations.json&query=%24.meshtastic.total&style=for-the-badge&label=Active%20Installations&color=red)](https://analytics.home-assistant.io/custom_integrations.json)
 
 
 _Home Assistant Integration for [Meshtastic](https://www.meshtastic.org)._
@@ -88,6 +88,7 @@ There are triggers when messages have been sent or have been received.
 Gateway nodes offer more triggers than other nodes. You can further refine the triggers to only fire when a message was 
 sent/received on a particular channel or as direct message.
 
+For anything the device triggers don't cover, use the [events](#events) below with a "Manual Events" trigger.
 
 #### Actions
  * Send Direct Message
@@ -97,6 +98,42 @@ sent/received on a particular channel or as direct message.
 Note: Ensure you have a delay before the action if your automations are triggered by meshtastic device trigger,
 otherwise you risk that your action triggered message is being dropped by meshtastic firmware because
 it is still busy with receiving / sending other mesh messages.
+
+#### Events
+
+Every gateway fires these events on the Home Assistant event bus. All of them share one envelope:
+
+```yaml
+config_entry_id: 01J...   # the gateway's config entry
+node: 1127918844          # node number the event is about (the sender for packets)
+data: {...}               # event specific, see below
+```
+
+Packet based events also carry `message_id`, the mesh packet id. Inside `data`, `to` is
+`{node: <number>, channel: null}` for a direct message and `{node: null, channel: <index>}` for a
+channel broadcast; the channel index is the gateway's own.
+
+| Event | Fired when | `data` |
+| --- | --- | --- |
+| `meshtastic_api_text_message` | a text message is received | `from`, `to`, `gateway`, `message`, `hop_start`, `hop_limit`, `rx_snr`, `rx_rssi`, `via_mqtt`, `xeddsa_signed` |
+| `meshtastic_api_text_message_out` | the gateway sends a text message | `from` (the gateway), `to`, `gateway`, `message` |
+| `meshtastic_api_detection_sensor` | a detection sensor packet is received | `from`, `to`, `gateway`, `message` (the sensor text) |
+| `meshtastic_api_mesh_beacon` | a Mesh Beacon is received | `from`, `to`, `gateway`, `beacon`, `hop_start`, `hop_limit`, `rx_snr`, `rx_rssi` |
+| `meshtastic_api_waypoint` | a waypoint is received | `from`, `to`, `gateway`, `waypoint` |
+| `meshtastic_api_position` | a position is received | the decoded `Position`, plus `latitude` and `longitude` in degrees |
+| `meshtastic_api_telemetry` | telemetry is received | the metrics group; the envelope adds `telemetry_type` (`device_metrics`, `local_stats`, `environment_metrics`, `power_metrics` or `host_metrics`) |
+| `meshtastic_api_node_updated` | a node announces itself (NodeInfo) | `num` and `user` (`id`, `longName`, `shortName`, `hwModel`, `publicKey` and so on) |
+| `meshtastic_api_packet` | any packet reaches the gateway | the whole decoded `MeshPacket` |
+
+`position` and `telemetry` events also put `node_info: {name: <long name>}` in the envelope.
+Decoded protobuf messages use the protobuf JSON names (`longName`, `geofenceRadius`), so fields left at
+their default are omitted.
+
+On text messages, `hop_start` minus `hop_limit` is the number of hops the message took, when the sender
+set `hop_start` (it is 0 otherwise). `rx_snr` and `rx_rssi` are as measured by the gateway, `via_mqtt` is true
+when the message came in over MQTT, and `xeddsa_signed` is true only when firmware verified the sender's
+signature. `beacon` holds `message` and, when offered, `offerChannel`, `offerRegion`, `offerPreset` and
+`offerFrequencySlot`.
 
 #### Examples
 <details>
@@ -219,6 +256,13 @@ trigger:
           channel: 0
         gateway: 862525748
         message: Sample Message
+        hop_start: 3
+        hop_limit: 2
+        rx_snr: 6.25
+        rx_rssi: -71
+        via_mqtt: false
+        xeddsa_signed: true
+      message_id: 2834221771
 ```
 
 From contains the node id of the sender of the message, to will have the node id of the gateway for direct messages, or a gateway channel id if the message is directed at the channel. 
@@ -259,6 +303,48 @@ In the example above, we echo back an incoming direct message.
 
 </details>
 
+<details>
+<summary>Waypoint events (including geofences)</summary>
+
+Waypoints received by your gateway fire a `meshtastic_api_waypoint` event. Meshtastic 2.8 waypoints can carry a geofence: a circle (`geofenceRadius` in meters around the waypoint position), a `boundingBox` (degrees scaled by 1e-7), or both.
+
+```yaml
+trigger:
+  event:
+    event_type: meshtastic_api_waypoint
+    event_data:
+      data:
+        from: 1127918844
+        to:
+          node: null
+          channel: 0
+        gateway: 862525748
+        waypoint:
+          id: 1234
+          name: Campsite
+          description: ""
+          icon: 0
+          expire: 0
+          lockedTo: 0
+          latitudeI: 407128000
+          longitudeI: -740060000
+          latitude: 40.7128
+          longitude: -74.006
+          geofenceRadius: 250
+          boundingBox:
+            longitudeWestI: -740100000
+            latitudeSouthI: 407100000
+            longitudeEastI: -740000000
+            latitudeNorthI: 407200000
+          notifyOnEnter: true
+          notifyOnExit: false
+          notifyFavoritesOnly: false
+```
+
+`boundingBox`, `latitudeI` and `longitudeI` are only present when set. The `notify*` flags are carried as sent; a receiving device keeps its own enter/exit preferences and ignores the flags on waypoints it gets from the mesh. Enter and exit are evaluated by the device and are not sent as events, so this integration does not report them.
+
+</details>
+
 ### [Logbook](https://www.home-assistant.io/integrations/logbook/)
 
 Direct messages or channel messages are recorded in the log book. 
@@ -272,6 +358,18 @@ Note: When logbook is not enabled, messages are not recorded.
 For nodes selected as part of the configuration, their position is exposed as a device tracker.
 You can see the nodes on home assistant map accordingly and home assistant will report if 
 node is at home or away.
+
+### Node numbers on firmware 2.8
+
+Firmware 2.8 derives a node's number from its public key, so upgrading a node from 2.7 gives it a new
+number. On startup the integration finds selected nodes that moved: a peer is followed when the gateway's
+node database holds the same public key at the new number, and the gateway is followed through its own
+connection. Devices and entities move to the new number in place, so entity ids and the automations that
+use them keep working. The integration also stores each selected node's key, so a later move is still
+followed after the gateway forgets the old number.
+
+A node whose key changes as well, through a full device reset, a flash erase or a key regenerate or
+import, is a new identity. Nothing links it to the old one, so it shows up as a new node to select.
 
 ### Services / [Actions](https://developers.home-assistant.io/blog/2024/07/16/service-actions/)
 

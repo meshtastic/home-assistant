@@ -1,4 +1,5 @@
 # SPDX-FileCopyrightText: 2024-2025 Pascal Brogle @broglep
+# SPDX-FileCopyrightText: 2025 Ovidiu D. Nițan @ov1d1u
 #
 # SPDX-License-Identifier: MIT
 
@@ -61,7 +62,11 @@ EVENT_MESHTASTIC_API_NODE_UPDATED = EVENT_MESHTASTIC_API_BASE + "_node_updated"
 EVENT_MESHTASTIC_API_TELEMETRY = EVENT_MESHTASTIC_API_BASE + "_telemetry"
 EVENT_MESHTASTIC_API_PACKET = EVENT_MESHTASTIC_API_BASE + "_packet"
 EVENT_MESHTASTIC_API_TEXT_MESSAGE = EVENT_MESHTASTIC_API_BASE + "_text_message"
+EVENT_MESHTASTIC_API_TEXT_MESSAGE_OUT = EVENT_MESHTASTIC_API_BASE + "_text_message_out"
+EVENT_MESHTASTIC_API_DETECTION_SENSOR = EVENT_MESHTASTIC_API_BASE + "_detection_sensor"
+EVENT_MESHTASTIC_API_MESH_BEACON = EVENT_MESHTASTIC_API_BASE + "_mesh_beacon"
 EVENT_MESHTASTIC_API_POSITION = EVENT_MESHTASTIC_API_BASE + "_position"
+EVENT_MESHTASTIC_API_WAYPOINT = EVENT_MESHTASTIC_API_BASE + "_waypoint"
 
 ATTR_EVENT_MESHTASTIC_API_CONFIG_ENTRY_ID = "config_entry_id"
 ATTR_EVENT_MESHTASTIC_API_NODE = "node"
@@ -75,6 +80,7 @@ class EventMeshtasticApiTelemetryType(StrEnum):
     LOCAL_STATS = "local_stats"
     ENVIRONMENT_METRICS = "environment_metrics"
     POWER_METRICS = "power_metrics"
+    HOST_METRICS = "host_metrics"
 
 
 class MeshtasticApiClientError(IntegrationError):
@@ -109,7 +115,7 @@ class MeshtasticApiClient:
             ble_address = data[CONF_CONNECTION_BLUETOOTH_ADDRESS]
             ble_device = None
             if hass:
-                from homeassistant.components.bluetooth import async_ble_device_from_address
+                from homeassistant.components.bluetooth import async_ble_device_from_address  # noqa: PLC0415
 
                 ble_device = async_ble_device_from_address(hass, ble_address, connectable=True)
             connection = AioBluetoothConnection(ble_address=ble_address, ble_device=ble_device)
@@ -132,7 +138,18 @@ class MeshtasticApiClient:
             packet_type=portnums_pb2.PortNum.TEXT_MESSAGE_APP, callback=self._on_text_message, as_packet=True
         )
         self._interface.add_packet_app_listener(
+            packet_type=portnums_pb2.PortNum.DETECTION_SENSOR_APP,
+            callback=self._on_detection_sensor,
+            as_packet=True,
+        )
+        self._interface.add_packet_app_listener(
+            packet_type=portnums_pb2.PortNum.MESH_BEACON_APP, callback=self._on_mesh_beacon, as_packet=True
+        )
+        self._interface.add_packet_app_listener(
             packet_type=portnums_pb2.PortNum.TELEMETRY_APP, callback=self._on_telemetry, as_dict=True
+        )
+        self._interface.add_packet_app_listener(
+            packet_type=portnums_pb2.PortNum.WAYPOINT_APP, callback=self._on_waypoint, as_packet=True
         )
         self._interface.add_packet_app_listener(
             packet_type=portnums_pb2.PortNum.POSITION_APP, callback=self._on_position, as_dict=True
@@ -214,14 +231,50 @@ class MeshtasticApiClient:
 
         return transformed
 
-    async def send_text(
+    async def _publish_event_text_message_out(
+        self,
+        text: str,
+        message_id: int,
+        destination_id: int | str = MeshInterface.BROADCAST_ADDR,
+        channel_index: int | None = None,
+    ) -> None:
+        if destination_id == MeshInterface.BROADCAST_NUM or channel_index is not None:
+            to_channel = channel_index
+            to_node = None
+        else:
+            to_channel = None
+            to_node = destination_id
+
+        gateway_id = self.get_own_node()["num"]
+        event_data = self._build_event_data(
+            gateway_id,
+            {
+                "from": gateway_id,
+                "to": {"node": to_node, "channel": to_channel},
+                "gateway": gateway_id,
+                "message": text,
+            },
+        )
+
+        event_data["message_id"] = message_id
+        self._hass.bus.async_fire(EVENT_MESHTASTIC_API_TEXT_MESSAGE_OUT, event_data)
+
+    async def send_text(  # noqa: PLR0913
         self,
         text: str,
         destination_id: int | str = MeshInterface.BROADCAST_ADDR,
         *,
         want_ack: bool = False,
         channel_index: int | None = None,
+        reply_id: int | None = None,
+        is_reaction: bool = False,
     ) -> bool:
+        async def _on_message_sent(packet: Packet) -> None:
+            # publish event so that outgoing messages are recorded to logbook
+            await self._publish_event_text_message_out(
+                text, packet.mesh_packet.id, destination_id=destination_id, channel_index=channel_index
+            )
+
         try:
             await asyncio.wait_for(
                 self._interface.send_text_message(
@@ -229,6 +282,9 @@ class MeshtasticApiClient:
                     destination=destination_id,
                     want_ack=want_ack,
                     channel_index=channel_index,
+                    reply_id=reply_id,
+                    is_reaction=is_reaction,
+                    on_message_sent=_on_message_sent,
                 ),
                 timeout=30,
             )
@@ -283,17 +339,94 @@ class MeshtasticApiClient:
                 "to": {"node": to_node, "channel": to_channel},
                 "gateway": self.get_own_node()["num"],
                 "message": packet.app_payload,
+                "hop_start": packet.mesh_packet.hop_start,
+                "hop_limit": packet.mesh_packet.hop_limit,
+                "rx_snr": packet.mesh_packet.rx_snr,
+                "rx_rssi": packet.mesh_packet.rx_rssi,
+                "via_mqtt": packet.mesh_packet.via_mqtt,
+                "xeddsa_signed": packet.mesh_packet.xeddsa_signed,
             },
         )
 
         event_data["message_id"] = packet.mesh_packet.id
         self._hass.bus.async_fire(EVENT_MESHTASTIC_API_TEXT_MESSAGE, event_data)
 
+    async def _on_detection_sensor(self, node: MeshNode, packet: Packet) -> None:
+        if packet.to_id == MeshInterface.BROADCAST_NUM:
+            to_channel = packet.channel_index
+            to_node = None
+        else:
+            to_channel = None
+            to_node = packet.to_id
+
+        event_data = self._build_event_data(
+            node.id,
+            {
+                "from": packet.from_id,
+                "to": {"node": to_node, "channel": to_channel},
+                "gateway": self.get_own_node()["num"],
+                "message": packet.app_payload,
+            },
+        )
+
+        event_data["message_id"] = packet.mesh_packet.id
+        self._hass.bus.async_fire(EVENT_MESHTASTIC_API_DETECTION_SENSOR, event_data)
+
+    async def _on_waypoint(self, node: MeshNode, packet: Packet) -> None:
+        waypoint = self._message_to_dict(packet.app_payload)
+        self._modify_position(waypoint)
+
+        if packet.to_id == MeshInterface.BROADCAST_NUM:
+            to_channel = packet.channel_index
+            to_node = None
+        else:
+            to_channel = None
+            to_node = packet.to_id
+
+        event_data = self._build_event_data(
+            node.id,
+            {
+                "from": packet.from_id,
+                "to": {"node": to_node, "channel": to_channel},
+                "gateway": self.get_own_node()["num"],
+                "waypoint": waypoint,
+            },
+        )
+
+        event_data["message_id"] = packet.mesh_packet.id
+        self._hass.bus.async_fire(EVENT_MESHTASTIC_API_WAYPOINT, event_data)
+
+    async def _on_mesh_beacon(self, node: MeshNode, packet: Packet) -> None:
+        if packet.to_id == MeshInterface.BROADCAST_NUM:
+            to_channel = packet.channel_index
+            to_node = None
+        else:
+            to_channel = None
+            to_node = packet.to_id
+
+        event_data = self._build_event_data(
+            node.id,
+            {
+                "from": packet.from_id,
+                "to": {"node": to_node, "channel": to_channel},
+                "gateway": self.get_own_node()["num"],
+                "beacon": self._message_to_dict(packet.app_payload),
+                "hop_start": packet.mesh_packet.hop_start,
+                "hop_limit": packet.mesh_packet.hop_limit,
+                "rx_snr": packet.mesh_packet.rx_snr,
+                "rx_rssi": packet.mesh_packet.rx_rssi,
+            },
+        )
+
+        event_data["message_id"] = packet.mesh_packet.id
+        self._hass.bus.async_fire(EVENT_MESHTASTIC_API_MESH_BEACON, event_data)
+
     async def _on_telemetry(self, node: MeshNode, telemetry: dict[str, Any]) -> None:
         device_metrics = telemetry.get("deviceMetrics")
         local_stats = telemetry.get("localStats")
         environment_metrics = telemetry.get("environmentMetrics")
         power_metrics = telemetry.get("powerMetrics")
+        host_metrics = telemetry.get("hostMetrics")
 
         node_info = {"name": node.long_name}
         if device_metrics:
@@ -318,6 +451,12 @@ class MeshtasticApiClient:
             event_data = self._build_event_data(node.id, power_metrics)
             event_data[ATTR_EVENT_MESHTASTIC_API_NODE_INFO] = node_info
             event_data[ATTR_EVENT_MESHTASTIC_API_TELEMETRY_TYPE] = EventMeshtasticApiTelemetryType.POWER_METRICS
+            self._hass.bus.async_fire(EVENT_MESHTASTIC_API_TELEMETRY, event_data)
+
+        if host_metrics:
+            event_data = self._build_event_data(node.id, host_metrics)
+            event_data[ATTR_EVENT_MESHTASTIC_API_NODE_INFO] = node_info
+            event_data[ATTR_EVENT_MESHTASTIC_API_TELEMETRY_TYPE] = EventMeshtasticApiTelemetryType.HOST_METRICS
             self._hass.bus.async_fire(EVENT_MESHTASTIC_API_TELEMETRY, event_data)
 
     async def _on_position(self, node: MeshNode, position: dict[str, Any]) -> None:

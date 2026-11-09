@@ -58,8 +58,7 @@
           "serial_port": "Path to serial port, e.g. /dev/ttyUSB0"
         }
       },
-      "reconfigure": {
-      },
+      "reconfigure": {},
       "node": {
         "description": "Configure which nodes should be imported",
         "data": {
@@ -177,6 +176,14 @@
         "ack": {
           "name": "Acknowledgement",
           "description": "Request an acknowledgement"
+        },
+        "reply_id": {
+          "name": "Reply ID",
+          "description": "A message ID to reply to."
+        },
+        "is_reaction": {
+          "name": "Send as Reaction",
+          "description": "Send the message as a reaction (emoji). Requires Reply ID to be set and the message must be a single emoji."
         }
       }
     },
@@ -195,6 +202,14 @@
         "ack": {
           "name": "Acknowledgement",
           "description": "Request an acknowledgement"
+        },
+        "reply_id": {
+          "name": "Reply ID",
+          "description": "A message ID to reply to."
+        },
+        "is_reaction": {
+          "name": "Send as Reaction",
+          "description": "Send the message as a reaction (emoji). Requires Reply ID to be set and the message must be a single emoji."
         }
       }
     },
@@ -213,6 +228,14 @@
         "ack": {
           "name": "Acknowledgement",
           "description": "Request an acknowledgement"
+        },
+        "reply_id": {
+          "name": "Reply ID",
+          "description": "A message ID to reply to."
+        },
+        "is_reaction": {
+          "name": "Send as Reaction",
+          "description": "Send the message as a reaction (emoji). Requires Reply ID to be set and the message must be a single emoji."
         }
       }
     },

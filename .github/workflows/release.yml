@@ -15,7 +15,7 @@ jobs:
       contents: write
     steps:
       - name: "Checkout the repository"
-        uses: "actions/checkout@v6.0.2"
+        uses: "actions/checkout@v7.0.1"
 
       - name: "ZIP the integration directory"
         shell: "bash"
@@ -24,6 +24,6 @@ jobs:
           zip homeassistant-meshtastic.zip -r ./
 
       - name: "Upload the ZIP file to the release"
-        uses: "softprops/action-gh-release@v2.5.0"
+        uses: "softprops/action-gh-release@v3.0.2"
         with:
           files: ${{ github.workspace }}/custom_components/meshtastic/homeassistant-meshtastic.zip
