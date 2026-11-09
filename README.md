@@ -262,6 +262,48 @@ In the example above, we echo back an incoming direct message.
 
 </details>
 
+<details>
+<summary>Waypoint events (including geofences)</summary>
+
+Waypoints received by your gateway fire a `meshtastic_api_waypoint` event. Meshtastic 2.8 waypoints can carry a geofence: a circle (`geofenceRadius` in meters around the waypoint position), a `boundingBox` (degrees scaled by 1e-7), or both.
+
+```yaml
+trigger:
+  event:
+    event_type: meshtastic_api_waypoint
+    event_data:
+      data:
+        from: 1127918844
+        to:
+          node: null
+          channel: 0
+        gateway: 862525748
+        waypoint:
+          id: 1234
+          name: Campsite
+          description: ""
+          icon: 0
+          expire: 0
+          lockedTo: 0
+          latitudeI: 407128000
+          longitudeI: -740060000
+          latitude: 40.7128
+          longitude: -74.006
+          geofenceRadius: 250
+          boundingBox:
+            longitudeWestI: -740100000
+            latitudeSouthI: 407100000
+            longitudeEastI: -740000000
+            latitudeNorthI: 407200000
+          notifyOnEnter: true
+          notifyOnExit: false
+          notifyFavoritesOnly: false
+```
+
+`boundingBox`, `latitudeI` and `longitudeI` are only present when set. The `notify*` flags are carried as sent; a receiving device keeps its own enter/exit preferences and ignores the flags on waypoints it gets from the mesh. Enter and exit are evaluated by the device and are not sent as events, so this integration does not report them.
+
+</details>
+
 ### [Logbook](https://www.home-assistant.io/integrations/logbook/)
 
 Direct messages or channel messages are recorded in the log book. 

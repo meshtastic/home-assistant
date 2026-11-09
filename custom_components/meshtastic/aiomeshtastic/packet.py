@@ -96,6 +96,10 @@ class Packet[T]:
             position_message = mesh_pb2.Position()
             position_message.ParseFromString(payload)
             return position_message
+        if port_num == portnums_pb2.PortNum.WAYPOINT_APP:
+            waypoint = mesh_pb2.Waypoint()
+            waypoint.ParseFromString(payload)
+            return waypoint
         if port_num == portnums_pb2.PortNum.NODEINFO_APP:
             node_info = mesh_pb2.NodeInfo()
             node_info.user.ParseFromString(payload)
