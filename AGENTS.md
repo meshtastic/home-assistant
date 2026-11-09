@@ -60,7 +60,7 @@ coordinator.py the node database as coordinator data, keyed by node number
 ## Commands
 
 ```sh
-scripts/setup                 # pip install -r requirements.txt (Home Assistant 2024.11, ruff 0.15.15)
+scripts/setup                 # pip install -r requirements.txt (Home Assistant 2026.8, ruff 0.15.15)
 scripts/lint                  # ruff format . && ruff check . --fix
 ruff check . && ruff format --check .   # what CI runs
 python3 -m pytest tests       # needs requirements.test.txt
@@ -69,8 +69,9 @@ scripts/develop               # standalone Home Assistant on config/configuratio
 scripts/generate_protobufs    # see CONTRIBUTING.md for protoc, mypy-protobuf 3.6 and GNU sed
 ```
 
-`hacs.json` sets the minimum Home Assistant version (2024.11.0), which `requirements.txt` pins for
-development; the code also runs on current releases, so check deprecations against both.
+`hacs.json` sets the minimum Home Assistant version (2026.8.0), which `requirements.txt` pins for
+development; the code also runs on current releases, so check deprecations against both. Devices are
+per config entry from 2026.8, so look them up with `async_get_device_by_identifier(identifier, entry_id)`.
 
 ## CI and merging
 
@@ -78,5 +79,5 @@ development; the code also runs on current releases, so check deprecations again
   also nightly) and `release.yml` (zip on release).
 - Fork pull requests from first-time contributors wait for a maintainer to approve their workflow runs.
 - The CLA assistant check must pass. Pull requests are squash-merged with Conventional titles.
-- Dependabot opens the dependency bumps. Pins that follow Home Assistant 2024.11 (`bleak`, `protobuf`
+- Dependabot opens the dependency bumps. Pins that follow Home Assistant 2026.8 (`bleak`, `protobuf`
   in `requirements.test.txt`) move with the Home Assistant pin, not on their own.

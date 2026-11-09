@@ -180,7 +180,6 @@ class GatewayChannelEntity(MeshtasticEntity):
 
 class GatewayDirectMessageEntity(MeshtasticEntity):
     _attr_icon = "mdi:message-lock"
-    _attr_name = "Direct Messages"
     _attr_translation_key = "direct_messages"
     _attr_has_entity_name = True
     _attr_should_poll = False
@@ -275,6 +274,7 @@ class MeshtasticNodeEntity(MeshtasticCoordinatorEntity, ABC):
             f"{coordinator.config_entry.entry_id}_{platform}_{self.node_id}_{self.entity_description.key}"
         )
         self._attr_has_entity_name = True
+        self._attr_translation_key = entity_description.translation_key or entity_description.key
 
     @property
     def node_id(self) -> int:

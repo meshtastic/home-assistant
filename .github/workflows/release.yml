@@ -17,6 +17,15 @@ jobs:
       - name: "Checkout the repository"
         uses: "actions/checkout@v7.0.1"
 
+      - name: "Set the manifest version from the release tag"
+        shell: "bash"
+        env:
+          TAG: ${{ github.event.release.tag_name }}
+        run: |
+          manifest="${{ github.workspace }}/custom_components/meshtastic/manifest.json"
+          jq --arg version "${TAG#v}" '.version = $version' "$manifest" > "$manifest.new"
+          mv "$manifest.new" "$manifest"
+
       - name: "ZIP the integration directory"
         shell: "bash"
         run: |

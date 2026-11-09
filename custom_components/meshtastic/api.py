@@ -296,6 +296,15 @@ class MeshtasticApiClient:
             return True
 
     @property
+    def my_info(self) -> Mapping[str, Any]:
+        my_info = self._interface.connected_node_info()
+        return MessageToDict(my_info) if my_info is not None else {}
+
+    @property
+    def node_count(self) -> int:
+        return len(self._interface.nodes())
+
+    @property
     def metadata(self) -> Mapping[str, Any]:
         metadata = self._interface.connected_node_metadata()
         return MessageToDict(metadata) if metadata is not None else {}
