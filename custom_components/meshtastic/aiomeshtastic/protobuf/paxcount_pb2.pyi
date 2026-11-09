@@ -3,53 +3,43 @@
 isort:skip_file
 """
 
-from google.protobuf import descriptor as _descriptor
-from google.protobuf import message as _message
-import builtins as _builtins
-import sys
-import typing as _typing
+import builtins
+import google.protobuf.descriptor
+import google.protobuf.message
+import typing
 
-if sys.version_info >= (3, 11):
-    from typing import TypeAlias as _TypeAlias, Never as _Never
-else:
-    from typing_extensions import TypeAlias as _TypeAlias, Never as _Never
+DESCRIPTOR: google.protobuf.descriptor.FileDescriptor
 
-DESCRIPTOR: _descriptor.FileDescriptor
-
-@_typing.final
-class Paxcount(_message.Message):
+@typing.final
+class Paxcount(google.protobuf.message.Message):
     """
     TODO: REPLACE
     """
 
-    DESCRIPTOR: _descriptor.Descriptor
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
 
-    WIFI_FIELD_NUMBER: _builtins.int
-    BLE_FIELD_NUMBER: _builtins.int
-    UPTIME_FIELD_NUMBER: _builtins.int
-    wifi: _builtins.int
+    WIFI_FIELD_NUMBER: builtins.int
+    BLE_FIELD_NUMBER: builtins.int
+    UPTIME_FIELD_NUMBER: builtins.int
+    wifi: builtins.int
     """
     seen Wifi devices
     """
-    ble: _builtins.int
+    ble: builtins.int
     """
     Seen BLE devices
     """
-    uptime: _builtins.int
+    uptime: builtins.int
     """
     Uptime in seconds
     """
     def __init__(
         self,
         *,
-        wifi: _builtins.int = ...,
-        ble: _builtins.int = ...,
-        uptime: _builtins.int = ...,
+        wifi: builtins.int = ...,
+        ble: builtins.int = ...,
+        uptime: builtins.int = ...,
     ) -> None: ...
-    _HasFieldArgType: _TypeAlias = _Never  # noqa: Y015
-    def HasField(self, field_name: _HasFieldArgType) -> _builtins.bool: ...
-    _ClearFieldArgType: _TypeAlias = _typing.Literal["ble", b"ble", "uptime", b"uptime", "wifi", b"wifi"]  # noqa: Y015
-    def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
-    def WhichOneof(self, oneof_group: _Never) -> None: ...
+    def ClearField(self, field_name: typing.Literal["ble", b"ble", "uptime", b"uptime", "wifi", b"wifi"]) -> None: ...
 
-Global___Paxcount: _TypeAlias = Paxcount  # noqa: Y015
+global___Paxcount = Paxcount

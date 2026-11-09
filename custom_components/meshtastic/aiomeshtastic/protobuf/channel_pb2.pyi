@@ -3,27 +3,22 @@
 isort:skip_file
 trunk-ignore(buf-lint/PACKAGE_DIRECTORY_MATCH)"""
 
-from google.protobuf import descriptor as _descriptor
-from google.protobuf import message as _message
-from google.protobuf.internal import enum_type_wrapper as _enum_type_wrapper
-import builtins as _builtins
+import builtins
+import google.protobuf.descriptor
+import google.protobuf.internal.enum_type_wrapper
+import google.protobuf.message
 import sys
-import typing as _typing
+import typing
 
-if sys.version_info >= (3, 11):
-    from typing import TypeAlias as _TypeAlias, Never as _Never
+if sys.version_info >= (3, 10):
+    import typing as typing_extensions
 else:
-    from typing_extensions import TypeAlias as _TypeAlias, Never as _Never
+    import typing_extensions
 
-if sys.version_info >= (3, 13):
-    from warnings import deprecated as _deprecated
-else:
-    from typing_extensions import deprecated as _deprecated
+DESCRIPTOR: google.protobuf.descriptor.FileDescriptor
 
-DESCRIPTOR: _descriptor.FileDescriptor
-
-@_typing.final
-class ChannelSettings(_message.Message):
+@typing.final
+class ChannelSettings(google.protobuf.message.Message):
     """
     This information can be encoded as a QRcode/url so that other users can configure
     their radio to join the same channel.
@@ -42,30 +37,21 @@ class ChannelSettings(_message.Message):
     explain how remote settings and remote gpio are managed as an example
     """
 
-    DESCRIPTOR: _descriptor.Descriptor
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
 
-    CHANNEL_NUM_FIELD_NUMBER: _builtins.int
-    PSK_FIELD_NUMBER: _builtins.int
-    NAME_FIELD_NUMBER: _builtins.int
-    ID_FIELD_NUMBER: _builtins.int
-    UPLINK_ENABLED_FIELD_NUMBER: _builtins.int
-    DOWNLINK_ENABLED_FIELD_NUMBER: _builtins.int
-    MODULE_SETTINGS_FIELD_NUMBER: _builtins.int
-    @_builtins.property
-    @_deprecated("""This field has been marked as deprecated using proto field options.""")
-    def channel_num(self) -> _builtins.int:
-        """
-        Deprecated in favor of LoraConfig.channel_num
-        """
-
-    @channel_num.setter
-    @_deprecated("""This field has been marked as deprecated using proto field options.""")
-    def channel_num(self, value: _builtins.int) -> None:
-        """
-        Deprecated in favor of LoraConfig.channel_num
-        """
-
-    psk: _builtins.bytes
+    CHANNEL_NUM_FIELD_NUMBER: builtins.int
+    PSK_FIELD_NUMBER: builtins.int
+    NAME_FIELD_NUMBER: builtins.int
+    ID_FIELD_NUMBER: builtins.int
+    UPLINK_ENABLED_FIELD_NUMBER: builtins.int
+    DOWNLINK_ENABLED_FIELD_NUMBER: builtins.int
+    MODULE_SETTINGS_FIELD_NUMBER: builtins.int
+    USE_AEAD_FIELD_NUMBER: builtins.int
+    channel_num: builtins.int
+    """
+    Deprecated in favor of LoraConfig.channel_num
+    """
+    psk: builtins.bytes
     """
     A simple pre-shared key for now for crypto.
     Must be either 0 bytes (no crypto), 16 bytes (AES128), or 32 bytes (AES256).
@@ -78,7 +64,7 @@ class ChannelSettings(_message.Message):
     `2` through 10 = The default channel key, except with 1 through 9 added to the last byte.
     Shown to user as simple1 through 10
     """
-    name: _builtins.str
+    name: builtins.str
     """
     A SHORT name that will be packed into the URL.
     Less than 12 bytes.
@@ -89,7 +75,7 @@ class ChannelSettings(_message.Message):
     For channel_num hashing empty string will be treated as "X".
     Where "X" is selected based on the English words listed above for ModemPreset
     """
-    id: _builtins.int
+    id: builtins.int
     """
     Used to construct a globally unique channel ID.
     The full globally unique ID will be: "name.id" where ID is shown as base36.
@@ -103,16 +89,24 @@ class ChannelSettings(_message.Message):
     a table of well known IDs.
     (see Well Known Channels FIXME)
     """
-    uplink_enabled: _builtins.bool
+    uplink_enabled: builtins.bool
     """
     If true, messages on the mesh will be sent to the *public* internet by any gateway ndoe
     """
-    downlink_enabled: _builtins.bool
+    downlink_enabled: builtins.bool
     """
     If true, messages seen on the internet will be forwarded to the local mesh.
     """
-    @_builtins.property
-    def module_settings(self) -> Global___ModuleSettings:
+    use_aead: builtins.bool
+    """
+    Enable authenticated encryption (AES-CCM) for this channel.
+    When true, messages include a 12-byte authentication tag that prevents
+    forgery and bit-flipping attacks. All nodes on the channel must have
+    this enabled - unauthenticated (AES-CTR) packets are rejected.
+    Experimental. Default: false (standard AES-CTR encryption).
+    """
+    @property
+    def module_settings(self) -> global___ModuleSettings:
         """
         Per-channel module settings.
         """
@@ -120,37 +114,35 @@ class ChannelSettings(_message.Message):
     def __init__(
         self,
         *,
-        channel_num: _builtins.int = ...,
-        psk: _builtins.bytes = ...,
-        name: _builtins.str = ...,
-        id: _builtins.int = ...,
-        uplink_enabled: _builtins.bool = ...,
-        downlink_enabled: _builtins.bool = ...,
-        module_settings: Global___ModuleSettings | None = ...,
+        channel_num: builtins.int = ...,
+        psk: builtins.bytes = ...,
+        name: builtins.str = ...,
+        id: builtins.int = ...,
+        uplink_enabled: builtins.bool = ...,
+        downlink_enabled: builtins.bool = ...,
+        module_settings: global___ModuleSettings | None = ...,
+        use_aead: builtins.bool = ...,
     ) -> None: ...
-    _HasFieldArgType: _TypeAlias = _typing.Literal["module_settings", b"module_settings"]  # noqa: Y015
-    def HasField(self, field_name: _HasFieldArgType) -> _builtins.bool: ...
-    _ClearFieldArgType: _TypeAlias = _typing.Literal["channel_num", b"channel_num", "downlink_enabled", b"downlink_enabled", "id", b"id", "module_settings", b"module_settings", "name", b"name", "psk", b"psk", "uplink_enabled", b"uplink_enabled"]  # noqa: Y015
-    def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
-    def WhichOneof(self, oneof_group: _Never) -> None: ...
+    def HasField(self, field_name: typing.Literal["module_settings", b"module_settings"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing.Literal["channel_num", b"channel_num", "downlink_enabled", b"downlink_enabled", "id", b"id", "module_settings", b"module_settings", "name", b"name", "psk", b"psk", "uplink_enabled", b"uplink_enabled", "use_aead", b"use_aead"]) -> None: ...
 
-Global___ChannelSettings: _TypeAlias = ChannelSettings  # noqa: Y015
+global___ChannelSettings = ChannelSettings
 
-@_typing.final
-class ModuleSettings(_message.Message):
+@typing.final
+class ModuleSettings(google.protobuf.message.Message):
     """
     This message is specifically for modules to store per-channel configuration data.
     """
 
-    DESCRIPTOR: _descriptor.Descriptor
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
 
-    POSITION_PRECISION_FIELD_NUMBER: _builtins.int
-    IS_MUTED_FIELD_NUMBER: _builtins.int
-    position_precision: _builtins.int
+    POSITION_PRECISION_FIELD_NUMBER: builtins.int
+    IS_MUTED_FIELD_NUMBER: builtins.int
+    position_precision: builtins.int
     """
     Bits of precision for the location sent in position packets.
     """
-    is_muted: _builtins.bool
+    is_muted: builtins.bool
     """
     Controls whether or not the client / device should mute the current channel
     Useful for noisy public channels you don't necessarily want to disable
@@ -158,31 +150,27 @@ class ModuleSettings(_message.Message):
     def __init__(
         self,
         *,
-        position_precision: _builtins.int = ...,
-        is_muted: _builtins.bool = ...,
+        position_precision: builtins.int = ...,
+        is_muted: builtins.bool = ...,
     ) -> None: ...
-    _HasFieldArgType: _TypeAlias = _Never  # noqa: Y015
-    def HasField(self, field_name: _HasFieldArgType) -> _builtins.bool: ...
-    _ClearFieldArgType: _TypeAlias = _typing.Literal["is_muted", b"is_muted", "position_precision", b"position_precision"]  # noqa: Y015
-    def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
-    def WhichOneof(self, oneof_group: _Never) -> None: ...
+    def ClearField(self, field_name: typing.Literal["is_muted", b"is_muted", "position_precision", b"position_precision"]) -> None: ...
 
-Global___ModuleSettings: _TypeAlias = ModuleSettings  # noqa: Y015
+global___ModuleSettings = ModuleSettings
 
-@_typing.final
-class Channel(_message.Message):
+@typing.final
+class Channel(google.protobuf.message.Message):
     """
     A pair of a channel number, mode and the (sharable) settings for that channel
     """
 
-    DESCRIPTOR: _descriptor.Descriptor
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
 
     class _Role:
-        ValueType = _typing.NewType("ValueType", _builtins.int)
-        V: _TypeAlias = ValueType  # noqa: Y015
+        ValueType = typing.NewType("ValueType", builtins.int)
+        V: typing_extensions.TypeAlias = ValueType
 
-    class _RoleEnumTypeWrapper(_enum_type_wrapper._EnumTypeWrapper[Channel._Role.ValueType], _builtins.type):
-        DESCRIPTOR: _descriptor.EnumDescriptor
+    class _RoleEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[Channel._Role.ValueType], builtins.type):
+        DESCRIPTOR: google.protobuf.descriptor.EnumDescriptor
         DISABLED: Channel._Role.ValueType  # 0
         """
         This channel is not in use right now
@@ -224,21 +212,21 @@ class Channel(_message.Message):
     Their radio settings (freq etc) are ignored, only psk is used.
     """
 
-    INDEX_FIELD_NUMBER: _builtins.int
-    SETTINGS_FIELD_NUMBER: _builtins.int
-    ROLE_FIELD_NUMBER: _builtins.int
-    index: _builtins.int
+    INDEX_FIELD_NUMBER: builtins.int
+    SETTINGS_FIELD_NUMBER: builtins.int
+    ROLE_FIELD_NUMBER: builtins.int
+    index: builtins.int
     """
     The index of this channel in the channel table (from 0 to MAX_NUM_CHANNELS-1)
     (Someday - not currently implemented) An index of -1 could be used to mean "set by name",
     in which case the target node will find and set the channel by settings.name.
     """
-    role: Global___Channel.Role.ValueType
+    role: global___Channel.Role.ValueType
     """
     TODO: REPLACE
     """
-    @_builtins.property
-    def settings(self) -> Global___ChannelSettings:
+    @property
+    def settings(self) -> global___ChannelSettings:
         """
         The new settings, or NULL to disable that channel
         """
@@ -246,14 +234,11 @@ class Channel(_message.Message):
     def __init__(
         self,
         *,
-        index: _builtins.int = ...,
-        settings: Global___ChannelSettings | None = ...,
-        role: Global___Channel.Role.ValueType = ...,
+        index: builtins.int = ...,
+        settings: global___ChannelSettings | None = ...,
+        role: global___Channel.Role.ValueType = ...,
     ) -> None: ...
-    _HasFieldArgType: _TypeAlias = _typing.Literal["settings", b"settings"]  # noqa: Y015
-    def HasField(self, field_name: _HasFieldArgType) -> _builtins.bool: ...
-    _ClearFieldArgType: _TypeAlias = _typing.Literal["index", b"index", "role", b"role", "settings", b"settings"]  # noqa: Y015
-    def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
-    def WhichOneof(self, oneof_group: _Never) -> None: ...
+    def HasField(self, field_name: typing.Literal["settings", b"settings"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing.Literal["index", b"index", "role", b"role", "settings", b"settings"]) -> None: ...
 
-Global___Channel: _TypeAlias = Channel  # noqa: Y015
+global___Channel = Channel

@@ -3,34 +3,34 @@
 isort:skip_file
 """
 
-from google.protobuf import descriptor as _descriptor
-from google.protobuf import message as _message
-from google.protobuf.internal import enum_type_wrapper as _enum_type_wrapper
-import builtins as _builtins
+import builtins
+import google.protobuf.descriptor
+import google.protobuf.internal.enum_type_wrapper
+import google.protobuf.message
 import sys
-import typing as _typing
+import typing
 
-if sys.version_info >= (3, 11):
-    from typing import TypeAlias as _TypeAlias, Never as _Never
+if sys.version_info >= (3, 10):
+    import typing as typing_extensions
 else:
-    from typing_extensions import TypeAlias as _TypeAlias, Never as _Never
+    import typing_extensions
 
-DESCRIPTOR: _descriptor.FileDescriptor
+DESCRIPTOR: google.protobuf.descriptor.FileDescriptor
 
-@_typing.final
-class PowerMon(_message.Message):
+@typing.final
+class PowerMon(google.protobuf.message.Message):
     """Note: There are no 'PowerMon' messages normally in use (PowerMons are sent only as structured logs - slogs).
     But we wrap our State enum in this message to effectively nest a namespace (without our linter yelling at us)
     """
 
-    DESCRIPTOR: _descriptor.Descriptor
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
 
     class _State:
-        ValueType = _typing.NewType("ValueType", _builtins.int)
-        V: _TypeAlias = ValueType  # noqa: Y015
+        ValueType = typing.NewType("ValueType", builtins.int)
+        V: typing_extensions.TypeAlias = ValueType
 
-    class _StateEnumTypeWrapper(_enum_type_wrapper._EnumTypeWrapper[PowerMon._State.ValueType], _builtins.type):
-        DESCRIPTOR: _descriptor.EnumDescriptor
+    class _StateEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[PowerMon._State.ValueType], builtins.type):
+        DESCRIPTOR: google.protobuf.descriptor.EnumDescriptor
         CPU_DeepSleep: PowerMon._State.ValueType  # 1
         CPU_LightSleep: PowerMon._State.ValueType  # 2
         Vext1_On: PowerMon._State.ValueType  # 4
@@ -93,28 +93,23 @@ class PowerMon(_message.Message):
     def __init__(
         self,
     ) -> None: ...
-    _HasFieldArgType: _TypeAlias = _Never  # noqa: Y015
-    def HasField(self, field_name: _HasFieldArgType) -> _builtins.bool: ...
-    _ClearFieldArgType: _TypeAlias = _Never  # noqa: Y015
-    def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
-    def WhichOneof(self, oneof_group: _Never) -> None: ...
 
-Global___PowerMon: _TypeAlias = PowerMon  # noqa: Y015
+global___PowerMon = PowerMon
 
-@_typing.final
-class PowerStressMessage(_message.Message):
+@typing.final
+class PowerStressMessage(google.protobuf.message.Message):
     """
     PowerStress testing support via the C++ PowerStress module
     """
 
-    DESCRIPTOR: _descriptor.Descriptor
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
 
     class _Opcode:
-        ValueType = _typing.NewType("ValueType", _builtins.int)
-        V: _TypeAlias = ValueType  # noqa: Y015
+        ValueType = typing.NewType("ValueType", builtins.int)
+        V: typing_extensions.TypeAlias = ValueType
 
-    class _OpcodeEnumTypeWrapper(_enum_type_wrapper._EnumTypeWrapper[PowerStressMessage._Opcode.ValueType], _builtins.type):
-        DESCRIPTOR: _descriptor.EnumDescriptor
+    class _OpcodeEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[PowerStressMessage._Opcode.ValueType], builtins.type):
+        DESCRIPTOR: google.protobuf.descriptor.EnumDescriptor
         UNSET: PowerStressMessage._Opcode.ValueType  # 0
         """
         Unset/unused
@@ -208,23 +203,19 @@ class PowerStressMessage(_message.Message):
     GPS_ON: PowerStressMessage.Opcode.ValueType  # 113
     """Turn on the GPS radio for num_seconds"""
 
-    CMD_FIELD_NUMBER: _builtins.int
-    NUM_SECONDS_FIELD_NUMBER: _builtins.int
-    cmd: Global___PowerStressMessage.Opcode.ValueType
+    CMD_FIELD_NUMBER: builtins.int
+    NUM_SECONDS_FIELD_NUMBER: builtins.int
+    cmd: global___PowerStressMessage.Opcode.ValueType
     """
     What type of HardwareMessage is this?
     """
-    num_seconds: _builtins.float
+    num_seconds: builtins.float
     def __init__(
         self,
         *,
-        cmd: Global___PowerStressMessage.Opcode.ValueType = ...,
-        num_seconds: _builtins.float = ...,
+        cmd: global___PowerStressMessage.Opcode.ValueType = ...,
+        num_seconds: builtins.float = ...,
     ) -> None: ...
-    _HasFieldArgType: _TypeAlias = _Never  # noqa: Y015
-    def HasField(self, field_name: _HasFieldArgType) -> _builtins.bool: ...
-    _ClearFieldArgType: _TypeAlias = _typing.Literal["cmd", b"cmd", "num_seconds", b"num_seconds"]  # noqa: Y015
-    def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
-    def WhichOneof(self, oneof_group: _Never) -> None: ...
+    def ClearField(self, field_name: typing.Literal["cmd", b"cmd", "num_seconds", b"num_seconds"]) -> None: ...
 
-Global___PowerStressMessage: _TypeAlias = PowerStressMessage  # noqa: Y015
+global___PowerStressMessage = PowerStressMessage
