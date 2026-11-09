@@ -98,6 +98,7 @@ class FieldMetadata(google.protobuf.message.Message):
     SINCE_FIRMWARE_FIELD_NUMBER: builtins.int
     DEPRECATED_SINCE_FIELD_NUMBER: builtins.int
     OEM_FIXED_GPS_FIELD_NUMBER: builtins.int
+    SENSITIVE_FIELD_NUMBER: builtins.int
     diy_only: builtins.bool
     """
     Field is only relevant to DIY hardware builds. Apps hide a GPS field
@@ -206,6 +207,23 @@ class FieldMetadata(google.protobuf.message.Message):
     `diy_only` GPS pin fields do not apply. Apps hide those fields on these
     boards and keep them on any other or unknown board.
     """
+    sensitive: builtins.bool
+    """
+    Field holds a SECRET: a password, PIN, passphrase or key whose value grants
+    access to the node, to its network, or to the traffic it carries. Knowing a
+    public key or a username does not, so neither is marked.
+
+    Apps should mask the value by default (a password-style control with an
+    explicit reveal), keep it out of logs, crash reports, analytics and debug
+    dumps, and not include it in a shared export, QR code or screenshot without
+    the user knowingly choosing to.
+
+    Handling metadata, not protection: it changes nothing on the wire, and the
+    firmware treats the field no differently. It marks the field alone. A
+    message that merely CONTAINS a sensitive field (`Config` holding
+    `SecurityConfig.private_key`) is not marked itself, so a consumer redacting
+    a whole message should walk into its submessages.
+    """
     def __init__(
         self,
         *,
@@ -221,9 +239,10 @@ class FieldMetadata(google.protobuf.message.Message):
         since_firmware: builtins.str | None = ...,
         deprecated_since: builtins.str | None = ...,
         oem_fixed_gps: builtins.bool | None = ...,
+        sensitive: builtins.bool | None = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing.Literal["admin_only", b"admin_only", "deprecated", b"deprecated", "deprecated_since", b"deprecated_since", "description", b"description", "diy_only", b"diy_only", "keywords", b"keywords", "label", b"label", "max_value", b"max_value", "min_value", b"min_value", "oem_fixed_gps", b"oem_fixed_gps", "since_firmware", b"since_firmware", "unit", b"unit"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["admin_only", b"admin_only", "deprecated", b"deprecated", "deprecated_since", b"deprecated_since", "description", b"description", "diy_only", b"diy_only", "keywords", b"keywords", "label", b"label", "max_value", b"max_value", "min_value", b"min_value", "oem_fixed_gps", b"oem_fixed_gps", "since_firmware", b"since_firmware", "unit", b"unit"]) -> None: ...
+    def HasField(self, field_name: typing.Literal["admin_only", b"admin_only", "deprecated", b"deprecated", "deprecated_since", b"deprecated_since", "description", b"description", "diy_only", b"diy_only", "keywords", b"keywords", "label", b"label", "max_value", b"max_value", "min_value", b"min_value", "oem_fixed_gps", b"oem_fixed_gps", "sensitive", b"sensitive", "since_firmware", b"since_firmware", "unit", b"unit"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing.Literal["admin_only", b"admin_only", "deprecated", b"deprecated", "deprecated_since", b"deprecated_since", "description", b"description", "diy_only", b"diy_only", "keywords", b"keywords", "label", b"label", "max_value", b"max_value", "min_value", b"min_value", "oem_fixed_gps", b"oem_fixed_gps", "sensitive", b"sensitive", "since_firmware", b"since_firmware", "unit", b"unit"]) -> None: ...
 
 global___FieldMetadata = FieldMetadata
 

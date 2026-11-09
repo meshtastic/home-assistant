@@ -59,7 +59,7 @@ $SEDCMD 's/\[meshtastic.aiomeshtastic.protobuf./[/' "${OUTDIR}/meshtastic/aiomes
 
 
 
-PROTOBUF_VERSION=$(cd "${PWD}/protobufs" && git tag --points-at HEAD | sed 's/v\(.*\)/\1/')
+PROTOBUF_VERSION=$(cd "${PWD}/protobufs" && git describe --tags --always | sed 's/^v//')
 # Create a __init__.py in the out directory with protobuf version
 cat <<EOT > "${OUTDIR}/meshtastic/aiomeshtastic/protobuf/__init__.py"
 # SPDX-FileCopyrightText: 2024-2025 Pascal Brogle @broglep

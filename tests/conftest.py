@@ -88,10 +88,14 @@ class FakeClient:
         return dict(self.nodes)
 
     async def async_get_node_local_config(self) -> dict[str, Any]:
-        return {"security": {"privateKey": "secret", "adminKey": ["a"]}, "network": {"wifiSsid": "home"}}
+        return {
+            "security": {"privateKey": "secret", "adminKey": ["a"]},
+            "network": {"wifiSsid": "home", "wifiPsk": "wifi-password"},
+            "bluetooth": {"fixedPin": 123456, "mode": "FIXED_PIN"},
+        }
 
     async def async_get_node_module_config(self) -> dict[str, Any]:
-        return {"mqtt": {"address": "mqtt.example"}}
+        return {"mqtt": {"address": "mqtt.example", "password": "mqtt-password"}}
 
     async def async_get_channels(self) -> list[dict[str, Any]]:
         settings = {"name": "LongFast", "psk": "c2VjcmV0", "uplinkEnabled": False, "downlinkEnabled": False}

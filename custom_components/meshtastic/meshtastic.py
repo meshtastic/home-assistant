@@ -18,6 +18,7 @@ from homeassistant.util import slugify
 
 from .const import DOMAIN
 from .entity import GatewayChannelEntity, GatewayDirectMessageEntity, GatewayEntity
+from .field_metadata import without_sensitive_channel, without_sensitive_local_config, without_sensitive_module_config
 
 if TYPE_CHECKING:
     from homeassistant.core import HomeAssistant
@@ -41,8 +42,9 @@ async def async_setup_entry(
         node=gateway_node["num"],
         long_name=gateway_node["user"]["longName"],
         short_name=gateway_node["user"]["shortName"],
-        local_config=local_config,
-        module_config=module_config,
+        # state attributes reach the recorder, backups and every API client, so secrets never go in
+        local_config=without_sensitive_local_config(local_config),
+        module_config=without_sensitive_module_config(module_config),
     )
     has_logbook = LOGBOOK_DOMAIN in hass.config.all_components
     gateway_direct_message = GatewayDirectMessageEntity(
@@ -63,7 +65,7 @@ async def async_setup_entry(
             settings=channel["settings"],
             has_logbook=has_logbook,
         )
-        for channel in await client.async_get_channels()
+        for channel in map(without_sensitive_channel, await client.async_get_channels())
         if channel["role"] != "DISABLED"
     ]
 

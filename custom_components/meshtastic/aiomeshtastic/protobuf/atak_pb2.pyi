@@ -3686,64 +3686,11 @@ class TAKPacketV2(google.protobuf.message.Message):
     """
     start_epoch_lo14: builtins.int
     """
-    Low 14 bits of the event's `start` time, as epoch seconds.
-
-    Restores a value the format otherwise drops entirely. The parser reads `time`
-    and `stale` only to derive `stale_seconds`, and never reads `start` at all, so
-    the builder has nothing to rebuild it from and sets `time = start = now` at
-    decode. A CoT that spent 40 s crossing the mesh therefore arrives stamped as
-    the freshest thing on the map, and no receiver can tell a 2-second-old
-    position from a 40-second-old one, which makes correct ordering of two
-    reports for one UID impossible.
-
-    14 bits rather than a full timestamp: any tag at 16 or above costs a 2-byte
-    key, and a value below 16384 fits a 2-byte varint where epoch seconds needs
-    five, so the field costs 4 bytes on the wire instead of 7.
-
-    SENDERS: populate this only when `start` is within 8192 s of transmission,
-    and omit it otherwise. The encoding cannot express an older start and a
-    receiver cannot detect one: an out-of-range value reconstructs silently as a
-    plausible recent time in the wrong window. Transit and clock skew spend part
-    of that budget, so treat roughly two hours as the practical limit.
-
-    RECEIVERS: rebuild the full value by selecting the candidate NEAREST your own
-    clock. Do not splice the low bits onto your current window.
-
-      delta = ((carried - now) % 16384 + 24576) % 16384 - 8192   // [-8192, 8191]
-      start = now + delta
-
-    (The + 24576 keeps the second remainder non-negative under both C and Python
-    remainder semantics.)
-
-    The naive `(now & ~0x3FFF) | carried` is wrong at a window boundary in BOTH
-    directions, not just one. For a boundary B, a sender `start` of B read by a
-    receiver whose clock is at B - 1 yields B - 16384: a fresh event that appears
-    4.55 hours old, which no future-side sanity check will catch. Nearest-
-    candidate is exact whenever the true start is within 8192 s of the receiver's
-    clock, which subsumes any realistic transit plus skew.
-
-    Treat the result as trustworthy for ORDERING packets from a single sender,
-    where a constant clock offset cancels out. Before using it as an absolute
-    age, bound it: reject a start more than a few seconds in the future, or more
-    than about an hour in the past, and fall back to decode time. Keep both
-    bounds well inside the 8192 s half-window, because past that the
-    reconstruction is wrong rather than merely implausible.
-
-    Ordering assumes the producer advances `start` on each emission, which ATAK
-    does because it sets `start = time`. A producer that holds `start` fixed
-    across updates cannot be ordered by this field.
-
-    `optional` is deliberate, despite the v0.4.0 `altitude` experiment above
-    finding `optional` net-negative: that regressed because a genuine 0 m
-    altitude is common, whereas `start` mod 16384 is 0 for one second in 16384.
-    Here explicit presence costs essentially nothing and distinguishes "sender
-    did not populate this" from a legitimate zero.
-
-    Tag 43 rather than the 27 held above for "future top-level annotations",
-    which is what this is: un-reserving 27 trips buf's RESERVED_MESSAGE_NO_DELETE
-    under the FILE breaking category this module enables, and every tag at 16 or
-    above costs the same 2-byte key, so the fresh tag is free. Move it to 27 if
-    you would rather except the rule.
+    Low 14 bits of the event's `start` time, as epoch seconds UTC. 14 bits rather
+    than a full timestamp, so the field costs 4 bytes on the wire instead of 7.
+    Order and deduplicates packets from a single sender. Valid only when within an
+    hour of current wall time. `optional` is deliberate. It costs essentially
+    nothing and distinguishes "sender did not populate this" from a legitimate zero.
     """
     raw_detail: builtins.bytes
     """

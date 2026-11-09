@@ -22,9 +22,10 @@ _runtime_version.ValidateProtobufRuntimeVersion(
 _sym_db = _symbol_database.Default()
 
 
+from . import field_metadata_pb2 as meshtastic_dot_aiomeshtastic_dot_protobuf_dot_field__metadata__pb2
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n9meshtastic/aiomeshtastic/protobuf/connection_status.proto\x12!meshtastic.aiomeshtastic.protobuf\"\x8d\x03\n\x16\x44\x65viceConnectionStatus\x12J\n\x04wifi\x18\x01 \x01(\x0b\x32\x37.meshtastic.aiomeshtastic.protobuf.WifiConnectionStatusH\x00\x88\x01\x01\x12R\n\x08\x65thernet\x18\x02 \x01(\x0b\x32;.meshtastic.aiomeshtastic.protobuf.EthernetConnectionStatusH\x01\x88\x01\x01\x12T\n\tbluetooth\x18\x03 \x01(\x0b\x32<.meshtastic.aiomeshtastic.protobuf.BluetoothConnectionStatusH\x02\x88\x01\x01\x12N\n\x06serial\x18\x04 \x01(\x0b\x32\x39.meshtastic.aiomeshtastic.protobuf.SerialConnectionStatusH\x03\x88\x01\x01\x42\x07\n\x05_wifiB\x0b\n\t_ethernetB\x0c\n\n_bluetoothB\t\n\x07_serial\"~\n\x14WifiConnectionStatus\x12J\n\x06status\x18\x01 \x01(\x0b\x32:.meshtastic.aiomeshtastic.protobuf.NetworkConnectionStatus\x12\x0c\n\x04ssid\x18\x02 \x01(\t\x12\x0c\n\x04rssi\x18\x03 \x01(\x05\"f\n\x18\x45thernetConnectionStatus\x12J\n\x06status\x18\x01 \x01(\x0b\x32:.meshtastic.aiomeshtastic.protobuf.NetworkConnectionStatus\"{\n\x17NetworkConnectionStatus\x12\x12\n\nip_address\x18\x01 \x01(\x07\x12\x14\n\x0cis_connected\x18\x02 \x01(\x08\x12\x19\n\x11is_mqtt_connected\x18\x03 \x01(\x08\x12\x1b\n\x13is_syslog_connected\x18\x04 \x01(\x08\"L\n\x19\x42luetoothConnectionStatus\x12\x0b\n\x03pin\x18\x01 \x01(\r\x12\x0c\n\x04rssi\x18\x02 \x01(\x05\x12\x14\n\x0cis_connected\x18\x03 \x01(\x08\"<\n\x16SerialConnectionStatus\x12\x0c\n\x04\x62\x61ud\x18\x01 \x01(\r\x12\x14\n\x0cis_connected\x18\x02 \x01(\x08\x42\x66\n\x14org.meshtastic.protoB\x10\x43onnStatusProtosZ\"github.com/meshtastic/go/generated\xaa\x02\x14Meshtastic.Protobufs\xba\x02\x00\x62\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n9meshtastic/aiomeshtastic/protobuf/connection_status.proto\x12!meshtastic.aiomeshtastic.protobuf\x1a\x36meshtastic/aiomeshtastic/protobuf/field_metadata.proto\"\x8d\x03\n\x16\x44\x65viceConnectionStatus\x12J\n\x04wifi\x18\x01 \x01(\x0b\x32\x37.meshtastic.aiomeshtastic.protobuf.WifiConnectionStatusH\x00\x88\x01\x01\x12R\n\x08\x65thernet\x18\x02 \x01(\x0b\x32;.meshtastic.aiomeshtastic.protobuf.EthernetConnectionStatusH\x01\x88\x01\x01\x12T\n\tbluetooth\x18\x03 \x01(\x0b\x32<.meshtastic.aiomeshtastic.protobuf.BluetoothConnectionStatusH\x02\x88\x01\x01\x12N\n\x06serial\x18\x04 \x01(\x0b\x32\x39.meshtastic.aiomeshtastic.protobuf.SerialConnectionStatusH\x03\x88\x01\x01\x42\x07\n\x05_wifiB\x0b\n\t_ethernetB\x0c\n\n_bluetoothB\t\n\x07_serial\"~\n\x14WifiConnectionStatus\x12J\n\x06status\x18\x01 \x01(\x0b\x32:.meshtastic.aiomeshtastic.protobuf.NetworkConnectionStatus\x12\x0c\n\x04ssid\x18\x02 \x01(\t\x12\x0c\n\x04rssi\x18\x03 \x01(\x05\"f\n\x18\x45thernetConnectionStatus\x12J\n\x06status\x18\x01 \x01(\x0b\x32:.meshtastic.aiomeshtastic.protobuf.NetworkConnectionStatus\"{\n\x17NetworkConnectionStatus\x12\x12\n\nip_address\x18\x01 \x01(\x07\x12\x14\n\x0cis_connected\x18\x02 \x01(\x08\x12\x19\n\x11is_mqtt_connected\x18\x03 \x01(\x08\x12\x1b\n\x13is_syslog_connected\x18\x04 \x01(\x08\"T\n\x19\x42luetoothConnectionStatus\x12\x13\n\x03pin\x18\x01 \x01(\rB\x06\xca\xf3\x18\x02h\x01\x12\x0c\n\x04rssi\x18\x02 \x01(\x05\x12\x14\n\x0cis_connected\x18\x03 \x01(\x08\"<\n\x16SerialConnectionStatus\x12\x0c\n\x04\x62\x61ud\x18\x01 \x01(\r\x12\x14\n\x0cis_connected\x18\x02 \x01(\x08\x42\x66\n\x14org.meshtastic.protoB\x10\x43onnStatusProtosZ\"github.com/meshtastic/go/generated\xaa\x02\x14Meshtastic.Protobufs\xba\x02\x00\x62\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
@@ -32,16 +33,18 @@ _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'meshtastic.aiomeshtastic.pr
 if not _descriptor._USE_C_DESCRIPTORS:
   _globals['DESCRIPTOR']._loaded_options = None
   _globals['DESCRIPTOR']._serialized_options = b'\n\024org.meshtastic.protoB\020ConnStatusProtosZ\"github.com/meshtastic/go/generated\252\002\024Meshtastic.Protobufs\272\002\000'
-  _globals['_DEVICECONNECTIONSTATUS']._serialized_start=97
-  _globals['_DEVICECONNECTIONSTATUS']._serialized_end=494
-  _globals['_WIFICONNECTIONSTATUS']._serialized_start=496
-  _globals['_WIFICONNECTIONSTATUS']._serialized_end=622
-  _globals['_ETHERNETCONNECTIONSTATUS']._serialized_start=624
-  _globals['_ETHERNETCONNECTIONSTATUS']._serialized_end=726
-  _globals['_NETWORKCONNECTIONSTATUS']._serialized_start=728
-  _globals['_NETWORKCONNECTIONSTATUS']._serialized_end=851
-  _globals['_BLUETOOTHCONNECTIONSTATUS']._serialized_start=853
-  _globals['_BLUETOOTHCONNECTIONSTATUS']._serialized_end=929
-  _globals['_SERIALCONNECTIONSTATUS']._serialized_start=931
-  _globals['_SERIALCONNECTIONSTATUS']._serialized_end=991
+  _globals['_BLUETOOTHCONNECTIONSTATUS'].fields_by_name['pin']._loaded_options = None
+  _globals['_BLUETOOTHCONNECTIONSTATUS'].fields_by_name['pin']._serialized_options = b'\312\363\030\002h\001'
+  _globals['_DEVICECONNECTIONSTATUS']._serialized_start=153
+  _globals['_DEVICECONNECTIONSTATUS']._serialized_end=550
+  _globals['_WIFICONNECTIONSTATUS']._serialized_start=552
+  _globals['_WIFICONNECTIONSTATUS']._serialized_end=678
+  _globals['_ETHERNETCONNECTIONSTATUS']._serialized_start=680
+  _globals['_ETHERNETCONNECTIONSTATUS']._serialized_end=782
+  _globals['_NETWORKCONNECTIONSTATUS']._serialized_start=784
+  _globals['_NETWORKCONNECTIONSTATUS']._serialized_end=907
+  _globals['_BLUETOOTHCONNECTIONSTATUS']._serialized_start=909
+  _globals['_BLUETOOTHCONNECTIONSTATUS']._serialized_end=993
+  _globals['_SERIALCONNECTIONSTATUS']._serialized_start=995
+  _globals['_SERIALCONNECTIONSTATUS']._serialized_end=1055
 # @@protoc_insertion_point(module_scope)
