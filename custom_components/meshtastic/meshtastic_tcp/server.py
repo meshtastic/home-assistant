@@ -170,10 +170,10 @@ class MeshtasticTcpProxy:
                     _LOGGER.debug(
                         "Forwarding from %s to gateway: %s",
                         peer_name,
-                        ClientApiConnection._protobuf_log(packet[1]),  # noqa: SLF001
+                        ClientApiConnection._protobuf_log(to_radio),  # noqa: SLF001
                     )
 
-                    await self._interface._connection._send_packet(packet[0])  # noqa: SLF001
+                    await self._interface._connection._send_packet(packet_bytes)  # noqa: SLF001
 
             async def forward_from_radio() -> None:
                 while client_connection.is_connected:
