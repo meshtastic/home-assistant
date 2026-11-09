@@ -1835,6 +1835,7 @@ class Config(google.protobuf.message.Message):
         CONFIG_OK_TO_MQTT_FIELD_NUMBER: builtins.int
         FEM_LNA_MODE_FIELD_NUMBER: builtins.int
         SERIAL_HAL_ONLY_FIELD_NUMBER: builtins.int
+        TRANSPARENT_MODE_FIELD_NUMBER: builtins.int
         use_preset: builtins.bool
         """
         When enabled, the `modem_preset` sets the bandwidth and spread factor, and the
@@ -1959,6 +1960,12 @@ class Config(google.protobuf.message.Message):
         """
         Don't use radiolib to initialize the radio, instead listen for a serialHal connection
         """
+        transparent_mode: builtins.bool
+        """
+        Act as a transparent LoRa modem: run RadioLib on-device but do no encryption, decryption, or mesh routing.
+        The connected client sets the PHY settings via this LoRaConfig, supplies fully-formed (already-encrypted) frames to transmit verbatim,
+        and receives every frame the radio hears delivered raw (never decrypted) back over the API.
+        """
         @property
         def ignore_incoming(self) -> google.protobuf.internal.containers.RepeatedScalarFieldContainer[builtins.int]:
             """
@@ -1990,8 +1997,9 @@ class Config(google.protobuf.message.Message):
             config_ok_to_mqtt: builtins.bool = ...,
             fem_lna_mode: global___Config.LoRaConfig.FEM_LNA_Mode.ValueType = ...,
             serial_hal_only: builtins.bool = ...,
+            transparent_mode: builtins.bool = ...,
         ) -> None: ...
-        def ClearField(self, field_name: typing.Literal["bandwidth", b"bandwidth", "channel_num", b"channel_num", "coding_rate", b"coding_rate", "config_ok_to_mqtt", b"config_ok_to_mqtt", "fem_lna_mode", b"fem_lna_mode", "frequency_offset", b"frequency_offset", "hop_limit", b"hop_limit", "ignore_incoming", b"ignore_incoming", "ignore_mqtt", b"ignore_mqtt", "modem_preset", b"modem_preset", "override_duty_cycle", b"override_duty_cycle", "override_frequency", b"override_frequency", "pa_fan_disabled", b"pa_fan_disabled", "region", b"region", "serial_hal_only", b"serial_hal_only", "spread_factor", b"spread_factor", "sx126x_rx_boosted_gain", b"sx126x_rx_boosted_gain", "tx_enabled", b"tx_enabled", "tx_power", b"tx_power", "use_preset", b"use_preset"]) -> None: ...
+        def ClearField(self, field_name: typing.Literal["bandwidth", b"bandwidth", "channel_num", b"channel_num", "coding_rate", b"coding_rate", "config_ok_to_mqtt", b"config_ok_to_mqtt", "fem_lna_mode", b"fem_lna_mode", "frequency_offset", b"frequency_offset", "hop_limit", b"hop_limit", "ignore_incoming", b"ignore_incoming", "ignore_mqtt", b"ignore_mqtt", "modem_preset", b"modem_preset", "override_duty_cycle", b"override_duty_cycle", "override_frequency", b"override_frequency", "pa_fan_disabled", b"pa_fan_disabled", "region", b"region", "serial_hal_only", b"serial_hal_only", "spread_factor", b"spread_factor", "sx126x_rx_boosted_gain", b"sx126x_rx_boosted_gain", "transparent_mode", b"transparent_mode", "tx_enabled", b"tx_enabled", "tx_power", b"tx_power", "use_preset", b"use_preset"]) -> None: ...
 
     @typing.final
     class BluetoothConfig(google.protobuf.message.Message):
@@ -2066,39 +2074,73 @@ class Config(google.protobuf.message.Message):
             DESCRIPTOR: google.protobuf.descriptor.EnumDescriptor
             PACKET_SIGNATURE_POLICY_COMPATIBLE: Config.SecurityConfig._PacketSignaturePolicy.ValueType  # 0
             """
-            Accept unsigned packets for maximum compatibility while still rejecting malformed or invalid signatures.
-            This is the default to avoid legacy nodes dropping signed packets during rebroadcast.
+            Packets are not signed. Unsigned packets are accepted, including from nodes that have signed before,
+            and an unsigned NodeInfo may update such a node's name and role.
+            Signatures are still checked: a signed packet whose signature is malformed or fails verification is
+            dropped. A signature from a node whose key is not yet known cannot be checked, and the packet is
+            accepted as unsigned.
+            This is the default: firmware before 2.8 strips signatures when relaying.
             """
             PACKET_SIGNATURE_POLICY_BALANCED: Config.SecurityConfig._PacketSignaturePolicy.ValueType  # 1
             """
-            Prefer authenticated packets while retaining compatibility with unsigned packets from nodes not known to sign.
-            Rejects unsigned, signable broadcasts from nodes that have previously signed.
+            Broadcasts are signed, and NodeInfo and position even when unicast. Licensed (ham) mode has no PKI, so it
+            also signs the unicasts PKI would cover; its acks carry an ack proof instead of a signature.
+            Unsigned packets are accepted, including from nodes that have signed before, but an unsigned NodeInfo
+            does not change the name or role of a node that has signed before.
+            Recommended only on a mesh with no relays running firmware older than 2.8: those strip signatures, so a
+            signer's NodeInfo relayed through them arrives unsigned and its name and role changes are not applied.
+            The same holds for a node that has signed before and no longer signs.
             """
             PACKET_SIGNATURE_POLICY_STRICT: Config.SecurityConfig._PacketSignaturePolicy.ValueType  # 2
             """
-            Accept only packets authenticated by a verified XEdDSA signature or successful PKI decryption.
-            Unsigned, malformed, invalid, or unverifiable packets are ignored.
+            Broadcasts are signed, and NodeInfo and position even when unicast. Licensed (ham) mode has no PKI, so it
+            also signs the unicasts PKI would cover; its acks carry an ack proof instead of a signature.
+            Only packets with a verified signature, or PKI-encrypted packets, are accepted.
+            Unsigned packets are dropped, except acks and other routing packets, which carry their own proof,
+            traceroutes, and key verification messages, which the users' security number authenticates.
+            A signature from a node whose key is not yet known cannot be checked, and the packet is dropped,
+            except a traceroute.
             """
 
         class PacketSignaturePolicy(_PacketSignaturePolicy, metaclass=_PacketSignaturePolicyEnumTypeWrapper):
             """
-            Controls how the device authenticates remotely received mesh packets.
+            Controls whether the device signs the packets it sends with XEdDSA, and which received packets it accepts.
+            In every mode a packet whose signature is malformed or fails verification is dropped, except a traceroute,
+            and so is a signed NodeInfo whose public key is not the key that signed it or does not hash to the sender's
+            node number.
+            A traceroute is never signed, and a signature on one is ignored: every hop rewrites it.
+            A channel with use_aead set overrides this policy: its packets are never signed, and are not dropped
+            for lacking a signature, because the AES-CCM tag authenticates them.
             """
 
         PACKET_SIGNATURE_POLICY_COMPATIBLE: Config.SecurityConfig.PacketSignaturePolicy.ValueType  # 0
         """
-        Accept unsigned packets for maximum compatibility while still rejecting malformed or invalid signatures.
-        This is the default to avoid legacy nodes dropping signed packets during rebroadcast.
+        Packets are not signed. Unsigned packets are accepted, including from nodes that have signed before,
+        and an unsigned NodeInfo may update such a node's name and role.
+        Signatures are still checked: a signed packet whose signature is malformed or fails verification is
+        dropped. A signature from a node whose key is not yet known cannot be checked, and the packet is
+        accepted as unsigned.
+        This is the default: firmware before 2.8 strips signatures when relaying.
         """
         PACKET_SIGNATURE_POLICY_BALANCED: Config.SecurityConfig.PacketSignaturePolicy.ValueType  # 1
         """
-        Prefer authenticated packets while retaining compatibility with unsigned packets from nodes not known to sign.
-        Rejects unsigned, signable broadcasts from nodes that have previously signed.
+        Broadcasts are signed, and NodeInfo and position even when unicast. Licensed (ham) mode has no PKI, so it
+        also signs the unicasts PKI would cover; its acks carry an ack proof instead of a signature.
+        Unsigned packets are accepted, including from nodes that have signed before, but an unsigned NodeInfo
+        does not change the name or role of a node that has signed before.
+        Recommended only on a mesh with no relays running firmware older than 2.8: those strip signatures, so a
+        signer's NodeInfo relayed through them arrives unsigned and its name and role changes are not applied.
+        The same holds for a node that has signed before and no longer signs.
         """
         PACKET_SIGNATURE_POLICY_STRICT: Config.SecurityConfig.PacketSignaturePolicy.ValueType  # 2
         """
-        Accept only packets authenticated by a verified XEdDSA signature or successful PKI decryption.
-        Unsigned, malformed, invalid, or unverifiable packets are ignored.
+        Broadcasts are signed, and NodeInfo and position even when unicast. Licensed (ham) mode has no PKI, so it
+        also signs the unicasts PKI would cover; its acks carry an ack proof instead of a signature.
+        Only packets with a verified signature, or PKI-encrypted packets, are accepted.
+        Unsigned packets are dropped, except acks and other routing packets, which carry their own proof,
+        traceroutes, and key verification messages, which the users' security number authenticates.
+        A signature from a node whose key is not yet known cannot be checked, and the packet is dropped,
+        except a traceroute.
         """
 
         PUBLIC_KEY_FIELD_NUMBER: builtins.int
@@ -2139,7 +2181,8 @@ class Config(google.protobuf.message.Message):
         """
         packet_signature_policy: global___Config.SecurityConfig.PacketSignaturePolicy.ValueType
         """
-        Determines the packet signature policy applied to remotely received mesh packets.
+        Determines whether this device signs the packets it sends, and which received packets it accepts.
+        See PacketSignaturePolicy.
         """
         @property
         def admin_key(self) -> google.protobuf.internal.containers.RepeatedScalarFieldContainer[builtins.bytes]:

@@ -166,7 +166,6 @@ class GatewayChannelEntity(MeshtasticEntity):
             STATE_ATTRIBUTE_CHANNEL_NODE: gateway_node,
             "primary": primary,
             "secondary": secondary,
-            "psk": self._settings["psk"],
             "uplink_enabled": self._settings["uplinkEnabled"],
             "downlink_enabled": self._settings["downlinkEnabled"],
         }

@@ -4615,10 +4615,427 @@ class ClientNotification(google.protobuf.message.Message):
 
     DESCRIPTOR: google.protobuf.descriptor.Descriptor
 
+    class _NotificationType:
+        ValueType = typing.NewType("ValueType", builtins.int)
+        V: typing_extensions.TypeAlias = ValueType
+
+    class _NotificationTypeEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[ClientNotification._NotificationType.ValueType], builtins.type):
+        DESCRIPTOR: google.protobuf.descriptor.EnumDescriptor
+        UNSET: ClientNotification._NotificationType.ValueType  # 0
+        """
+        Not set. Older firmware, or a message without its own type.
+        """
+        POSITION_SHARING_DISABLED: ClientNotification._NotificationType.ValueType  # 1
+        """
+        Position packet rejected: location sharing is disabled on this channel.
+        """
+        TRACEROUTE_RATE_LIMITED: ClientNotification._NotificationType.ValueType  # 2
+        """
+        Traceroute rejected: only one may be sent every 30 seconds.
+        """
+        TRACEROUTE_BROADCAST_REJECTED: ClientNotification._NotificationType.ValueType  # 3
+        """
+        Traceroute rejected: multi-hop traceroute to the broadcast address is not allowed.
+        """
+        DUTY_CYCLE_LIMIT_EXCEEDED: ClientNotification._NotificationType.ValueType  # 4
+        """
+        Send aborted: the duty cycle limit is exceeded. The message gives the minutes until sending resumes.
+        """
+        POSITION_SENT_SLEEPING: ClientNotification._NotificationType.ValueType  # 5
+        """
+        Power-saving tracker sent its position and is about to sleep for the broadcast interval.
+        """
+        TELEMETRY_SENT_SLEEPING: ClientNotification._NotificationType.ValueType  # 6
+        """
+        Power-saving sensor sent its telemetry and is about to sleep for the update interval.
+        """
+        KEY_VERIFICATION_NUMBER_INFORM: ClientNotification._NotificationType.ValueType  # 7
+        """
+        Incoming key verification: display the security number. Carries key_verification_number_inform.
+        """
+        KEY_VERIFICATION_NUMBER_REQUEST: ClientNotification._NotificationType.ValueType  # 8
+        """
+        Outgoing key verification: enter the security number shown on the remote node. Carries key_verification_number_request.
+        """
+        KEY_VERIFICATION_FINAL_INCOMING: ClientNotification._NotificationType.ValueType  # 9
+        """
+        Final confirmation of an incoming key verification. Carries key_verification_final.
+        """
+        KEY_VERIFICATION_FINAL_OUTGOING: ClientNotification._NotificationType.ValueType  # 10
+        """
+        Final confirmation of an outgoing key verification. Carries key_verification_final.
+        """
+        KEY_VERIFICATION_LICENSED_UNAVAILABLE: ClientNotification._NotificationType.ValueType  # 11
+        """
+        Key verification is unavailable in licensed (ham) mode.
+        """
+        DUPLICATED_PUBLIC_KEY: ClientNotification._NotificationType.ValueType  # 12
+        """
+        A remote node advertised this node's public key; the key may be compromised.
+        """
+        LOW_ENTROPY_KEY_REGENERATED: ClientNotification._NotificationType.ValueType  # 13
+        """
+        Compromised (low-entropy) keys were detected at boot and regenerated.
+        """
+        LOW_ENTROPY_KEY_RESTORE_REJECTED: ClientNotification._NotificationType.ValueType  # 14
+        """
+        A restored key is a known low-entropy key; a new key was generated and the node number changed.
+        """
+        LICENSED_MODE_ACTIVATED: ClientNotification._NotificationType.ValueType  # 15
+        """
+        Licensed mode activated: the admin channel and encryption were removed from all channels.
+        """
+        LICENSED_IDENTITY_WILL_CHANGE: ClientNotification._NotificationType.ValueType  # 16
+        """
+        Licensed signing needs an identity key; the node identity will change after key generation.
+        """
+        LICENSED_IDENTITY_CHANGED: ClientNotification._NotificationType.ValueType  # 17
+        """
+        Licensed signing generated a new identity key; the node identity changed.
+        """
+        PROTECTED_NODE_LIMIT_REACHED: ClientNotification._NotificationType.ValueType  # 18
+        """
+        Favorite or ignore refused: the protected-node limit is reached.
+        """
+        ROUTER_REBROADCAST_NONE_REJECTED: ClientNotification._NotificationType.ValueType  # 19
+        """
+        Rebroadcast mode NONE is not allowed for a router role; it was set to ALL.
+        """
+        PACKET_SIGNATURE_POLICY_UNAVAILABLE: ClientNotification._NotificationType.ValueType  # 20
+        """
+        The packet signature policy is unavailable on this firmware build; it was set to COMPATIBLE.
+        """
+        MANAGED_MODE_REQUIRES_ADMIN_KEY: ClientNotification._NotificationType.ValueType  # 21
+        """
+        Managed mode needs at least one admin public key; it was left disabled.
+        """
+        PUBLIC_CHANNEL_POSITION_PRECISION_REDUCED: ClientNotification._NotificationType.ValueType  # 22
+        """
+        Precise position is not allowed on a public channel; precision was reduced.
+        """
+        CHANNEL_BLANK_PSK: ClientNotification._NotificationType.ValueType  # 23
+        """
+        A channel has a blank PSK (no encryption) instead of the default key.
+        """
+        CHANNEL_NAME_PRESET_MISTYPE: ClientNotification._NotificationType.ValueType  # 24
+        """
+        A channel name looks like a mistyped modem preset name; the user should type it exactly.
+        """
+        CHANNEL_NAME_PRESET_MISTYPE_CLEAR_NAME: ClientNotification._NotificationType.ValueType  # 42
+        """
+        A channel name looks like a mistyped modem preset name; clearing it lets the preset name apply automatically.
+        """
+        CHANNEL_PRESET_NON_DEFAULT_KEY: ClientNotification._NotificationType.ValueType  # 25
+        """
+        A channel resolves to or matches a modem preset but uses a non-default key.
+        """
+        CHANNEL_NAME_MATCHES_OLD_PRESET: ClientNotification._NotificationType.ValueType  # 26
+        """
+        After a modem preset change, a channel name still matches the old preset.
+        """
+        CHANNEL_NAME_WONT_AUTO_RESOLVE: ClientNotification._NotificationType.ValueType  # 27
+        """
+        After a modem preset change, a channel name matches the new preset but won't auto-resolve.
+        """
+        CHANNEL_NAME_ISSUES: ClientNotification._NotificationType.ValueType  # 28
+        """
+        Name issues on one or more channels (several warnings combined).
+        """
+        CHANNEL_PSK_ISSUES: ClientNotification._NotificationType.ValueType  # 29
+        """
+        PSK issues on one or more channels (several warnings combined).
+        """
+        CHANNEL_NAME_AND_PSK_ISSUES: ClientNotification._NotificationType.ValueType  # 30
+        """
+        Name and PSK issues on one or more channels (several warnings combined).
+        """
+        LORA_REGION_UNRECOGNIZED: ClientNotification._NotificationType.ValueType  # 31
+        """
+        LoRa region code is not recognized.
+        """
+        LORA_REGION_REQUIRES_LICENSE: ClientNotification._NotificationType.ValueType  # 32
+        """
+        LoRa region requires licensed mode.
+        """
+        LORA_REGION_UNSUPPORTED_BY_RADIO: ClientNotification._NotificationType.ValueType  # 33
+        """
+        LoRa region needs a band (2.4 GHz or sub-GHz) this radio does not support.
+        """
+        LORA_PRESET_REGION_SWAP: ClientNotification._NotificationType.ValueType  # 34
+        """
+        The selected modem preset moved the node to a sibling region.
+        """
+        LORA_PRESET_INVALID_FOR_REGION: ClientNotification._NotificationType.ValueType  # 35
+        """
+        Modem preset is invalid for the region; the region default may have been applied.
+        """
+        LORA_BANDWIDTH_EXCEEDS_REGION: ClientNotification._NotificationType.ValueType  # 36
+        """
+        Requested bandwidth is wider than the region's span; the region default may have been applied.
+        """
+        LORA_CHANNEL_NUM_INVALID: ClientNotification._NotificationType.ValueType  # 37
+        """
+        Channel number is out of range for the region; a valid slot may have been applied.
+        """
+        SERIAL_CONSOLE_OVERRIDE_INVALID: ClientNotification._NotificationType.ValueType  # 38
+        """
+        Serial config rejected: overriding the console serial port needs an output-only mode (NMEA, CalTopo or MS Config).
+        """
+        MQTT_SERVER_UNREACHABLE: ClientNotification._NotificationType.ValueType  # 39
+        """
+        MQTT server could not be reached; the settings were saved anyway.
+        """
+        MQTT_PROXY_TO_CLIENT_REQUIRED: ClientNotification._NotificationType.ValueType  # 40
+        """
+        MQTT config rejected: proxy_to_client_enabled is required on a node without a network.
+        """
+        MQTT_DEFAULT_SERVER_PORT_INVALID: ClientNotification._NotificationType.ValueType  # 41
+        """
+        MQTT config rejected: the default server address must not have a port specified.
+        """
+        OTA_INVALID_HASH: ClientNotification._NotificationType.ValueType  # 43
+        """
+        OTA refused: the provided ota_hash is invalid.
+        """
+        OTA_LOADER_PARTITION_MISSING: ClientNotification._NotificationType.ValueType  # 44
+        """
+        OTA refused: no OTA loader partition was found.
+        """
+        OTA_LOADER_INVALID: ClientNotification._NotificationType.ValueType  # 45
+        """
+        OTA refused: the OTA loader partition does not hold a valid loader.
+        """
+        OTA_MODE_UNSUPPORTED: ClientNotification._NotificationType.ValueType  # 46
+        """
+        OTA refused: the OTA loader does not support the requested mode (BLE or WiFi).
+        """
+        OTA_REBOOTING: ClientNotification._NotificationType.ValueType  # 47
+        """
+        OTA accepted: rebooting into the OTA loader for the requested mode.
+        """
+        OTA_PARTITION_SWITCH_FAILED: ClientNotification._NotificationType.ValueType  # 48
+        """
+        OTA refused: switching to the OTA partition failed.
+        """
+        UNSIGNED_IDENTITY_UPDATE_IGNORED: ClientNotification._NotificationType.ValueType  # 49
+        """
+        A NodeInfo update without a valid signature tried to change a known node's name or role,
+        and packet_signature_policy (Balanced or Strict) refused it. The stored identity is kept.
+        """
+
+    class NotificationType(_NotificationType, metaclass=_NotificationTypeEnumTypeWrapper):
+        """
+        Identifies which firmware message a notification carries, so clients can
+        localize or act on it without parsing the message text.
+        """
+
+    UNSET: ClientNotification.NotificationType.ValueType  # 0
+    """
+    Not set. Older firmware, or a message without its own type.
+    """
+    POSITION_SHARING_DISABLED: ClientNotification.NotificationType.ValueType  # 1
+    """
+    Position packet rejected: location sharing is disabled on this channel.
+    """
+    TRACEROUTE_RATE_LIMITED: ClientNotification.NotificationType.ValueType  # 2
+    """
+    Traceroute rejected: only one may be sent every 30 seconds.
+    """
+    TRACEROUTE_BROADCAST_REJECTED: ClientNotification.NotificationType.ValueType  # 3
+    """
+    Traceroute rejected: multi-hop traceroute to the broadcast address is not allowed.
+    """
+    DUTY_CYCLE_LIMIT_EXCEEDED: ClientNotification.NotificationType.ValueType  # 4
+    """
+    Send aborted: the duty cycle limit is exceeded. The message gives the minutes until sending resumes.
+    """
+    POSITION_SENT_SLEEPING: ClientNotification.NotificationType.ValueType  # 5
+    """
+    Power-saving tracker sent its position and is about to sleep for the broadcast interval.
+    """
+    TELEMETRY_SENT_SLEEPING: ClientNotification.NotificationType.ValueType  # 6
+    """
+    Power-saving sensor sent its telemetry and is about to sleep for the update interval.
+    """
+    KEY_VERIFICATION_NUMBER_INFORM: ClientNotification.NotificationType.ValueType  # 7
+    """
+    Incoming key verification: display the security number. Carries key_verification_number_inform.
+    """
+    KEY_VERIFICATION_NUMBER_REQUEST: ClientNotification.NotificationType.ValueType  # 8
+    """
+    Outgoing key verification: enter the security number shown on the remote node. Carries key_verification_number_request.
+    """
+    KEY_VERIFICATION_FINAL_INCOMING: ClientNotification.NotificationType.ValueType  # 9
+    """
+    Final confirmation of an incoming key verification. Carries key_verification_final.
+    """
+    KEY_VERIFICATION_FINAL_OUTGOING: ClientNotification.NotificationType.ValueType  # 10
+    """
+    Final confirmation of an outgoing key verification. Carries key_verification_final.
+    """
+    KEY_VERIFICATION_LICENSED_UNAVAILABLE: ClientNotification.NotificationType.ValueType  # 11
+    """
+    Key verification is unavailable in licensed (ham) mode.
+    """
+    DUPLICATED_PUBLIC_KEY: ClientNotification.NotificationType.ValueType  # 12
+    """
+    A remote node advertised this node's public key; the key may be compromised.
+    """
+    LOW_ENTROPY_KEY_REGENERATED: ClientNotification.NotificationType.ValueType  # 13
+    """
+    Compromised (low-entropy) keys were detected at boot and regenerated.
+    """
+    LOW_ENTROPY_KEY_RESTORE_REJECTED: ClientNotification.NotificationType.ValueType  # 14
+    """
+    A restored key is a known low-entropy key; a new key was generated and the node number changed.
+    """
+    LICENSED_MODE_ACTIVATED: ClientNotification.NotificationType.ValueType  # 15
+    """
+    Licensed mode activated: the admin channel and encryption were removed from all channels.
+    """
+    LICENSED_IDENTITY_WILL_CHANGE: ClientNotification.NotificationType.ValueType  # 16
+    """
+    Licensed signing needs an identity key; the node identity will change after key generation.
+    """
+    LICENSED_IDENTITY_CHANGED: ClientNotification.NotificationType.ValueType  # 17
+    """
+    Licensed signing generated a new identity key; the node identity changed.
+    """
+    PROTECTED_NODE_LIMIT_REACHED: ClientNotification.NotificationType.ValueType  # 18
+    """
+    Favorite or ignore refused: the protected-node limit is reached.
+    """
+    ROUTER_REBROADCAST_NONE_REJECTED: ClientNotification.NotificationType.ValueType  # 19
+    """
+    Rebroadcast mode NONE is not allowed for a router role; it was set to ALL.
+    """
+    PACKET_SIGNATURE_POLICY_UNAVAILABLE: ClientNotification.NotificationType.ValueType  # 20
+    """
+    The packet signature policy is unavailable on this firmware build; it was set to COMPATIBLE.
+    """
+    MANAGED_MODE_REQUIRES_ADMIN_KEY: ClientNotification.NotificationType.ValueType  # 21
+    """
+    Managed mode needs at least one admin public key; it was left disabled.
+    """
+    PUBLIC_CHANNEL_POSITION_PRECISION_REDUCED: ClientNotification.NotificationType.ValueType  # 22
+    """
+    Precise position is not allowed on a public channel; precision was reduced.
+    """
+    CHANNEL_BLANK_PSK: ClientNotification.NotificationType.ValueType  # 23
+    """
+    A channel has a blank PSK (no encryption) instead of the default key.
+    """
+    CHANNEL_NAME_PRESET_MISTYPE: ClientNotification.NotificationType.ValueType  # 24
+    """
+    A channel name looks like a mistyped modem preset name; the user should type it exactly.
+    """
+    CHANNEL_NAME_PRESET_MISTYPE_CLEAR_NAME: ClientNotification.NotificationType.ValueType  # 42
+    """
+    A channel name looks like a mistyped modem preset name; clearing it lets the preset name apply automatically.
+    """
+    CHANNEL_PRESET_NON_DEFAULT_KEY: ClientNotification.NotificationType.ValueType  # 25
+    """
+    A channel resolves to or matches a modem preset but uses a non-default key.
+    """
+    CHANNEL_NAME_MATCHES_OLD_PRESET: ClientNotification.NotificationType.ValueType  # 26
+    """
+    After a modem preset change, a channel name still matches the old preset.
+    """
+    CHANNEL_NAME_WONT_AUTO_RESOLVE: ClientNotification.NotificationType.ValueType  # 27
+    """
+    After a modem preset change, a channel name matches the new preset but won't auto-resolve.
+    """
+    CHANNEL_NAME_ISSUES: ClientNotification.NotificationType.ValueType  # 28
+    """
+    Name issues on one or more channels (several warnings combined).
+    """
+    CHANNEL_PSK_ISSUES: ClientNotification.NotificationType.ValueType  # 29
+    """
+    PSK issues on one or more channels (several warnings combined).
+    """
+    CHANNEL_NAME_AND_PSK_ISSUES: ClientNotification.NotificationType.ValueType  # 30
+    """
+    Name and PSK issues on one or more channels (several warnings combined).
+    """
+    LORA_REGION_UNRECOGNIZED: ClientNotification.NotificationType.ValueType  # 31
+    """
+    LoRa region code is not recognized.
+    """
+    LORA_REGION_REQUIRES_LICENSE: ClientNotification.NotificationType.ValueType  # 32
+    """
+    LoRa region requires licensed mode.
+    """
+    LORA_REGION_UNSUPPORTED_BY_RADIO: ClientNotification.NotificationType.ValueType  # 33
+    """
+    LoRa region needs a band (2.4 GHz or sub-GHz) this radio does not support.
+    """
+    LORA_PRESET_REGION_SWAP: ClientNotification.NotificationType.ValueType  # 34
+    """
+    The selected modem preset moved the node to a sibling region.
+    """
+    LORA_PRESET_INVALID_FOR_REGION: ClientNotification.NotificationType.ValueType  # 35
+    """
+    Modem preset is invalid for the region; the region default may have been applied.
+    """
+    LORA_BANDWIDTH_EXCEEDS_REGION: ClientNotification.NotificationType.ValueType  # 36
+    """
+    Requested bandwidth is wider than the region's span; the region default may have been applied.
+    """
+    LORA_CHANNEL_NUM_INVALID: ClientNotification.NotificationType.ValueType  # 37
+    """
+    Channel number is out of range for the region; a valid slot may have been applied.
+    """
+    SERIAL_CONSOLE_OVERRIDE_INVALID: ClientNotification.NotificationType.ValueType  # 38
+    """
+    Serial config rejected: overriding the console serial port needs an output-only mode (NMEA, CalTopo or MS Config).
+    """
+    MQTT_SERVER_UNREACHABLE: ClientNotification.NotificationType.ValueType  # 39
+    """
+    MQTT server could not be reached; the settings were saved anyway.
+    """
+    MQTT_PROXY_TO_CLIENT_REQUIRED: ClientNotification.NotificationType.ValueType  # 40
+    """
+    MQTT config rejected: proxy_to_client_enabled is required on a node without a network.
+    """
+    MQTT_DEFAULT_SERVER_PORT_INVALID: ClientNotification.NotificationType.ValueType  # 41
+    """
+    MQTT config rejected: the default server address must not have a port specified.
+    """
+    OTA_INVALID_HASH: ClientNotification.NotificationType.ValueType  # 43
+    """
+    OTA refused: the provided ota_hash is invalid.
+    """
+    OTA_LOADER_PARTITION_MISSING: ClientNotification.NotificationType.ValueType  # 44
+    """
+    OTA refused: no OTA loader partition was found.
+    """
+    OTA_LOADER_INVALID: ClientNotification.NotificationType.ValueType  # 45
+    """
+    OTA refused: the OTA loader partition does not hold a valid loader.
+    """
+    OTA_MODE_UNSUPPORTED: ClientNotification.NotificationType.ValueType  # 46
+    """
+    OTA refused: the OTA loader does not support the requested mode (BLE or WiFi).
+    """
+    OTA_REBOOTING: ClientNotification.NotificationType.ValueType  # 47
+    """
+    OTA accepted: rebooting into the OTA loader for the requested mode.
+    """
+    OTA_PARTITION_SWITCH_FAILED: ClientNotification.NotificationType.ValueType  # 48
+    """
+    OTA refused: switching to the OTA partition failed.
+    """
+    UNSIGNED_IDENTITY_UPDATE_IGNORED: ClientNotification.NotificationType.ValueType  # 49
+    """
+    A NodeInfo update without a valid signature tried to change a known node's name or role,
+    and packet_signature_policy (Balanced or Strict) refused it. The stored identity is kept.
+    """
+
     REPLY_ID_FIELD_NUMBER: builtins.int
     TIME_FIELD_NUMBER: builtins.int
     LEVEL_FIELD_NUMBER: builtins.int
     MESSAGE_FIELD_NUMBER: builtins.int
+    TYPE_FIELD_NUMBER: builtins.int
     KEY_VERIFICATION_NUMBER_INFORM_FIELD_NUMBER: builtins.int
     KEY_VERIFICATION_NUMBER_REQUEST_FIELD_NUMBER: builtins.int
     KEY_VERIFICATION_FINAL_FIELD_NUMBER: builtins.int
@@ -4640,6 +5057,10 @@ class ClientNotification(google.protobuf.message.Message):
     """
     The message body of the notification
     """
+    type: global___ClientNotification.NotificationType.ValueType
+    """
+    Which firmware message this notification carries. UNSET when not known.
+    """
     @property
     def key_verification_number_inform(self) -> global___KeyVerificationNumberInform: ...
     @property
@@ -4657,6 +5078,7 @@ class ClientNotification(google.protobuf.message.Message):
         time: builtins.int = ...,
         level: global___LogRecord.Level.ValueType = ...,
         message: builtins.str = ...,
+        type: global___ClientNotification.NotificationType.ValueType = ...,
         key_verification_number_inform: global___KeyVerificationNumberInform | None = ...,
         key_verification_number_request: global___KeyVerificationNumberRequest | None = ...,
         key_verification_final: global___KeyVerificationFinal | None = ...,
@@ -4664,7 +5086,7 @@ class ClientNotification(google.protobuf.message.Message):
         low_entropy_key: global___LowEntropyKey | None = ...,
     ) -> None: ...
     def HasField(self, field_name: typing.Literal["_reply_id", b"_reply_id", "duplicated_public_key", b"duplicated_public_key", "key_verification_final", b"key_verification_final", "key_verification_number_inform", b"key_verification_number_inform", "key_verification_number_request", b"key_verification_number_request", "low_entropy_key", b"low_entropy_key", "payload_variant", b"payload_variant", "reply_id", b"reply_id"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["_reply_id", b"_reply_id", "duplicated_public_key", b"duplicated_public_key", "key_verification_final", b"key_verification_final", "key_verification_number_inform", b"key_verification_number_inform", "key_verification_number_request", b"key_verification_number_request", "level", b"level", "low_entropy_key", b"low_entropy_key", "message", b"message", "payload_variant", b"payload_variant", "reply_id", b"reply_id", "time", b"time"]) -> None: ...
+    def ClearField(self, field_name: typing.Literal["_reply_id", b"_reply_id", "duplicated_public_key", b"duplicated_public_key", "key_verification_final", b"key_verification_final", "key_verification_number_inform", b"key_verification_number_inform", "key_verification_number_request", b"key_verification_number_request", "level", b"level", "low_entropy_key", b"low_entropy_key", "message", b"message", "payload_variant", b"payload_variant", "reply_id", b"reply_id", "time", b"time", "type", b"type"]) -> None: ...
     @typing.overload
     def WhichOneof(self, oneof_group: typing.Literal["_reply_id", b"_reply_id"]) -> typing.Literal["reply_id"] | None: ...
     @typing.overload
@@ -4989,6 +5411,8 @@ class DeviceMetadata(google.protobuf.message.Message):
     EXCLUDED_MODULES_FIELD_NUMBER: builtins.int
     HAS_XEDDSA_FIELD_NUMBER: builtins.int
     DISPLAY_FIELD_NUMBER: builtins.int
+    BLE_ADDRESS_FIELD_NUMBER: builtins.int
+    BOOTLOADER_VERSION_FIELD_NUMBER: builtins.int
     firmware_version: builtins.str
     """
     Device firmware version string
@@ -5043,6 +5467,23 @@ class DeviceMetadata(google.protobuf.message.Message):
     Indicates whether this firmware build includes XEdDSA packet signature verification.
     This is a read-only capability and must be false when XEdDSA is not compiled in.
     """
+    ble_address: builtins.str
+    """
+    The address this node's BLE radio advertises and accepts connections on, as
+    colon-separated uppercase hex, most significant byte first ("AA:BB:CC:DD:EE:FF").
+    Read from the BLE stack, so it is the address phones and other centrals see.
+    It can differ from User.macaddr: on ESP32, Bluetooth uses its own MAC derived
+    from the base MAC. Reported while Bluetooth is disabled in config whenever the
+    hardware address is known. Empty when the device has no BLE radio or the
+    address cannot be determined.
+    """
+    bootloader_version: builtins.int
+    """
+    nRF52 bootloader version, packed as major << 16 | minor << 8 | patch, as the
+    bootloader hands it to the application at boot. Meshtastic nRF52 Bootloader
+    releases before 2.6.0 report 0.9.2, the same as stock Adafruit 0.9.2. 0 means
+    not reported: a non-nRF52 device, or firmware that predates this field.
+    """
     @property
     def display(self) -> global___DisplayInfo:
         """
@@ -5069,9 +5510,11 @@ class DeviceMetadata(google.protobuf.message.Message):
         excluded_modules: builtins.int = ...,
         has_xeddsa: builtins.bool = ...,
         display: global___DisplayInfo | None = ...,
+        ble_address: builtins.str = ...,
+        bootloader_version: builtins.int = ...,
     ) -> None: ...
     def HasField(self, field_name: typing.Literal["display", b"display"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["canShutdown", b"canShutdown", "device_state_version", b"device_state_version", "display", b"display", "excluded_modules", b"excluded_modules", "firmware_version", b"firmware_version", "hasBluetooth", b"hasBluetooth", "hasEthernet", b"hasEthernet", "hasPKC", b"hasPKC", "hasRemoteHardware", b"hasRemoteHardware", "hasWifi", b"hasWifi", "has_xeddsa", b"has_xeddsa", "hw_model", b"hw_model", "position_flags", b"position_flags", "role", b"role"]) -> None: ...
+    def ClearField(self, field_name: typing.Literal["ble_address", b"ble_address", "bootloader_version", b"bootloader_version", "canShutdown", b"canShutdown", "device_state_version", b"device_state_version", "display", b"display", "excluded_modules", b"excluded_modules", "firmware_version", b"firmware_version", "hasBluetooth", b"hasBluetooth", "hasEthernet", b"hasEthernet", "hasPKC", b"hasPKC", "hasRemoteHardware", b"hasRemoteHardware", "hasWifi", b"hasWifi", "has_xeddsa", b"has_xeddsa", "hw_model", b"hw_model", "position_flags", b"position_flags", "role", b"role"]) -> None: ...
 
 global___DeviceMetadata = DeviceMetadata
 

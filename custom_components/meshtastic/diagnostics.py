@@ -26,6 +26,7 @@ from .const import (
     CONF_OPTION_WEB_CLIENT_ENABLE_DEFAULT,
     DOMAIN,
 )
+from .field_metadata import sensitive_json_names
 
 if TYPE_CHECKING:
     from homeassistant.core import HomeAssistant
@@ -35,24 +36,22 @@ if TYPE_CHECKING:
 
 # Keys are protobuf JSON names (MessageToDict camelCase) plus the entry's own option keys.
 # async_redact_data matches at any depth, so one set covers config, module config, node DB and entry data.
-TO_REDACT = {
+# Secrets come from the schema's `sensitive` field metadata; the rest are identifying, not secret.
+TO_REDACT = set(sensitive_json_names()) | {
     # entry data and options
     CONF_CONNECTION_TCP_HOST,
     CONF_CONNECTION_BLUETOOTH_ADDRESS,
     CONF_CONNECTION_SERIAL_PORT,
     "public_key",
     "title",
-    # keys: Security config, User, Channel settings and the selected-node options
+    # public keys: Security config, User and the selected-node options
     "publicKey",
-    "privateKey",
     "adminKey",
-    "psk",
     # identifiers that fingerprint a device
     "macaddr",
     "deviceId",
     # NetworkConfig and its static IPv4 block
     "wifiSsid",
-    "wifiPsk",
     "ip",
     "gateway",
     "subnet",
@@ -60,9 +59,6 @@ TO_REDACT = {
     # MQTT module
     "address",
     "username",
-    "password",
-    # BluetoothConfig pairing PIN
-    "fixedPin",
     # Position, nodes and the gateway's own
     "latitude",
     "longitude",

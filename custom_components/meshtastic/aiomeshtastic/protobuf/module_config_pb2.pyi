@@ -109,9 +109,11 @@ class ModuleConfig(google.protobuf.message.Message):
         encryption_enabled: builtins.bool
         """
         Whether to send encrypted or decrypted packets to MQTT.
-        This parameter is only honoured if you also set server
-        (the default official mqtt.meshtastic.org server can handle encrypted packets)
-        Decrypted packets may be useful for external systems that want to consume meshtastic packets
+        When false, packets on channels with uplink enabled are published decrypted, and decrypted packets
+        from the broker are accepted on channels with downlink enabled without channel authentication,
+        including on AES-CCM channels. This trusts the broker, and anyone who can publish to it, as much
+        as the channel's own members.
+        Decrypted packets may be useful for external systems that want to consume meshtastic packets.
         """
         json_enabled: builtins.bool
         """

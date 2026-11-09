@@ -20,7 +20,8 @@ if TYPE_CHECKING:
     from homeassistant.core import HomeAssistant
 
 MAC = "q83vASNF"
-SECRETS = (HOST, GATEWAY_KEY, PEER_KEY, "c2VjcmV0", MAC, "mqtt.example", "home")
+SECRETS = (HOST, GATEWAY_KEY, PEER_KEY, MAC, "mqtt.example", "home")
+SENSITIVE = ("secret", "c2VjcmV0", "wifi-password", "mqtt-password", "123456")
 
 
 async def test_diagnostics_redact_secrets_and_keep_the_radio_section(
@@ -43,7 +44,7 @@ async def test_diagnostics_redact_secrets_and_keep_the_radio_section(
     diagnostics = await async_get_config_entry_diagnostics(hass, entry)
 
     rendered = json.dumps(diagnostics)
-    for secret in (*SECRETS, "473769000", "85417000", "408"):
+    for secret in (*SECRETS, *SENSITIVE, "473769000", "85417000", "408"):
         assert secret not in rendered
 
     assert diagnostics["config_entry"]["data"][CONF_CONNECTION_TCP_HOST] == REDACTED
