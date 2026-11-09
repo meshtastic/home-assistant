@@ -20,7 +20,7 @@ conflicts = [
 dev = [
   "colorlog==6.10.1",
   "homeassistant==2026.8.0",
-  "ruff==0.15.15",
+  "ruff==0.17.4",
   "mypy",
   "types-protobuf",
   # runtime requirements of the integration, as Home Assistant installs them from manifest.json
