@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: MIT
 
 import asyncio
+from collections.abc import Coroutine
 from typing import ClassVar, Self
 
 import aiomqtt
@@ -15,6 +16,12 @@ from custom_components.meshtastic.aiomeshtastic.protobuf import channel_pb2, con
 
 Role = channel_pb2.Channel.Role
 Preset = config_pb2.Config.LoRaConfig.ModemPreset
+real_sleep = asyncio.sleep
+
+
+async def fast_sleep(_delay: float) -> None:
+    """Skip the reconnect back-off while still yielding to the event loop."""
+    await real_sleep(0)
 
 
 class RecordingConnection:
@@ -122,6 +129,8 @@ async def test_message_is_handed_to_radio_unchanged() -> None:
         ("msh/US/2/e/Private/!1234abcd", None),
         ("msh/US/2/e/Private/!1234abcd", b"x" * 436),
         ("msh/US/2/e/" + "x" * 60 + "/!1234abcd", b"\x01"),
+        ("msh/US/2/e/" + "x" * 39 + "/!1234abcd", b"\x01"),  # 60 bytes leaves no room for the NUL
+        ("msh/US/2/e/" + "\u00e9" * 20 + "/!1234abcd", b"\x01"),  # 41 characters, 61 UTF-8 bytes
     ],
 )
 async def test_messages_firmware_cannot_take_are_dropped(topic: str, payload: object) -> None:
@@ -130,6 +139,16 @@ async def test_messages_firmware_cannot_take_are_dropped(topic: str, payload: ob
     await interface._forward_mqtt_message_to_radio(message(topic, payload))
 
     assert connection.sent == []
+
+
+async def test_largest_message_firmware_can_take_is_forwarded() -> None:
+    interface, connection = make_interface([])
+    topic = "msh/US/2/e/" + "x" * 38 + "/!1234abcd"
+    assert len(topic.encode("utf-8")) == 59
+
+    await interface._forward_mqtt_message_to_radio(message(topic, b"x" * 435))
+
+    assert [sent.mqttClientProxyMessage.topic for sent in connection.sent] == [topic]
 
 
 class FakeMqttClient:
@@ -196,3 +215,49 @@ async def test_dropped_stream_raises_so_the_connection_is_retried() -> None:
 
     with pytest.raises(MqttError, match="Disconnected"):
         await interface._forward_mqtt_downlink_until_stopped()
+
+
+async def test_dropped_connection_reconnects_and_forwards(monkeypatch: pytest.MonkeyPatch) -> None:
+    FakeMqttClient.instances = []
+    monkeypatch.setattr(interface_module.aiomqtt, "Client", FakeMqttClient)
+    monkeypatch.setattr(interface_module.asyncio, "sleep", fast_sleep)
+    interface, connection = make_interface([channel(0, "Private")])
+    interface._mqtt_config = {}
+    interface._is_running.set()
+
+    task = asyncio.create_task(interface._maintain_mqtt_connection())
+    while not FakeMqttClient.instances:
+        await real_sleep(0)
+    first = FakeMqttClient.instances[0]
+    await asyncio.wait_for(first.subscribed.wait(), timeout=1)
+    first.queue.put_nowait(MqttError("Disconnected during message iteration"))
+    while len(FakeMqttClient.instances) < 2:
+        await real_sleep(0)
+    second = FakeMqttClient.instances[1]
+    await asyncio.wait_for(second.subscribed.wait(), timeout=1)
+    second.queue.put_nowait(message("msh/US/2/e/Private/!1234abcd", b"\x02"))
+    await asyncio.wait_for(connection.has_sent.wait(), timeout=1)
+    interface._is_stopped.set()
+    await asyncio.wait_for(task, timeout=1)
+
+    assert second.subscriptions == ["msh/US/2/e/Private/+", "msh/US/2/e/PKI/+"]
+    assert [sent.mqttClientProxyMessage.data for sent in connection.sent] == [b"\x02"]
+
+
+async def test_client_bounds_its_incoming_queue(monkeypatch: pytest.MonkeyPatch) -> None:
+    interface, _ = make_interface([])
+    mqtt = interface._connected_node_module_config.mqtt
+    mqtt.enabled = True
+    mqtt.proxy_to_client_enabled = True
+    mqtt.address = "broker.example"
+    interface._connected_node_info = mesh_pb2.MyNodeInfo(my_node_num=0x1234ABCD)
+    interface._connected_node_ready.set()
+
+    def capture(coroutine: Coroutine[None, None, None], name: str) -> None:
+        assert name == "mqtt-connection"
+        coroutine.close()
+
+    monkeypatch.setattr(interface, "_add_background_task", capture)
+    await interface._init_mqtt_client()
+
+    assert interface._mqtt_config["max_queued_incoming_messages"] == interface_module._MQTT_MAX_QUEUED_INCOMING_MESSAGES

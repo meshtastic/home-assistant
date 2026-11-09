@@ -54,9 +54,13 @@ from .protobuf import (
 )
 from .protobuf.mesh_pb2 import MeshPacket
 
-# nanopb limits on MqttClientProxyMessage (mesh.options); firmware cannot decode anything larger
-_MQTT_PROXY_TOPIC_MAX_SIZE = 60
+# nanopb limits on MqttClientProxyMessage (mesh.options); firmware cannot decode anything larger.
+# A string's max_size counts its terminating NUL, so the 60 byte topic field holds 59 bytes of text.
+_MQTT_PROXY_TOPIC_MAX_SIZE = 59
 _MQTT_PROXY_DATA_MAX_SIZE = 435
+
+# broker messages waiting for the radio; a slow link (Bluetooth) drops the excess instead of growing without bound
+_MQTT_MAX_QUEUED_INCOMING_MESSAGES = 100
 
 # preset names firmware does not derive by title-casing the enum (DisplayFormatters::getModemPresetDisplayName)
 _MQTT_PRESET_CHANNEL_IDS = {"LONG_MODERATE": "LongMod"}
@@ -443,6 +447,7 @@ class MeshInterface:
             "password": password or None,
             "tls_context": get_default_context() if use_tls else None,
             "identifier": client_id,
+            "max_queued_incoming_messages": _MQTT_MAX_QUEUED_INCOMING_MESSAGES,
         }
 
         # Start connection task
