@@ -407,7 +407,12 @@ class MeshtasticWebApiV1View(HomeAssistantView):
 
     def _check_access(self, config_entry_id: str, token: str) -> None:
         if not self._tokens.check(config_entry_id, token):
-            raise web.HTTPUnauthorized(headers={"Cache-Control": "no-cache"})
+            # 403, not 401: HA's ban middleware counts every 401 as a failed login, and a tab left open
+            # across a restart polls with its lost token every few seconds
+            raise web.HTTPForbidden(
+                body="Web client session expired, open it again from the Meshtastic sidebar",
+                headers={"Cache-Control": "no-cache"},
+            )
 
         config_entry = self._hass.config_entries.async_get_entry(config_entry_id)
         if config_entry is None:
