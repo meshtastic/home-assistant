@@ -6,6 +6,9 @@
 
 from __future__ import annotations
 
+import re
+from pathlib import Path
+
 from aiohttp import web
 
 from custom_components.meshtastic.meshtastic_web import (
@@ -39,6 +42,16 @@ def test_a_path_outside_the_static_directory_is_never_served() -> None:
     response = _serve_web_client_path("../__init__.py")
 
     assert isinstance(response, web.HTTPNotFound)
+
+
+def test_every_file_index_html_references_exists_with_its_exact_case() -> None:
+    # git on macOS ignores case, so a rebuilt asset can keep a stale name that 404s on Home Assistant
+    static = Path(_serve_web_client_path.__code__.co_filename).parent / "static"
+    referenced = set(re.findall(r'"/meshtastic/web/([^"]+)"', (static / "index.html").read_text()))
+    present = {path.name for path in static.iterdir()}
+
+    assert referenced
+    assert referenced <= present, referenced - present
 
 
 def test_the_fromradio_hold_ends_before_the_client_read_timeout() -> None:
