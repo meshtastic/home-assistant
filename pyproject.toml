@@ -20,7 +20,7 @@ conflicts = [
 dev = [
   "colorlog==6.12.0",
   "homeassistant==2026.8.0",
-  "ruff==0.15.15",
+  "ruff==0.17.4",
   "mypy",
   "types-protobuf",
   # runtime requirements of the integration, as Home Assistant installs them from manifest.json
@@ -70,7 +70,11 @@ ignore = [
     "D104", # Missing docstring (currently no distributed library)
     "D105", # Missing docstring (currently no distributed library)
     "D107", # Missing docstring (currently no distributed library)
+    "PLR0917", # too many positional arguments; entity and platform constructors take them
 ]
+
+[tool.ruff.lint.flake8-copyright]
+notice-rgx = "SPDX-FileCopyrightText: "
 
 [tool.ruff.lint.flake8-pytest-style]
 fixture-parentheses = false

@@ -76,7 +76,7 @@ class ClientProxyTransport(StreamingClientTransport):
         try:
             await asyncio.wait_for(self._writer.wait_closed(), _CLOSE_TIMEOUT_S)
             closed = True
-        except Exception:  # noqa: BLE001
+        except Exception:
             self._logger.debug("Graceful close of proxy client failed, aborting", exc_info=True)
         finally:
             if not closed:
@@ -206,7 +206,7 @@ class MeshtasticTcpProxy:
                 peer_name,
                 [r for r in results if isinstance(r, Exception)],
             )
-        except Exception:  # noqa: BLE001
+        except Exception:
             _LOGGER.warning("Failed handling proxy connection", exc_info=True)
         finally:
             self._clients.pop(queue, None)

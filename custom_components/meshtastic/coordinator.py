@@ -154,7 +154,7 @@ class MeshtasticDataUpdateCoordinator(DataUpdateCoordinator):
     async def _async_recover_gateway(self) -> None:
         try:
             data = await self._async_update_data()
-        except Exception:  # noqa: BLE001
+        except Exception:
             self._logger.warning("Gateway reconnected but refreshing node data failed", exc_info=True)
             return
 

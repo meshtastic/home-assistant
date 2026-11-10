@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import base64
 import contextlib
-import datetime
+import datetime as dt
 from collections import defaultdict
 from collections.abc import Callable
 from typing import TYPE_CHECKING, Any, cast
@@ -74,7 +74,7 @@ PLATFORMS: list[Platform] = [Platform.SENSOR, Platform.BINARY_SENSOR, Platform.D
 ENTITY_ID_FORMAT = DOMAIN + ".{}"
 PLATFORM_SCHEMA = cv.PLATFORM_SCHEMA
 PLATFORM_SCHEMA_BASE = cv.PLATFORM_SCHEMA_BASE
-SCAN_INTERVAL = datetime.timedelta(hours=1)
+SCAN_INTERVAL = dt.timedelta(hours=1)
 
 
 _remove_listeners: MutableMapping[str, list[Callable[[], None]]] = defaultdict(list)

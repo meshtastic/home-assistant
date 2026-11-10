@@ -288,7 +288,7 @@ class ClientApiConnection:
         out_callback: Callable[[Packet], Awaitable[None]] | None = None,
         ack_callback: Callable[[Packet[mesh_pb2.Routing]], Awaitable[None]] | None = None,
         response_callback: Callable[[Packet], Awaitable[None]] | None = None,
-    ) -> None | Packet:
+    ) -> Packet | None:
         mesh_packet = mesh_pb2.MeshPacket()
         if channel_index is not None:
             mesh_packet.channel = channel_index
@@ -336,7 +336,7 @@ class ClientApiConnection:
         out_callback: Callable[[Packet], Awaitable[None]] | None = None,
         ack_callback: Callable[[Packet[mesh_pb2.Routing]], Awaitable[None]] | None = None,
         response_callback: Callable[[Packet], Awaitable[None]] | None = None,
-    ) -> None | Packet:
+    ) -> Packet | None:
         ack_packet = None
         response_packet = None
 
@@ -469,7 +469,7 @@ class ClientApiConnection:
 
                 except asyncio.CancelledError:
                     self._logger.debug("On demand processor cancelled", exc_info=True)
-                except Exception:  # noqa: BLE001
+                except Exception:
                     self._logger.debug("On demand processor failed", exc_info=True)
                 finally:
                     self._on_demand_streaming_task = None

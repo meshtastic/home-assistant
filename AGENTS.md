@@ -61,7 +61,7 @@ coordinator.py the node database as coordinator data, keyed by node number
 ## Commands
 
 ```sh
-scripts/setup                 # uv sync --group dev --group test (Home Assistant 2026.8, ruff 0.15.15)
+scripts/setup                 # uv sync --group dev --group test (Home Assistant 2026.8; ruff as pinned in the dev group)
 scripts/lint                  # ruff format . && ruff check . --fix
 uv run ruff check . && uv run ruff format --check .   # what CI runs
 uv run python -m pytest tests # the tests

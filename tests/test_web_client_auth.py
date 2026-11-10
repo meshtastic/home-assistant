@@ -6,7 +6,7 @@
 
 from __future__ import annotations
 
-import datetime
+import datetime as dt
 from http import HTTPStatus
 from typing import TYPE_CHECKING
 from unittest.mock import patch
@@ -144,7 +144,7 @@ def test_a_token_expires_when_idle() -> None:
     token = tokens.issue("entry", "user")
     assert tokens.check("entry", token)
 
-    later = datetime.datetime.now(tz=datetime.UTC) + TOKEN_IDLE_TIMEOUT + datetime.timedelta(seconds=1)
-    with patch("custom_components.meshtastic.meshtastic_web.datetime.datetime") as clock:
+    later = dt.datetime.now(tz=dt.UTC) + TOKEN_IDLE_TIMEOUT + dt.timedelta(seconds=1)
+    with patch("custom_components.meshtastic.meshtastic_web.dt.datetime") as clock:
         clock.now.return_value = later
         assert not tokens.check("entry", token)
