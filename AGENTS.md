@@ -30,6 +30,8 @@ coordinator.py the node database as coordinator data, keyed by node number
 | `sensor.py`, `binary_sensor.py`, `device_tracker.py`, `notify.py`, `text.py` | the platforms |
 | `device_trigger.py`, `device_action.py`, `logbook.py`, `services.py` | automation surface |
 | `renumber.py` | following nodes whose number changed (firmware 2.8) |
+| `field_metadata.py` | reads the protobuf field metadata: role labels and the `sensitive` fields kept out of attributes and diagnostics |
+| `diagnostics.py` | config entry and device diagnostics, redacted |
 | `meshtastic_tcp/` | TCP proxy so other clients share the gateway's single API connection |
 | `meshtastic_web/`, `frontend.py`, `ha_frontend/` | the bundled Meshtastic web client and its sidebar panel |
 | `config_flow.py` | connection, node selection, notify, web client and proxy steps, plus the options flow |
@@ -54,6 +56,15 @@ coordinator.py the node database as coordinator data, keyed by node number
   generated descriptors.
 - **Events share one envelope** built by `_build_event_data`: `config_entry_id`, `node`, `data`, plus
   `message_id` on packet events. The README event table is the contract; update it with any change.
+- **Secrets never reach state attributes.** Gateway config and channel settings pass through
+  `field_metadata.without_sensitive_*` before they become attributes, and diagnostics redact
+  `sensitive_json_names()`. A new secret field is handled by its `sensitive` tag in protobufs, not a list here.
+- **The web client's radio API answers only under a token.** `meshtastic/web_client/open` (admins only)
+  issues one bound to a config entry; tokens live in memory, so a restart drops them. A bad token gets 403,
+  never 401: HA's ban middleware counts every 401 as a failed login, and an open tab polls every few seconds.
+- **The bundled web client is built, never edited.** Change `scripts/web-client/patches` and rerun
+  `scripts/build_web_client`. Home Assistant serves the files case-sensitively, so a rebuild on macOS must not
+  keep a stale tracked name; `test_web_client_paths.py` checks every file `index.html` references.
 - **Generated protobufs are vendored.** After a submodule bump, regenerate, then compare old and new
   descriptors for removed or renamed fields before merging; v2.8 protos qualify custom options with the
   package, which the generator rewrites.
@@ -84,4 +95,5 @@ per config entry from 2026.8, so look them up with `async_get_device_by_identifi
 - The CLA assistant check must pass. Pull requests are squash-merged with Conventional titles.
 - Renovate opens the dependency bumps (`.github/renovate.json`). A `homeassistant` bump waits for approval on
   the dependency dashboard issue; the pins taken from that release (`pytest-homeassistant-custom-component`,
-  `protobuf`, `josepy`, `bleak`) are never bumped by Renovate and move by hand with it.
+  `protobuf`, `josepy`, `bleak`, `serialx`, the devcontainer's Python) are never bumped by Renovate and move
+  by hand with it. Nor are `grpcio-tools` and `mypy-protobuf`, which move only with a protobuf regeneration.

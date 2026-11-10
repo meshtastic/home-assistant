@@ -30,7 +30,8 @@ validations. Runtime requirements stay in `custom_components/meshtastic/manifest
 
 ## Tests
 
-`tests/` holds pytest tests for the TCP proxy and the channel handling, using
+`tests/` covers setup and unload, the config flow, the firmware 2.8 renumber migration, diagnostics,
+state attributes, the TCP proxy and the web client, with a fake radio client and
 `pytest-homeassistant-custom-component` from the `test` dependency group. CI runs them on every pull
 request; to run them locally:
 

@@ -27,10 +27,11 @@ Supported Features:
  * Record node position (as device tracker)
  * Device triggers & actions for automations
  * Various other service actions (e.g. request metrics, trace route)
- * Bundled meshtastic web client for manual interaction with gateway
+ * Bundled meshtastic web client for manual interaction with gateway, opened by Home Assistant admins
  * MQTT client proxy support (forwards messages from radio to MQTT broker, and broker messages for channels with downlink enabled back to the radio)
+ * Reconfigure a gateway's connection, and diagnostics with secrets redacted
 
-For more details, see check the [documentation](#documentation).
+For more details, see the [documentation](#documentation).
 
 ## Installation
 
@@ -81,6 +82,10 @@ USB auto-discovery matches the common nRF52, ESP32, RP2040 and CH340 based radio
 ## Supported Platforms
 ### Sensor / Binary Sensor
 For nodes selected as part of the configuration, metrics are exposed as corresponding sensors.
+
+The gateway entity carries the radio's config as attributes, and each channel entity its settings. Fields
+the Meshtastic protobufs mark sensitive (passwords, PINs, private and channel keys) are left out, since
+attributes reach the recorder, backups and every API client.
 
 The integration is classified as `local_push`: Home Assistant is notified as soon as new state is available.
 Polling is only a fallback should the push mechanism stop working.
@@ -409,7 +414,7 @@ that are not connected via TCP (like serial or bluetooth) or don't support TCP a
 
 **Security Note**: The web client controls the gateway with full admin rights. Only Home Assistant admins can
 open it: the Open button issues a token for that gateway, and the radio API answers only under that token. A token
-lapses after an hour unused or a day after it was issued; press Open again for a new one. Anyone holding the
+lapses after an hour unused, a day after it was issued, or when Home Assistant restarts; press Open again for a new one. Anyone holding the
 web client's URL holds the token, so don't share it.
 
 To open the web client:
