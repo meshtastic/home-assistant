@@ -27,7 +27,7 @@ from custom_components.meshtastic.const import (
     DOMAIN,
 )
 
-from .conftest import GATEWAY_KEY, GATEWAY_NUM, HOST, PEER_NUM, canonical, make_entry, make_node
+from .conftest import GATEWAY_KEY, GATEWAY_NUM, HOST, PEER_NUM, FakeClient, canonical, make_entry, make_node
 
 if TYPE_CHECKING:
     from homeassistant.core import HomeAssistant
@@ -212,3 +212,35 @@ async def test_reconfigure_cannot_connect_shows_the_form_again(
     assert result["type"] is FlowResultType.FORM
     assert result["errors"] == {"base": "cannot_connect"}
     assert entry.data[CONF_CONNECTION_TCP_HOST] == HOST
+
+
+@pytest.mark.usefixtures("validate_input")
+async def test_options_flow_tolerates_nodes_without_a_name(
+    hass: HomeAssistant, entry: MockConfigEntry, fake_client: FakeClient
+) -> None:
+    """A real mesh has nodes the gateway only knows from their position, or without a long name."""
+    no_user, no_name = 0x44444444, 0x55555555
+    assert await hass.config_entries.async_setup(entry.entry_id)
+    await hass.async_block_till_done()
+    fake_client.nodes[no_user] = {"num": no_user, "position": {"latitude": 47.0, "longitude": 8.0}}
+    fake_client.nodes[no_name] = {"num": no_name, "user": {"id": "!55555555", "shortName": "5555"}}
+
+    result = await hass.config_entries.options.async_init(entry.entry_id)
+    assert result["type"] is FlowResultType.FORM
+    offered = result["data_schema"].schema[CONF_OPTION_NODE].config["options"]
+    labels = {option["value"]: option["label"] for option in offered}
+    assert labels[str(no_name)] == "!55555555 (!55555555)"  # no long name: shown by its id
+    assert str(no_user) not in labels  # no user record at all: cannot become a device yet
+
+    result = await hass.config_entries.options.async_configure(
+        result["flow_id"],
+        {
+            CONF_OPTION_FILTER_NODES: [str(GATEWAY_NUM), str(PEER_NUM)],
+            CONF_OPTION_NODE: str(no_name),
+            CONF_OPTION_NOTIFY_PLATFORM: {"channels": False, "nodes": "selected"},
+            CONF_OPTION_WEB_CLIENT: {"enable": False},
+            CONF_OPTION_TCP_PROXY: {"enable": False, "port": 4403},
+        },
+    )
+    assert result["type"] is FlowResultType.CREATE_ENTRY
+    assert result["data"][CONF_OPTION_FILTER_NODES][-1] == {"id": no_name, "name": "!55555555"}
