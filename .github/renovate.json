@@ -16,7 +16,13 @@
     {
       "description": "These pins are taken from the pinned Home Assistant release and move by hand with it, never on their own",
       "matchManagers": ["pep621"],
-      "matchPackageNames": ["pytest-homeassistant-custom-component", "protobuf", "josepy", "bleak"],
+      "matchPackageNames": ["pytest-homeassistant-custom-component", "protobuf", "josepy", "bleak", "serialx"],
+      "enabled": false
+    },
+    {
+      "description": "The devcontainer runs the Python Home Assistant runs, so only its patch releases and digest move on their own",
+      "matchPackageNames": ["mcr.microsoft.com/devcontainers/python"],
+      "matchUpdateTypes": ["major", "minor"],
       "enabled": false
     },
     {
