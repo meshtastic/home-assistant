@@ -83,7 +83,11 @@ def meshtastic_api_event_callback(f):  # noqa: ANN001, ANN201
     return wrapper
 
 
-class MeshtasticDataUpdateCoordinator(DataUpdateCoordinator):
+# keyed by node number; each value is the node's MessageToDict output
+NodeData = dict[int, dict[str, Any]]
+
+
+class MeshtasticDataUpdateCoordinator(DataUpdateCoordinator[NodeData]):
     config_entry: MeshtasticConfigEntry
 
     def __init__(
