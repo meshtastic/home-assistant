@@ -124,26 +124,14 @@ NODE_SCHEMA = vol.Schema(
 )
 
 
-def _node_user_id(node_id: int, node: Mapping[str, Any]) -> str:
-    return node.get("user", {}).get("id") or f"!{node_id:08x}"
-
-
-def _node_long_name(node_id: int, node: Mapping[str, Any]) -> str:
-    """Name a node for the option lists; nodes the gateway has no (complete) user record for fall back to their id."""
-    return node.get("user", {}).get("longName") or _node_user_id(node_id, node)
-
-
 def _build_add_node_schema(
     options: Mapping[str, Any],
     nodes: Mapping[int, Any],
     node_selection_required: bool = True,  # noqa: FBT001, FBT002
 ) -> vol.Schema:
     already_selected_node_nums = [el["id"] for el in options[CONF_OPTION_FILTER_NODES]]
-    # a node can only become a device once the gateway knows its user record
     selectable_nodes = {
-        node_id: node_info
-        for node_id, node_info in nodes.items()
-        if node_id not in already_selected_node_nums and node_info.get("user")
+        node_id: node_info for node_id, node_info in nodes.items() if node_id not in already_selected_node_nums
     }
     if not selectable_nodes:
         return vol.Schema({})
@@ -151,7 +139,7 @@ def _build_add_node_schema(
     selector_options = [
         SelectOptionDict(
             value=str(node_id),
-            label=f"{_node_long_name(node_id, node_info)} ({_node_user_id(node_id, node_info)})",
+            label=f"{node_info['user']['longName']} ({node_info['user']['id']})",
         )
         for node_id, node_info in sorted(
             selectable_nodes.items(),
@@ -600,7 +588,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 self.options[CONF_OPTION_FILTER_NODES].append(
                     {
                         "id": node_id,
-                        "name": _node_long_name(node_id, self.nodes[node_id]),
+                        "name": self.nodes[node_id]["user"]["longName"],
                     }
                 )
                 if user_input.get(CONF_OPTION_ADD_ANOTHER_NODE, False):
@@ -786,7 +774,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
             if CONF_OPTION_FILTER_NODES in self.options
             else self.config_entry.options[CONF_OPTION_FILTER_NODES]
         )
-        all_nodes = {str(k): _node_long_name(k, v) for k, v in self.nodes.items()}
+        all_nodes = {str(k): v["user"]["longName"] for k, v in self.nodes.items()}
         already_selected_node_ids = [el["id"] for el in current_filter_node_option]
 
         if user_input is not None:
@@ -806,9 +794,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                 updated_filter_node_option.append(
                     {
                         "id": int(user_input[CONF_OPTION_NODE]),
-                        "name": _node_long_name(
-                            int(user_input[CONF_OPTION_NODE]), self.nodes[int(user_input[CONF_OPTION_NODE])]
-                        ),
+                        "name": self.nodes[int(user_input[CONF_OPTION_NODE])]["user"]["longName"],
                     }
                 )
 

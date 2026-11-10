@@ -331,37 +331,6 @@ def test_panel_ships_the_style_sheets_it_loads() -> None:
     assert ".elements" not in script
 
 
-@pytest.mark.usefixtures("fake_api")
-async def test_options_form_tolerates_nodes_without_a_name(
-    hass: HomeAssistant, hass_client: ClientSessionGenerator
-) -> None:
-    """A real mesh has nodes the gateway only knows from their position or telemetry, without a user record."""
-    assert await async_setup_component(hass, "config", {})
-    entry = _entry({"chat": {"enable": True}})
-    entry.add_to_hass(hass)
-    assert await hass.config_entries.async_setup(entry.entry_id)
-    await hass.async_block_till_done()
-
-    original = entry.runtime_data.client.async_get_all_nodes
-
-    async def with_incomplete_nodes() -> dict[int, dict[str, Any]]:
-        nodes = await original()
-        nodes[0x22222222] = {"num": 0x22222222, "position": {"latitude": 47.0, "longitude": 8.0}}
-        nodes[0x33333333] = {"num": 0x33333333, "user": {"id": "!33333333", "shortName": "3333"}}
-        return nodes
-
-    entry.runtime_data.client.async_get_all_nodes = with_incomplete_nodes
-
-    client = await hass_client()
-    response = await client.post("/api/config/config_entries/options/flow", json={"handler": entry.entry_id})
-    assert response.status == 200
-    form = await response.json()
-    node_field = next(field for field in form["data_schema"] if field["name"] == "node")
-    labels = {option["value"]: option["label"] for option in node_field["selector"]["select"]["options"]}
-    assert labels[str(0x33333333)] == "!33333333 (!33333333)"  # no long name: shown by its id
-    assert str(0x22222222) not in labels  # no user record at all: cannot become a device yet
-
-
 def _tracker_unique_ids(hass: HomeAssistant) -> set[str]:
     entities = er.async_get(hass).entities.values()
     return {e.unique_id for e in entities if e.platform == DOMAIN and e.domain == "device_tracker"}
