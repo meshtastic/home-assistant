@@ -97,10 +97,24 @@ async def test_the_api_refuses_a_missing_wrong_or_foreign_token(
     )
     untokened = await http.get(f"/meshtastic/web/{entry.entry_id}/api/v1/fromradio")
 
-    assert wrong.status == HTTPStatus.UNAUTHORIZED
-    assert foreign.status == HTTPStatus.UNAUTHORIZED
-    assert put.status == HTTPStatus.UNAUTHORIZED
+    assert wrong.status == HTTPStatus.FORBIDDEN
+    assert foreign.status == HTTPStatus.FORBIDDEN
+    assert put.status == HTTPStatus.FORBIDDEN
     assert untokened.headers.get("Content-Type", "").startswith("text/html")
+
+
+@pytest.mark.usefixtures("fake_client")
+async def test_a_stale_token_is_not_counted_as_a_failed_login(
+    hass: HomeAssistant, hass_client_no_auth: ClientSessionGenerator
+) -> None:
+    entry, _ = await setup_gateway(hass)
+    http = await hass_client_no_auth()
+
+    with patch("homeassistant.components.http.ban.process_wrong_login") as wrong_login:
+        for _ in range(3):
+            await http.get(f"/meshtastic/web/{entry.entry_id}/lost-token/api/v1/fromradio")
+
+    wrong_login.assert_not_called()
 
 
 @pytest.mark.usefixtures("fake_client")
