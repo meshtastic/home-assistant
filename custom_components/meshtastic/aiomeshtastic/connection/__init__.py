@@ -18,6 +18,7 @@ from google.protobuf.message import Message
 
 from ..packet import Packet  # noqa: TID252
 from ..protobuf import mesh_pb2, portnums_pb2  # noqa: TID252
+from ..redact import without_secrets  # noqa: TID252
 from .errors import (
     ClientApiConnectFailedError,
     ClientApiConnectionError,
@@ -47,7 +48,8 @@ class _LazyProtobufLog:
         self._message = message
 
     def __str__(self) -> str:
-        return repr(self._message).replace("\n", "")
+        # users attach debug logs to bug reports, and the config exchange carries keys and passwords
+        return repr(without_secrets(self._message)).replace("\n", "")
 
     __repr__ = __str__
 
