@@ -32,7 +32,7 @@ from .aiomeshtastic import (
     TcpConnection as AioTcpConnection,
 )
 from .aiomeshtastic.errors import MeshRoutingError, MeshtasticError
-from .aiomeshtastic.protobuf import portnums_pb2
+from .aiomeshtastic.protobuf import mesh_pb2, portnums_pb2
 from .const import (
     CONF_CONNECTION_BLUETOOTH_ADDRESS,
     CONF_CONNECTION_SERIAL_PORT,
@@ -78,6 +78,21 @@ ATTR_EVENT_MESHTASTIC_API_NODE = "node"
 ATTR_EVENT_MESHTASTIC_API_DATA = "data"
 ATTR_EVENT_MESHTASTIC_API_TELEMETRY_TYPE = "telemetry_type"
 ATTR_EVENT_MESHTASTIC_API_NODE_INFO = "node_info"
+
+
+def _without_admin_payload(packet: mesh_pb2.MeshPacket) -> mesh_pb2.MeshPacket:
+    """
+    Drop an admin packet's payload before it is published.
+
+    Admin replies carry config the integration requests itself, such as the connection status with the
+    Bluetooth PIN, and the packet event reaches the recorder and every listener.
+    """
+    if not packet.HasField("decoded") or packet.decoded.portnum != portnums_pb2.PortNum.ADMIN_APP:
+        return packet
+    redacted = mesh_pb2.MeshPacket()
+    redacted.CopyFrom(packet)
+    redacted.decoded.ClearField("payload")
+    return redacted
 
 
 class EventMeshtasticApiTelemetryType(StrEnum):
@@ -532,11 +547,11 @@ class MeshtasticApiClient:
     async def _process_meshtastic_packet(self) -> None:
         async for packet in self._interface.packet_stream():
             try:
-                packet_clone = google.protobuf.json_format.MessageToDict(packet)
+                packet_clone = google.protobuf.json_format.MessageToDict(_without_admin_payload(packet))
                 node_id = packet_clone["from"]
                 self._hass.bus.async_fire(EVENT_MESHTASTIC_API_PACKET, self._build_event_data(node_id, packet_clone))
             except:  # noqa: E722
-                self._logger.warning("Failed to process packet %s", packet, exc_info=True)
+                self._logger.warning("Failed to process packet %s", packet.id, exc_info=True)
 
     def _add_background_task(self, coro: Coroutine[Any, Any, None], name: str | None = None) -> asyncio.Task:
         task = asyncio.create_task(coro, name=name)

@@ -20,7 +20,7 @@ if TYPE_CHECKING:
     from homeassistant.core import HomeAssistant
 
 MAC = "q83vASNF"
-SECRETS = (HOST, GATEWAY_KEY, PEER_KEY, MAC, "mqtt.example", "home")
+SECRETS = (HOST, GATEWAY_KEY, PEER_KEY, MAC, "mqtt.example", "home", "ntp.lan", "syslog.lan")
 SENSITIVE = ("secret", "c2VjcmV0", "wifi-password", "mqtt-password", "123456")
 
 
