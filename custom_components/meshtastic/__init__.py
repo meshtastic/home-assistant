@@ -138,7 +138,7 @@ async def async_setup_entry(
     except BaseException:
         # unload never runs for a failed setup, and many radios accept only one API connection;
         # the options flow must not pick up the stopped client either
-        entry.runtime_data = None
+        entry.runtime_data = None  # type: ignore[assignment]  # cleared so the options flow skips the stopped client
         with contextlib.suppress(Exception):
             await client.disconnect()
         # a retry must not find the entity platform of the failed attempt still registered
@@ -265,7 +265,7 @@ async def _async_follow_renumbered_nodes(
 
 async def _setup_meshtastic_devices(
     hass: HomeAssistant, entry: MeshtasticConfigEntry, client: MeshtasticApiClient
-) -> None:
+) -> Mapping[str, Any]:
     gateway_node = await client.async_get_own_node()
     nodes = await client.async_get_all_nodes()
     device_registry = dr.async_get(hass)

@@ -64,6 +64,7 @@ coordinator.py the node database as coordinator data, keyed by node number
 scripts/setup                 # uv sync --group dev --group test (Home Assistant 2026.8; ruff as pinned in the dev group)
 scripts/lint                  # ruff format . && ruff check . --fix
 uv run ruff check . && uv run ruff format --check .   # what CI runs
+uv run mypy                   # type check, also in CI; config in pyproject.toml
 uv run python -m pytest tests # the tests
 uv run python -m pytest tests/test_tcp_proxy.py -k disconnect   # one test
 scripts/develop               # standalone Home Assistant on config/configuration.yaml
@@ -77,7 +78,7 @@ per config entry from 2026.8, so look them up with `async_get_device_by_identifi
 
 ## CI and merging
 
-- CI is `lint.yml` (ruff), `tests.yml` (pytest on Python 3.14, both through uv), `validate.yml` (HACS and hassfest,
+- CI is `lint.yml` (ruff), `tests.yml` (mypy and pytest on Python 3.14, both through uv), `validate.yml` (HACS and hassfest,
   also nightly) and `release.yml` (zip on release).
 - Fork pull requests from first-time contributors wait for a maintainer to approve their workflow runs.
 - The CLA assistant check must pass. Pull requests are squash-merged with Conventional titles.

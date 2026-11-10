@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: MIT
 
 import logging
+from typing import Any
 
 
 class Undefined:
@@ -13,5 +14,5 @@ class Undefined:
         return "..."
 
 
-UNDEFINED = Undefined()
+UNDEFINED: Any = Undefined()  # Any: it is the default of float-typed parameters
 LOGGER = logging.getLogger(__package__)

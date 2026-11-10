@@ -117,6 +117,7 @@ class SerialConnection(StreamingClientTransport, asyncio.Protocol):
         if not self._can_read():
             msg = "Can not read bytes"
             raise ValueError(msg)
+        assert self._reader is not None  # noqa: S101  # _can_read() above guarantees it
         try:
             if exactly is not None:
                 return await self._reader.readexactly(exactly)

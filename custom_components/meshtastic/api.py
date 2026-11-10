@@ -10,7 +10,7 @@ import contextlib
 from copy import deepcopy
 from datetime import timedelta
 from enum import StrEnum
-from typing import TYPE_CHECKING, Any, Self
+from typing import TYPE_CHECKING, Any, Self, cast
 
 import google
 from google.protobuf.json_format import MessageToDict
@@ -46,11 +46,12 @@ from .const import (
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Coroutine, Mapping, MutableMapping
-    from types import MappingProxyType, TracebackType
+    from types import TracebackType
 
     from google.protobuf.message import Message
     from homeassistant.core import HomeAssistant
 
+    from .aiomeshtastic.connection import ClientApiConnection
     from .aiomeshtastic.interface import ConnectionState, MeshNode, TelemetryType
     from .aiomeshtastic.packet import Packet
 
@@ -100,7 +101,7 @@ class MeshtasticApiClientCommunicationError(
 class MeshtasticApiClient:
     def __init__(
         self,
-        data: MappingProxyType[str, Any],
+        data: Mapping[str, Any],
         hass: HomeAssistant,
         config_entry_id: str | None,
         *,
@@ -113,6 +114,7 @@ class MeshtasticApiClient:
 
         connection_type = data[CONF_CONNECTION_TYPE]
 
+        connection: ClientApiConnection
         if connection_type == ConnectionType.TCP.value:
             connection = AioTcpConnection(host=data[CONF_CONNECTION_TCP_HOST], port=data[CONF_CONNECTION_TCP_PORT])
         elif connection_type == ConnectionType.BLUETOOTH.value:
@@ -139,29 +141,18 @@ class MeshtasticApiClient:
         self._packet_processor: asyncio.Task | None = None
         self._background_tasks: set[asyncio.Task] = set()
 
-        self._interface.add_packet_app_listener(
-            packet_type=portnums_pb2.PortNum.NODEINFO_APP, callback=self._on_node_info, as_dict=True
-        )
-        self._interface.add_packet_app_listener(
-            packet_type=portnums_pb2.PortNum.TEXT_MESSAGE_APP, callback=self._on_text_message, as_packet=True
-        )
-        self._interface.add_packet_app_listener(
+        add_listener = self._interface.add_packet_app_listener
+        add_listener(packet_type=portnums_pb2.PortNum.NODEINFO_APP, callback=self._on_node_info, as_dict=True)
+        add_listener(packet_type=portnums_pb2.PortNum.TEXT_MESSAGE_APP, callback=self._on_text_message, as_packet=True)
+        add_listener(
             packet_type=portnums_pb2.PortNum.DETECTION_SENSOR_APP,
             callback=self._on_detection_sensor,
             as_packet=True,
         )
-        self._interface.add_packet_app_listener(
-            packet_type=portnums_pb2.PortNum.MESH_BEACON_APP, callback=self._on_mesh_beacon, as_packet=True
-        )
-        self._interface.add_packet_app_listener(
-            packet_type=portnums_pb2.PortNum.TELEMETRY_APP, callback=self._on_telemetry, as_dict=True
-        )
-        self._interface.add_packet_app_listener(
-            packet_type=portnums_pb2.PortNum.WAYPOINT_APP, callback=self._on_waypoint, as_packet=True
-        )
-        self._interface.add_packet_app_listener(
-            packet_type=portnums_pb2.PortNum.POSITION_APP, callback=self._on_position, as_dict=True
-        )
+        add_listener(packet_type=portnums_pb2.PortNum.MESH_BEACON_APP, callback=self._on_mesh_beacon, as_packet=True)
+        add_listener(packet_type=portnums_pb2.PortNum.TELEMETRY_APP, callback=self._on_telemetry, as_dict=True)
+        add_listener(packet_type=portnums_pb2.PortNum.WAYPOINT_APP, callback=self._on_waypoint, as_packet=True)
+        add_listener(packet_type=portnums_pb2.PortNum.POSITION_APP, callback=self._on_position, as_dict=True)
 
     async def connect(self) -> None:
         try:
@@ -197,7 +188,7 @@ class MeshtasticApiClient:
 
     async def disconnect(self) -> None:
         try:
-            self._packet_processor.cancel()
+            cast("asyncio.Task[Any]", self._packet_processor).cancel()
             await self._interface.stop()
         except Exception as e:
             raise MeshtasticApiClientCommunicationError from e
@@ -212,17 +203,23 @@ class MeshtasticApiClient:
     async def async_get_channels(self) -> list[Mapping[str, Any]]:
         if not await self._interface.connected_node_ready():
             return []
-        return [self._message_to_dict(c) for c in self._interface.connected_node_channels()]
+        channels = self._interface.connected_node_channels()
+        assert channels is not None  # noqa: S101  (iterated immediately; None raised TypeError already)
+        return [self._message_to_dict(c) for c in channels]
 
     async def async_get_node_local_config(self) -> dict:
         if not await self._interface.connected_node_ready():
             return {}
-        return self._message_to_dict(self._interface.connected_node_local_config())
+        local_config = self._interface.connected_node_local_config()
+        assert local_config is not None  # noqa: S101  (MessageToDict dereferences it; None raised already)
+        return self._message_to_dict(local_config)
 
     async def async_get_node_module_config(self) -> dict:
         if not await self._interface.connected_node_ready():
             return {}
-        return self._message_to_dict(self._interface.connected_node_module_config())
+        module_config = self._interface.connected_node_module_config()
+        assert module_config is not None  # noqa: S101  (MessageToDict dereferences it; None raised already)
+        return self._message_to_dict(module_config)
 
     async def async_get_own_node(self) -> Mapping[str, Any]:
         if not await self._interface.connected_node_ready():
@@ -301,6 +298,7 @@ class MeshtasticApiClient:
     ) -> bool:
         async def _on_message_sent(packet: Packet) -> None:
             # publish event so that outgoing messages are recorded to logbook
+            assert packet.mesh_packet is not None  # noqa: S101  (dereferenced next)
             await self._publish_event_text_message_out(
                 text,
                 packet.mesh_packet.id,
@@ -376,6 +374,7 @@ class MeshtasticApiClient:
             to_channel = None
             to_node = packet.to_id
 
+        assert packet.mesh_packet is not None  # noqa: S101  (dereferenced below)
         event_data = self._build_event_data(
             node.id,
             {
@@ -423,6 +422,7 @@ class MeshtasticApiClient:
             },
         )
 
+        assert packet.mesh_packet is not None  # noqa: S101  (dereferenced next)
         event_data["message_id"] = packet.mesh_packet.id
         self._hass.bus.async_fire(EVENT_MESHTASTIC_API_DETECTION_SENSOR, event_data)
 
@@ -447,6 +447,7 @@ class MeshtasticApiClient:
             },
         )
 
+        assert packet.mesh_packet is not None  # noqa: S101  (dereferenced next)
         event_data["message_id"] = packet.mesh_packet.id
         self._hass.bus.async_fire(EVENT_MESHTASTIC_API_WAYPOINT, event_data)
 
@@ -458,6 +459,7 @@ class MeshtasticApiClient:
             to_channel = None
             to_node = packet.to_id
 
+        assert packet.mesh_packet is not None  # noqa: S101  (dereferenced below)
         event_data = self._build_event_data(
             node.id,
             {
@@ -542,12 +544,12 @@ class MeshtasticApiClient:
         task.add_done_callback(self._background_tasks.discard)
         return task
 
-    def _message_to_dict(self, message: Message) -> Mapping[str, Any]:
+    def _message_to_dict(self, message: Message) -> dict[str, Any]:
         try:
             return MessageToDict(message, always_print_fields_with_no_presence=True)
         except TypeError:
-            # older protobuf version
-            return MessageToDict(message, including_default_value_fields=True)
+            # older protobuf version; the stubs omit its keyword, hence the ignore
+            return MessageToDict(message, including_default_value_fields=True)  # type: ignore[call-arg]
 
     async def request_telemetry(self, node: int, telemetry_type: TelemetryType) -> Mapping[str, Any]:
         try:

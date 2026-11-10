@@ -31,6 +31,7 @@ class TcpConnection(StreamingClientTransport):
             await self._disconnect()
             msg = "Can not read bytes"
             raise TcpConnectionError(msg)
+        assert self._reader is not None  # noqa: S101  # _can_read() above guarantees it
         try:
             if exactly is not None:
                 return await self._reader.readexactly(n=exactly)

@@ -7,7 +7,7 @@ from __future__ import annotations
 from copy import deepcopy
 from datetime import timedelta
 from functools import wraps
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 
 from homeassistant.core import callback
 from homeassistant.helpers.event import async_call_later
@@ -48,7 +48,7 @@ def meshtastic_api_event_callback(f):  # noqa: ANN001, ANN201
                 # while unavailable the node DB is refreshed in one go once the link is back
                 return None
 
-            event_data = deepcopy(event.data)
+            event_data = cast("dict[str, Any]", deepcopy(event.data))
             config_entry_id = event_data.pop(ATTR_EVENT_MESHTASTIC_API_CONFIG_ENTRY_ID, None)
             if config_entry_id != self.config_entry.entry_id:
                 return None
@@ -83,7 +83,11 @@ def meshtastic_api_event_callback(f):  # noqa: ANN001, ANN201
     return wrapper
 
 
-class MeshtasticDataUpdateCoordinator(DataUpdateCoordinator):
+# keyed by node number; each value is the node's MessageToDict output
+NodeData = dict[int, dict[str, Any]]
+
+
+class MeshtasticDataUpdateCoordinator(DataUpdateCoordinator[NodeData]):
     config_entry: MeshtasticConfigEntry
 
     def __init__(
@@ -199,9 +203,9 @@ class MeshtasticDataUpdateCoordinator(DataUpdateCoordinator):
             self._logger.debug("Received telemetry identical to existing metrics, ignoring event")
             return
 
-        data = deepcopy(self.data)
-        data[node_id][metric_type] = new_metrics
-        self.async_set_updated_data(data)
+        updated = deepcopy(self.data)
+        updated[node_id][metric_type] = new_metrics
+        self.async_set_updated_data(updated)
 
     @meshtastic_api_event_callback
     async def _api_position(
@@ -216,15 +220,15 @@ class MeshtasticDataUpdateCoordinator(DataUpdateCoordinator):
             self._logger.debug("Received position identical to existing position, ignoring event")
             return
 
-        data = deepcopy(self.data)
-        data[node_id]["position"] = new_position
-        self.async_set_updated_data(data)
+        updated = deepcopy(self.data)
+        updated[node_id]["position"] = new_position
+        self.async_set_updated_data(updated)
 
     async def _node_updated(self, event: Event) -> None:
         if self.config_entry is None:
             return
 
-        event_data = deepcopy(event.data)
+        event_data = cast("dict[str, Any]", deepcopy(event.data))
         config_entry_id = event_data.pop("config_entry_id", None)
         if config_entry_id != self.config_entry.entry_id:
             return

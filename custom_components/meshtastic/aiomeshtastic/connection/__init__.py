@@ -8,10 +8,10 @@ import contextlib
 import logging
 import random
 from abc import abstractmethod
-from collections.abc import AsyncIterable, Awaitable, Callable, Coroutine
+from collections.abc import AsyncIterable, AsyncIterator, Awaitable, Callable, Coroutine
 from contextlib import asynccontextmanager
 from types import TracebackType
-from typing import Self
+from typing import Any, Self
 
 import google
 from google.protobuf.message import Message
@@ -277,7 +277,7 @@ class ClientApiConnection:
         to_node: int,
         message: google.protobuf.message.Message | bytes,
         port_num: portnums_pb2.PortNum.ValueType = portnums_pb2.PortNum.PRIVATE_APP,
-        priority: mesh_pb2.MeshPacket.Priority = mesh_pb2.MeshPacket.Priority.DEFAULT,
+        priority: mesh_pb2.MeshPacket.Priority.ValueType = mesh_pb2.MeshPacket.Priority.DEFAULT,
         channel_index: int | None = None,
         *,
         from_node: int | None = None,
@@ -349,7 +349,7 @@ class ClientApiConnection:
                     self._logger.debug("Out callback failed", exc_info=True)
 
         async for from_radio in self.listen(on_start=on_start()):
-            packet = Packet(from_radio)
+            packet: Packet[Any] = Packet(from_radio)
             if packet.data is None:
                 continue
 
@@ -418,7 +418,7 @@ class ClientApiConnection:
         return await self._send_packet(packet)
 
     @asynccontextmanager
-    async def _ensure_processing_packets(self) -> None:
+    async def _ensure_processing_packets(self) -> AsyncIterator[None]:
         if not self.is_connected:
             raise ClientApiNotConnectedError
 

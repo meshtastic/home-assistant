@@ -5,7 +5,7 @@
 import asyncio
 from asyncio import StreamReader, StreamWriter
 from types import TracebackType
-from typing import Self
+from typing import Any, Self, cast
 
 from google.protobuf import message
 
@@ -43,6 +43,7 @@ class ClientProxyTransport(StreamingClientTransport):
             self._logger.debug("Error while parsing ToRadio bytes %s", packet, exc_info=True)
         else:
             return packet, to_radio
+        return None
 
     async def write_from_radio_packet(self, from_radio: mesh_pb2.FromRadio) -> None:
         binary = from_radio.SerializeToString()
@@ -92,7 +93,7 @@ class MeshtasticTcpProxy:
         # per-client live queue -> that client's disconnect event and peer name
         self._clients: dict[asyncio.Queue, tuple[asyncio.Event, str]] = {}
         self._handlers: set[asyncio.Task] = set()
-        self._forward_task = None
+        self._forward_task: asyncio.Task[None] | None = None
         self._interface = interface
         self._should_stop = False
         self._stopping = False
@@ -100,7 +101,7 @@ class MeshtasticTcpProxy:
         self._port = port or 4403
         self._server: asyncio.Server | None = None
 
-        self._packet_queue = asyncio.Queue()
+        self._packet_queue: asyncio.Queue[Any] = asyncio.Queue()
 
     async def __aenter__(self) -> Self:
         await self.start()
@@ -147,8 +148,8 @@ class MeshtasticTcpProxy:
             return
 
         handler = asyncio.current_task()
-        self._handlers.add(handler)
-        queue = asyncio.Queue(maxsize=_CLIENT_QUEUE_SIZE)
+        self._handlers.add(cast("asyncio.Task", handler))  # a handler always runs inside a task
+        queue: asyncio.Queue[Any] = asyncio.Queue(maxsize=_CLIENT_QUEUE_SIZE)
         disconnect_event = asyncio.Event()
         try:
             peer_name = "{}:{}".format(*writer.transport.get_extra_info("peername", (None, None))[0:2])

@@ -87,9 +87,9 @@ class GatewayEntity(MeshtasticEntity):
         self._attr_has_entity_name = True
 
         def flatten(
-            dictionary: dict[str, typing.Any], parent_key: str = "", separator: str = "_"
+            dictionary: typing.MutableMapping[str, typing.Any], parent_key: str = "", separator: str = "_"
         ) -> dict[str, typing.Any]:
-            items = []
+            items: list[tuple[str, typing.Any]] = []
             for key, value in dictionary.items():
                 new_key = parent_key + separator + key if parent_key else key
                 if isinstance(value, typing.MutableMapping):
@@ -137,7 +137,7 @@ class GatewayChannelEntity(MeshtasticEntity):
         super().__init__(config_entry_id, gateway_node, MeshtasticDeviceClass.CHANNEL, index)
 
         self._index = index
-        self._attr_messages = []
+        self._attr_messages: list[typing.Any] = []
         self._settings = settings
         self._gateway_suggested_id = gateway_entity.suggested_object_id
         self._attr_unique_id = self.build_unique_id(config_entry_id, gateway_node, index)
@@ -153,7 +153,7 @@ class GatewayChannelEntity(MeshtasticEntity):
             self._attr_has_entity_name = True
             self._attr_name = "Secondary"
 
-        self._attr_name = "Channel " + self._attr_name
+        self._attr_name = "Channel " + typing.cast("str", self._attr_name)
 
         if has_logbook:
             self._attr_state = "logging"

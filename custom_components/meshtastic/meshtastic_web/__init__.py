@@ -135,20 +135,20 @@ class MeshtasticWebApiContext:
                     _LOGGER.debug("Removing session %s", session_key)
                     self._remove_session(session_key)
 
-        self._expire_sessions_task = hass.async_create_background_task(
+        self._expire_sessions_task: asyncio.Task[None] | None = hass.async_create_background_task(
             expire_sessions(), name="meshtastic_web_expire_sessions"
         )
 
     def close(self) -> None:
         with contextlib.suppress(asyncio.CancelledError):
-            self._expire_sessions_task.cancel()
+            cast("asyncio.Task[None]", self._expire_sessions_task).cancel()
         self._expire_sessions_task = None
 
     def add_client(self, config_entry_id: str, client: MeshtasticApiClient) -> None:
         self._clients[config_entry_id] = client
 
     def _get_config_entry_id(self, request: HomeAssistantRequest) -> str:
-        return request.match_info.get("config_entry_id")
+        return cast("str", request.match_info.get("config_entry_id"))
 
     def _get_config_entry(self, request: HomeAssistantRequest) -> ConfigEntry | None:
         config_entry_id = self._get_config_entry_id(request)
@@ -158,6 +158,7 @@ class MeshtasticWebApiContext:
             return self._hass.config_entries.async_get_entry(config_entry_id)
         except Exception:
             _LOGGER.warning("Failed to get config entry", exc_info=True)
+        return None
 
     def get_meshtastic_client(self, request: HomeAssistantRequest) -> MeshtasticApiClient | None:
         config_entry = self._get_config_entry(request)
@@ -183,9 +184,9 @@ class MeshtasticWebApiContext:
         self, request: HomeAssistantRequest, meshtastic_config_id: str
     ) -> asyncio.Queue[mesh_pb2.FromRadio]:
         config_entry_id = self._get_config_entry_id(request)
-        session_key = (request.remote, meshtastic_config_id)
+        session_key = (cast("str", request.remote), meshtastic_config_id)
 
-        session_queue = asyncio.Queue()
+        session_queue: asyncio.Queue[mesh_pb2.FromRadio] = asyncio.Queue()
         self._meshtastic_queues[config_entry_id][session_key] = session_queue
 
         async def consume(queue: asyncio.Queue[mesh_pb2.FromRadio]) -> None:
@@ -216,7 +217,7 @@ class MeshtasticWebApiContext:
         self, request: HomeAssistantRequest, meshtastic_config_id: str
     ) -> tuple[str, str] | None:
         config_entry_id = self._get_config_entry_id(request)
-        session_key = (request.remote, meshtastic_config_id)
+        session_key: tuple[str, str] | None = (cast("str", request.remote), meshtastic_config_id)
 
         config_entry_queues = self._meshtastic_queues.get(config_entry_id, {})
         if session_key not in config_entry_queues:
@@ -274,9 +275,10 @@ class MeshtasticWebApiContext:
 
     def get_session_queue(
         self, request: HomeAssistantRequest, meshtastic_config_id: str
-    ) -> asyncio.Queue[mesh_pb2.FromRadio]:
+    ) -> asyncio.Queue[mesh_pb2.FromRadio] | None:
         config_entry_id = self._get_config_entry_id(request)
-        session_key = self._get_existing_session_key(request, meshtastic_config_id)
+        # may be None at runtime; None is a valid (if useless) dict key and the lookup then yields no queue
+        session_key = cast("tuple[str, str]", self._get_existing_session_key(request, meshtastic_config_id))
 
         self._session_last_active[session_key] = dt.datetime.now(tz=dt.UTC)
         return self._meshtastic_queues.get(config_entry_id, {}).get(session_key, None)
@@ -302,7 +304,7 @@ class MeshtasticWebSpaView(HomeAssistantView):
         self,
         request: HomeAssistantRequest,  # noqa: ARG002
         path: str,
-    ) -> web.Response:
+    ) -> web.StreamResponse:
         return _serve_web_client_path(path)
 
 
@@ -339,7 +341,7 @@ CROSS_ORIGIN_ISOLATION_HEADERS = {
 }
 
 
-def _serve_web_client_path(relative_path: str) -> web.Response:
+def _serve_web_client_path(relative_path: str) -> web.StreamResponse:
     """
     Serve a bundled file, or index.html for a client-side route.
 
@@ -378,7 +380,7 @@ class MeshtasticWebConfigEntryView(HomeAssistantView):
         self,
         request: HomeAssistantRequest,  # noqa: ARG002
         entity_id: str,
-    ) -> web.Response:
+    ) -> web.StreamResponse:
         if not entity_id.startswith("gateway_"):
             return _serve_web_client_path(entity_id)
 
@@ -395,7 +397,7 @@ class MeshtasticWebApiV1View(HomeAssistantView):
         self._context = context
         self._tokens = tokens
 
-    def get_connection(self, request: HomeAssistantRequest) -> ClientApiConnection:
+    def get_connection(self, request: HomeAssistantRequest) -> ClientApiConnection | None:
         return self._context.get_connection(request)
 
     @staticmethod
@@ -469,16 +471,16 @@ class MeshtasticWebApiV1FromRadioView(MeshtasticWebApiV1View):
         config_id = request.cookies.get("config_id")
         if config_id is None:
             await asyncio.sleep(1)
-            response = web.HTTPBadRequest()
-            response.headers.add("Cache-Control", "no-cache")
-            return response
+            bad_request = web.HTTPBadRequest()
+            bad_request.headers.add("Cache-Control", "no-cache")
+            return bad_request
 
         queue = self._context.get_session_queue(request, config_id)
         if queue is None:
             await asyncio.sleep(1)
-            response = web.HTTPGone()
-            response.headers.add("Cache-Control", "no-cache")
-            return response
+            gone = web.HTTPGone()
+            gone.headers.add("Cache-Control", "no-cache")
+            return gone
 
         try:
             from_radio = await asyncio.wait_for(queue.get(), timeout=FROM_RADIO_HOLD_SECONDS)

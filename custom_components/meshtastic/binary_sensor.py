@@ -39,7 +39,7 @@ def _build_binary_sensors(
 ) -> Iterable[MeshtasticBinarySensor]:
     coordinator = runtime_data.coordinator
     gateway = runtime_data.client.get_own_node()
-    entities = []
+    entities: list[MeshtasticBinarySensor] = []
     entities += [
         MeshtasticBinarySensor(
             coordinator=coordinator,
@@ -67,7 +67,9 @@ def _build_binary_sensors(
                 key=key,
                 entity_category=EntityCategory.DIAGNOSTIC,
                 exists_fn=lambda _device: True,
-                value_fn=lambda device, field=field: bool(device.coordinator.data[device.node_id].get(field, False)),
+                value_fn=lambda device, field=field: bool(  # type: ignore[misc]  # mypy cannot infer a lambda with a loop-bound default
+                    device.coordinator.data[device.node_id].get(field, False)
+                ),
             ),
             gateway=gateway,
             node_id=node_id,
@@ -99,7 +101,7 @@ async def async_unload_entry(
     return await helpers.async_unload_entry(hass, entry)
 
 
-@dataclass(kw_only=True)
+@dataclass(frozen=True, kw_only=True)
 class MeshtasticBinarySensorEntityDescription(BinarySensorEntityDescription):
     value_fn: Callable[[MeshtasticBinarySensor], bool]
     exists_fn: Callable[[MeshtasticBinarySensor], bool]
