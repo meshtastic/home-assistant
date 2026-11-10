@@ -28,7 +28,7 @@ Supported Features:
  * Device triggers & actions for automations
  * Various other service actions (e.g. request metrics, trace route)
  * Bundled meshtastic web client for manual interaction with gateway, opened by Home Assistant admins
- * MQTT client proxy support (forwards messages from radio to MQTT broker, and broker messages for channels with downlink enabled back to the radio)
+ * MQTT client proxy support (forwards messages from radio to MQTT broker, and broker messages for channels with downlink enabled back to the radio; refreshes broker settings and subscriptions when radio configuration changes)
  * Reconfigure a gateway's connection, and diagnostics with secrets redacted
 
 For more details, see the [documentation](#documentation).
