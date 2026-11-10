@@ -122,7 +122,7 @@ def _build_add_node_schema(
     selector_options = [
         SelectOptionDict(
             value=str(node_id),
-            label=f"{node_info['user']['longName']} ({node_info['user']['id']})",
+            label=f"{node_info.get('user', {}).get('longName') or 'Unknown'} ({node_info.get('user', {}).get('id') or node_id})",
         )
         for node_id, node_info in sorted(
             selectable_nodes.items(),
@@ -529,7 +529,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 self.options[CONF_OPTION_FILTER_NODES].append(
                     {
                         "id": node_id,
-                        "name": self.nodes[node_id]["user"]["longName"],
+                        "name": (self.nodes[node_id].get("user", {}).get("longName") or str(node_id)),
                     }
                 )
                 if user_input.get(CONF_OPTION_ADD_ANOTHER_NODE, False):
@@ -707,7 +707,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
             if CONF_OPTION_FILTER_NODES in self.options
             else self.config_entry.options[CONF_OPTION_FILTER_NODES]
         )
-        all_nodes = {str(k): v["user"]["longName"] for k, v in self.nodes.items()}
+        all_nodes = {str(k): v.get("user", {}).get("longName") or str(k) for k, v in self.nodes.items()}
         already_selected_node_ids = [el["id"] for el in current_filter_node_option]
 
         if user_input is not None:
@@ -727,7 +727,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                 updated_filter_node_option.append(
                     {
                         "id": int(user_input[CONF_OPTION_NODE]),
-                        "name": self.nodes[int(user_input[CONF_OPTION_NODE])]["user"]["longName"],
+                        "name": (self.nodes[int(user_input[CONF_OPTION_NODE])].get("user", {}).get("longName") or str(user_input[CONF_OPTION_NODE])),
                     }
                 )
 
