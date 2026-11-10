@@ -16,14 +16,33 @@ from homeassistant.components.frontend import (
     async_remove_panel,
 )
 from homeassistant.components.http import StaticPathConfig
+from homeassistant.util.hass_dict import HassKey
 
 from .const import DOMAIN, URL_BASE
-from .ha_frontend import locate_dir
+from .ha_frontend import VERSION, locate_dir
 
 if TYPE_CHECKING:
     from homeassistant.core import HomeAssistant
 
 _DEBUG = False
+
+CHAT_PANEL_URL_PATH = f"{DOMAIN}-chat"
+
+_DATA_STATIC_PATH_REGISTERED: HassKey[bool] = HassKey(f"{DOMAIN}_frontend_static_path")
+
+
+async def _async_register_static_path(hass: HomeAssistant) -> None:
+    # static paths cannot be unregistered, register them only once per Home Assistant run
+    if hass.data.get(_DATA_STATIC_PATH_REGISTERED):
+        return
+    await hass.http.async_register_static_paths(
+        [StaticPathConfig(f"{URL_BASE}/frontend", locate_dir(), cache_headers=not _DEBUG)]
+    )
+    hass.data[_DATA_STATIC_PATH_REGISTERED] = True
+
+
+def _module_url(file_name: str) -> str:
+    return f"{URL_BASE}/frontend/{file_name}?v=" + (str(time.time()) if _DEBUG else VERSION)
 
 
 def _panel_digest() -> str:
@@ -34,9 +53,7 @@ def _panel_digest() -> str:
 async def async_register_frontend(hass: HomeAssistant) -> None:
     # Add to sidepanel if needed
     if DOMAIN not in hass.data.get("frontend_panels", {}):
-        await hass.http.async_register_static_paths(
-            [StaticPathConfig(f"{URL_BASE}/frontend", locate_dir(), cache_headers=not _DEBUG)]
-        )
+        await _async_register_static_path(hass)
 
         async_register_built_in_panel(
             hass,
@@ -63,3 +80,34 @@ async def async_unregister_frontend(hass: HomeAssistant) -> None:
             hass,
             frontend_url_path=DOMAIN,
         )
+
+
+async def async_register_chat_frontend(hass: HomeAssistant, *, require_admin: bool) -> None:
+    panels = hass.data.get("frontend_panels", {})
+    if (existing := panels.get(CHAT_PANEL_URL_PATH)) is not None:
+        if existing.require_admin == require_admin:
+            return
+        async_remove_panel(hass, frontend_url_path=CHAT_PANEL_URL_PATH)
+
+    await _async_register_static_path(hass)
+    async_register_built_in_panel(
+        hass,
+        component_name="custom",
+        sidebar_title="Mesh Chat",
+        sidebar_icon="mdi:message-text-outline",
+        frontend_url_path=CHAT_PANEL_URL_PATH,
+        config={
+            "_panel_custom": {
+                "name": "meshtastic-chat-panel",
+                "embed_iframe": False,
+                "trust_external": False,
+                "module_url": _module_url("chat-panel.js"),
+            }
+        },
+        require_admin=require_admin,
+    )
+
+
+async def async_unregister_chat_frontend(hass: HomeAssistant) -> None:
+    if CHAT_PANEL_URL_PATH in hass.data.get("frontend_panels", {}):
+        async_remove_panel(hass, frontend_url_path=CHAT_PANEL_URL_PATH)

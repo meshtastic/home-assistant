@@ -287,6 +287,7 @@ class ClientApiConnection:
         reply_id: int | None = None,
         emoji: bool = False,
         want_response: bool = False,
+        packet_id: int | None = None,
         out_callback: Callable[[Packet], Awaitable[None]] | None = None,
         ack_callback: Callable[[Packet[mesh_pb2.Routing]], Awaitable[None]] | None = None,
         response_callback: Callable[[Packet], Awaitable[None]] | None = None,
@@ -303,7 +304,7 @@ class ClientApiConnection:
             mesh_packet.decoded.reply_id = reply_id
         if emoji:
             mesh_packet.decoded.emoji = 1
-        mesh_packet.id = self._generate_packet_id()
+        mesh_packet.id = packet_id or self.generate_packet_id()
         if from_node is not None:
             mesh_packet.__setattr__("from", from_node)
         mesh_packet.to = to_node
@@ -386,7 +387,7 @@ class ClientApiConnection:
 
         return None
 
-    def _generate_packet_id(self) -> int:
+    def generate_packet_id(self) -> int:
         if self._current_packet_id is None:
             self._current_packet_id = random.randint(0, 0xFFFFFFFF)  # noqa: S311
 

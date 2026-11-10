@@ -29,6 +29,8 @@ Supported Features:
  * Various other service actions (e.g. request metrics, trace route)
  * Bundled meshtastic web client for manual interaction with gateway, opened by Home Assistant admins
  * MQTT client proxy support (forwards messages from radio to MQTT broker, and broker messages for channels with downlink enabled back to the radio)
+ * [Mesh Chat](#mesh-chat): a sidebar chat to read and send messages, with replies, emoji, node and channel details,
+   a map of the mesh and optional channel management
  * Reconfigure a gateway's connection, and diagnostics with secrets redacted
 
 For more details, see the [documentation](#documentation).
@@ -458,6 +460,204 @@ Attach the [diagnostics](https://www.home-assistant.io/integrations/diagnostics/
 1. Go to **Settings** > **Devices & services** > **Meshtastic**, open the menu of each gateway entry and select **Delete**. This removes its devices and entities and disconnects from the radio.
 2. Uninstall the integration: **Settings** > **Marketplace** on 2026.11 and newer, or HACS on older versions. Restart Home Assistant. Without the Marketplace or HACS, delete the `custom_components/meshtastic` folder and restart.
 3. Remove any `meshtastic` entries you added to `logger:` in `configuration.yaml`.
+
+## Mesh Chat
+
+Mesh Chat adds a sidebar panel to read and send messages through your gateways, without a second connection to the node
+and behind Home Assistant's own login. Every message the gateway hears is kept, together with everything sent from
+Home Assistant, so the history is the same on every device you open Home Assistant on.
+
+<p align="center"><img src="docs/mesh-chat/desktop.png" width="800" alt="Mesh Chat on a desktop browser: channels and nodes on the left, the conversation on the right"></p>
+<p align="center"><img src="docs/mesh-chat/phone.png" width="240" alt="Mesh Chat on a phone"> &nbsp;&nbsp; <img src="docs/mesh-chat/dark.png" width="520" alt="Mesh Chat with a dark theme"></p>
+
+- Channels and nodes are taken from the gateway, so new nodes appear as the gateway hears them.
+- One conversation per channel and per node, with unread markers and search.
+- Sent messages show their delivery state: heard by the mesh, acknowledged by the recipient (direct messages),
+  no acknowledgement, or failed with the routing error.
+- Messages sent from the chat are also recorded in the logbook next to received ones.
+- Works on phones: the list and the conversation are shown one at a time on narrow screens, and the panel follows
+  your Home Assistant theme.
+
+### Enabling Mesh Chat
+
+1. Settings → Devices & services → **Meshtastic** → open the gateway's entry → **Configure**
+2. Expand **Mesh Chat** at the bottom, turn on **Enable Chat** and submit
+3. Reload the browser: **Mesh Chat** appears in the sidebar
+
+The same options are offered as the last step when a new gateway is added. The panel is visible to administrators,
+and to every user once a gateway allows non-administrators (see the options below).
+
+### Using the chat
+
+| Element | Meaning |
+|---|---|
+| Lock / globe on a channel | encrypted channel / public channel (default key, anyone in range can read it) |
+| Star on a node | favourite on the gateway; favourites are listed first, then by last message or last heard |
+| Blue dot | unread messages in that conversation |
+| Number next to the time | how many messages of that conversation are stored in Home Assistant |
+| `✓` on a sent message | heard by the mesh (a neighbour relayed it) |
+| `✓✓` on a sent message | acknowledged by the recipient (direct messages) |
+| `?` on a sent message | no acknowledgement within a minute |
+| `!` on a sent message | failed, with the routing error as tooltip |
+| "… via Home Assistant" under a message | which Home Assistant user, automation or bridge sent it |
+| "6.3 dB · -92 dBm · 1 hop" under a received message | how the gateway heard it: signal to noise, signal strength, and how many relays it passed ("direct" when none) |
+| Byte counter next to the composer | Meshtastic text messages are limited to 200 bytes, prefix included; an emoji takes 4 to 7 of them |
+| ↩ next to a message | reply to it (see below) |
+| Grey box with a name above a message | the message it answers; click it to jump to the original |
+| ☺ in the composer | opens a strip with the emoji you used last; ⌃ at its end shows all emoji |
+| Bin icon in the header | administrators can delete the stored history of a conversation; messages on devices are not affected |
+| Name or ⓘ in the header | opens the details of the node or channel (see below) |
+
+### Replies and emoji
+
+<p align="center"><img src="docs/mesh-chat/replies.png" width="800" alt="Reply bar above the composer, quoted messages and the emoji picker"></p>
+
+Point at a message and press ↩ (on a touch screen the button is always shown) to answer it: the message appears above
+the composer, and Escape or ✕ drops the reply again. The answer is sent as a native Meshtastic reply, so the Meshtastic
+apps show it as a quote as well and it costs no extra bytes. Replies you receive from the mesh show the quoted
+message in the same way; the quoted text is kept with the reply, so it is still there after the original has been
+deleted from the history. Only messages that carry a packet id can be answered, which is every message received or
+sent since this feature exists.
+
+☺ in the composer opens a compact strip with the eight emoji you used last (it starts with 👍 ❤️ 😂 🙏 👋 ✅ 🥾 🔥,
+and is kept in your browser); a click puts the emoji at the cursor. ⌃ at the end of the strip opens the full list
+(smileys, gestures, outdoors, weather, radio) above it.
+
+<p align="center"><img src="docs/mesh-chat/emoji.png" width="800" alt="The emoji strip with the full list opened above it"></p>
+
+Emoji are plain text on the mesh, so every Meshtastic app shows them, but each takes several of the 200 bytes of a
+message, and small device screens may not be able to draw them.
+
+### Node details, favourites and the map
+
+Hovering a node in the list shows the essentials: hardware, role, when it was last heard, hops, SNR and battery.
+Clicking the name in the conversation header opens the details pane; on phones it replaces the conversation.
+
+<p align="center"><img src="docs/mesh-chat/node-details.png" width="800" alt="Mesh Chat with the details of a node open on the right: position with distance and bearing, a map, security flags, the Home Assistant device and the request buttons"></p>
+
+For a **node** the pane shows the user ID, hardware and role, how it was last heard (time, hops, SNR, RSSI, via MQTT),
+how many of its messages are stored and when the last one arrived, the last device metrics the gateway received
+(battery, voltage, channel and air utilisation, uptime), the position with its precision and age, the favourite and
+public-key flags and, when the node has one, a button to its Home Assistant device. The **Ask the node** buttons send the integration's existing requests over the mesh – telemetry (device,
+environment, power or air quality metrics), position and traceroute – and show the reply, including the route with the
+SNR of every hop. Requests can take up to a minute. When a node does not answer, the reply says why: *Routing error:
+MAX_RETRANSMIT* means the gateway sent the request, retried the maximum number of times and heard nothing back (the
+node is probably out of range, offline or asleep), *No response received within 60 seconds* is the timeout.
+
+**Favourites** – the star next to a node (in the list and in the details pane) stores the favourite in the gateway's
+node database, exactly like the Meshtastic apps do, so the gateway's own screen and every client connected to it see it
+too. Favourites are listed first. Setting favourites changes the device, so it is limited to Home Assistant
+administrators; reading details and sending requests follow the gateway's "Only administrators" option like the chat.
+
+**Map and location** – when the node has a position the pane shows the distance and bearing from the gateway and
+a small map with the node and the gateway; *Open the map* opens the full map view centred on the node. No external
+map service is involved: the map is Home Assistant's own map engine.
+
+<p align="center"><img src="docs/mesh-chat/channel-details.png" width="800" alt="Mesh Chat with the details of a channel open: encryption, MQTT uplink and downlink, gateway radio settings and the nodes heard on the channel"> </p>
+<p align="center"><img src="docs/mesh-chat/phone-actions.png" width="240" alt="Node details on a phone: the request buttons with a telemetry reply and a traceroute"></p>
+
+For a **channel** the pane shows the index and role, the encryption (public default key, AES-128 or AES-256), MQTT
+uplink and downlink together with the gateway's MQTT state, the position precision shared on the channel, the gateway's
+region, modem preset and hop limit, and the activity in the stored history: how many messages were kept, the first and
+last one and the nodes heard on the channel – click one to open its direct messages.
+
+### Channel management
+
+Channels are read-only until the **Channel management from the chat** option is set to *Administrators only* or
+*All chat users*. Then the channel details end with an **Edit channel** form and a **Share** section, and the
+channel list gets a **+** to create a channel in a free slot.
+
+<p align="center"><img src="docs/mesh-chat/channel-management.png" width="800" alt="Channel details with the edit form, the disable button and the QR code to share the channel"></p>
+
+- Create: pick the slot, a name of up to 11 characters, the key (a new random AES-256 key by default, AES-128, the
+  public default key, none, or a key you paste in base64), MQTT uplink and downlink, and the position precision
+  shared on the channel.
+- Edit: rename, change the key, the MQTT flags or the position precision; disable a secondary channel (the stored
+  history stays). Every change is summarised in a confirmation dialog before it is sent, and the gateway applies it
+  immediately without a reboot.
+- The primary channel can be renamed and its flags changed, but its key and role stay as they are: a wrong primary
+  key cuts the gateway off the mesh, so that change is left to the Meshtastic app on the device.
+- Share: the QR code and link contain the channel settings including the key, in the same format the Meshtastic
+  apps use (`https://meshtastic.org/e/…`). Scanning adds the channel on a phone; the second link carries all
+  enabled channels with the gateway's LoRa settings.
+
+Keys and the share link are only shown to users allowed to manage channels. Changes are written to the Home
+Assistant log with the user's name.
+
+### Your gateway and the map of the mesh
+
+- **Direct message from a channel**: click the sender's name above a received message to open the direct messages
+  with that node.
+- **Your gateway**: the row above the channels is the connected node itself. It opens the same details pane with
+  gauges on top (channel utilisation, transmit air time, battery, nodes known, messages today) and a *Gateway*
+  section: Home Assistant entry, firmware, hardware, role, region, modem preset, hop limit, TX power, MQTT, and how
+  many channels and nodes it has.
+
+<p align="center"><img src="docs/mesh-chat/gateway.png" width="800" alt="The gateway's details with the gauges, and received messages with their signal under the text"></p>
+- **Map of the mesh**: the map button in the toolbar replaces the conversation with a full-size map of every node
+  that reported a position, drawn with Home Assistant's map engine but the chat's own markers (short name on a
+  coloured circle, full name on hover). A marker opens the node's details; the close button returns to the chat.
+  *Open the map* in a node's details opens the same view centred on that node.
+
+<p align="center"><img src="docs/mesh-chat/map.png" width="800" alt="Map view: full-size map with the chat's own node markers"></p>
+
+A node that shares its position with limited precision gets a circle of that accuracy around its marker (exact
+positions, and ones coarser than 50 km, get none), on the full map and in the details map. The circle is not a radio
+range: it shows how precisely the node tells the mesh where it is, taken from the precision bits of its position
+packets. Your own gateway's position is exact in its node list, so its circle shows what the mesh sees instead: the
+position precision of its primary channel (none when that channel shares full precision or no position).
+
+Nodes with a `device_tracker` entity (the nodes selected in the integration options) are the ones Home Assistant's
+own Map panel and automations know as well; the chat map does not need them.
+
+### Options
+
+| Option | Default | Description |
+|---|---|---|
+| Only administrators can use the chat | on | Turn off to let every Home Assistant user read and send messages through this gateway |
+| Prefix messages with the sender's name | off | All messages sent from Home Assistant come from the gateway node. When on, the Home Assistant user's name is added, e.g. `Alex B.: on my way` |
+| Messages kept per conversation | 200 | Older messages are removed once a conversation reaches this size |
+| Channel management from the chat | off | *Administrators only* or *All chat users* lets those users create, rename, re-key, enable or disable channels on the gateway from the channel details; off keeps channels read-only |
+
+History is kept in `.storage/meshtastic.chat.<entry id>` and removed when the gateway is deleted.
+
+### Automations and other chats
+
+While Mesh Chat is enabled for a gateway, messages sent with the `meshtastic.send_text` action are kept in the chat
+history too. The action keeps its `ack` option: with `ack: true` the message shows its delivery state, without it (the
+default of the action) it is sent once and shown as sent, with no delivery tracking. Messages that answer or react to
+another (`reply_id`, `is_reaction`) are sent as they are and not kept in the history. The optional `sent_by` field (up
+to 64 characters) labels them:
+
+```yaml
+action: meshtastic.send_text
+data:
+  channel: "1"
+  text: "Garage door opened"
+  ack: true
+  sent_by: "Garage automation"
+```
+
+Every message sent through the chat (from the panel or the action) fires a `meshtastic_chat_message_sent` event once
+its delivery is settled, with the target, the text, the applied name prefix, the `sent_by` label and the status.
+Together with the `meshtastic_api_text_message` event for received messages this is all that is needed to mirror a
+channel to another chat:
+
+```yaml
+triggers:
+  - trigger: event
+    event_type: meshtastic_chat_message_sent
+    event_data:
+      to:
+        channel: 1
+actions:
+  - action: notify.mobile_app_phone
+    data:
+      message: "{{ trigger.event.data.sent_by or 'Gateway' }}: {{ trigger.event.data.message }}"
+```
+
+A ready-made bridge built on these hooks exists for Telegram:
+[meshtastic-telegram-bridge](https://github.com/rdkmedia0/meshtastic-telegram-bridge).
 
 ## Contributions are welcome!
 

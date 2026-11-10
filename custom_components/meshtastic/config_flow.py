@@ -17,6 +17,7 @@ from homeassistant.helpers.selector import (
     SelectOptionDict,
     SelectSelector,
     SelectSelectorConfig,
+    SelectSelectorMode,
 )
 
 from . import CONF_OPTION_WEB_CLIENT, CURRENT_CONFIG_VERSION_MINOR
@@ -31,6 +32,22 @@ from .const import (
     CONF_CONNECTION_TCP_PORT,
     CONF_CONNECTION_TYPE,
     CONF_OPTION_ADD_ANOTHER_NODE,
+    CONF_OPTION_CHAT,
+    CONF_OPTION_CHAT_CHANNEL_MANAGEMENT,
+    CONF_OPTION_CHAT_CHANNEL_MANAGEMENT_ADMIN,
+    CONF_OPTION_CHAT_CHANNEL_MANAGEMENT_ALL,
+    CONF_OPTION_CHAT_CHANNEL_MANAGEMENT_DEFAULT,
+    CONF_OPTION_CHAT_CHANNEL_MANAGEMENT_OFF,
+    CONF_OPTION_CHAT_ENABLE,
+    CONF_OPTION_CHAT_ENABLE_DEFAULT,
+    CONF_OPTION_CHAT_HISTORY_SIZE,
+    CONF_OPTION_CHAT_HISTORY_SIZE_DEFAULT,
+    CONF_OPTION_CHAT_HISTORY_SIZE_MAX,
+    CONF_OPTION_CHAT_HISTORY_SIZE_MIN,
+    CONF_OPTION_CHAT_PREFIX_SENDER,
+    CONF_OPTION_CHAT_PREFIX_SENDER_DEFAULT,
+    CONF_OPTION_CHAT_REQUIRE_ADMIN,
+    CONF_OPTION_CHAT_REQUIRE_ADMIN_DEFAULT,
     CONF_OPTION_FILTER_NODES,
     CONF_OPTION_NODE,
     CONF_OPTION_NOTIFY_PLATFORM,
@@ -191,6 +208,48 @@ def _build_meshtastic_tcp_schema(
                 CONF_OPTION_TCP_PROXY_PORT,
                 default=options.get(CONF_OPTION_TCP_PROXY_PORT, CONF_OPTION_TCP_PROXY_PORT_DEFAULT),
             ): cv.positive_int,
+        }
+    )
+
+
+def _build_chat_schema(
+    options: dict[str, Any],
+) -> vol.Schema:
+    return vol.Schema(
+        {
+            vol.Required(
+                CONF_OPTION_CHAT_ENABLE,
+                default=options.get(CONF_OPTION_CHAT_ENABLE, CONF_OPTION_CHAT_ENABLE_DEFAULT),
+            ): cv.boolean,
+            vol.Required(
+                CONF_OPTION_CHAT_REQUIRE_ADMIN,
+                default=options.get(CONF_OPTION_CHAT_REQUIRE_ADMIN, CONF_OPTION_CHAT_REQUIRE_ADMIN_DEFAULT),
+            ): cv.boolean,
+            vol.Required(
+                CONF_OPTION_CHAT_PREFIX_SENDER,
+                default=options.get(CONF_OPTION_CHAT_PREFIX_SENDER, CONF_OPTION_CHAT_PREFIX_SENDER_DEFAULT),
+            ): cv.boolean,
+            vol.Required(
+                CONF_OPTION_CHAT_HISTORY_SIZE,
+                default=options.get(CONF_OPTION_CHAT_HISTORY_SIZE, CONF_OPTION_CHAT_HISTORY_SIZE_DEFAULT),
+            ): vol.All(
+                vol.Coerce(int),
+                vol.Range(min=CONF_OPTION_CHAT_HISTORY_SIZE_MIN, max=CONF_OPTION_CHAT_HISTORY_SIZE_MAX),
+            ),
+            vol.Required(
+                CONF_OPTION_CHAT_CHANNEL_MANAGEMENT,
+                default=options.get(CONF_OPTION_CHAT_CHANNEL_MANAGEMENT, CONF_OPTION_CHAT_CHANNEL_MANAGEMENT_DEFAULT),
+            ): SelectSelector(
+                SelectSelectorConfig(
+                    options=[
+                        CONF_OPTION_CHAT_CHANNEL_MANAGEMENT_OFF,
+                        CONF_OPTION_CHAT_CHANNEL_MANAGEMENT_ADMIN,
+                        CONF_OPTION_CHAT_CHANNEL_MANAGEMENT_ALL,
+                    ],
+                    translation_key="chat_channel_management",
+                    mode=SelectSelectorMode.DROPDOWN,
+                )
+            ),
         }
     )
 
@@ -568,10 +627,18 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
             if not errors:
                 self.options[CONF_OPTION_TCP_PROXY] = user_input
-                return await self._finish_steps()
+                return await self.async_step_chat()
 
         schema = _build_meshtastic_tcp_schema(user_input or {})
         return self.async_show_form(step_id="tcp_proxy", data_schema=schema, errors=errors)
+
+    async def async_step_chat(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
+        if user_input is not None:
+            self.options[CONF_OPTION_CHAT] = user_input
+            return await self._finish_steps()
+
+        schema = _build_chat_schema(user_input or {})
+        return self.async_show_form(step_id="chat", data_schema=schema, errors={})
 
     async def _finish_steps(self) -> ConfigFlowResult:
         return self.async_create_entry(
@@ -742,6 +809,9 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
             if CONF_OPTION_WEB_CLIENT in user_input:
                 new_data[CONF_OPTION_WEB_CLIENT] = user_input[CONF_OPTION_WEB_CLIENT]
 
+            if CONF_OPTION_CHAT in user_input:
+                new_data[CONF_OPTION_CHAT] = user_input[CONF_OPTION_CHAT]
+
             if CONF_OPTION_TCP_PROXY in user_input:
                 if not await validate_tcp_proxy_port(self.hass, self.config_entry, user_input):
                     errors["base"] = "option_invalid"
@@ -775,6 +845,11 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
             if CONF_OPTION_TCP_PROXY in self.options
             else self.config_entry.options.get(CONF_OPTION_TCP_PROXY, {})
         )
+        chat_options = (
+            self.options[CONF_OPTION_CHAT]
+            if CONF_OPTION_CHAT in self.options
+            else self.config_entry.options.get(CONF_OPTION_CHAT, {})
+        )
         options_schema = vol.Schema(
             {
                 vol.Required(CONF_OPTION_FILTER_NODES, default=list(selected_nodes.keys())): cv.multi_select(
@@ -793,6 +868,9 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                 ),
                 vol.Required(CONF_OPTION_TCP_PROXY): data_entry_flow.section(
                     _build_meshtastic_tcp_schema(tcp_proxy_options), {"collapsed": "tcp_proxy" in errors}
+                ),
+                vol.Required(CONF_OPTION_CHAT): data_entry_flow.section(
+                    _build_chat_schema(chat_options), {"collapsed": True}
                 ),
             }
         )

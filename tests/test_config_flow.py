@@ -73,14 +73,18 @@ async def test_manual_tcp_flow_creates_entry_with_nodes_and_options(
     assert result["step_id"] == "web_client"
     result = await hass.config_entries.flow.async_configure(flow_id, {"enable": False})
     assert result["step_id"] == "tcp_proxy"
+    result = await hass.config_entries.flow.async_configure(flow_id, {"enable": False, "port": 4403})
+    assert result["step_id"] == "chat"
 
     with _setup_entry_patch() as setup_entry:
-        result = await hass.config_entries.flow.async_configure(flow_id, {"enable": False, "port": 4403})
+        result = await hass.config_entries.flow.async_configure(flow_id, {"enable": False})
         await hass.async_block_till_done()
 
     assert result["type"] is FlowResultType.CREATE_ENTRY
     assert result["title"] == "Gateway"
     assert result["data"] == {CONF_CONNECTION_TYPE: "tcp", **connection}
+    # chat is off unless asked for; the other chat options keep their defaults
+    assert result["options"].pop("chat")["enable"] is False
     assert result["options"] == {
         CONF_OPTION_FILTER_NODES: [{"id": PEER_NUM, "name": "Peer"}, {"id": GATEWAY_NUM, "name": "Gateway"}],
         CONF_OPTION_NOTIFY_PLATFORM: {"channels": False, "nodes": "selected"},

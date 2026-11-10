@@ -6,6 +6,7 @@
 from __future__ import annotations
 
 import asyncio
+import base64
 import contextlib
 from copy import deepcopy
 from datetime import timedelta
@@ -32,7 +33,7 @@ from .aiomeshtastic import (
     TcpConnection as AioTcpConnection,
 )
 from .aiomeshtastic.errors import MeshRoutingError, MeshtasticError
-from .aiomeshtastic.protobuf import mesh_pb2, portnums_pb2
+from .aiomeshtastic.protobuf import apponly_pb2, channel_pb2, mesh_pb2, portnums_pb2
 from .const import (
     CONF_CONNECTION_BLUETOOTH_ADDRESS,
     CONF_CONNECTION_SERIAL_PORT,
@@ -45,7 +46,7 @@ from .const import (
 )
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, Coroutine, Mapping, MutableMapping
+    from collections.abc import Callable, Coroutine, Iterable, Mapping, MutableMapping
     from types import TracebackType
 
     from google.protobuf.message import Message
@@ -308,9 +309,17 @@ class MeshtasticApiClient:
         *,
         want_ack: bool = False,
         channel_index: int | None = None,
+        packet_id: int | None = None,
         reply_id: int | None = None,
         is_reaction: bool = False,
     ) -> bool:
+        """
+        Send a text message without waiting for an acknowledgement.
+
+        ``reply_id`` marks it as the answer to the packet with that id, ``packet_id`` (see ``new_packet_id``)
+        fixes the id of the new packet.
+        """
+
         async def _on_message_sent(packet: Packet) -> None:
             # publish event so that outgoing messages are recorded to logbook
             assert packet.mesh_packet is not None  # noqa: S101  (dereferenced next)
@@ -330,6 +339,7 @@ class MeshtasticApiClient:
                     destination=destination_id,
                     want_ack=want_ack,
                     channel_index=channel_index,
+                    packet_id=packet_id,
                     reply_id=reply_id,
                     is_reaction=is_reaction,
                     on_message_sent=_on_message_sent,
@@ -342,6 +352,54 @@ class MeshtasticApiClient:
             raise MeshtasticApiClientError from e
         else:
             return True
+
+    async def send_text_with_ack(  # noqa: PLR0913
+        self,
+        text: str,
+        destination_id: int = MeshInterface.BROADCAST_NUM,
+        *,
+        channel_index: int | None = None,
+        ack_timeout: float = 60,
+        packet_id: int | None = None,
+        reply_id: int | None = None,
+    ) -> tuple[int | None, str | None]:
+        """
+        Send a text message requesting an acknowledgement.
+
+        ``reply_id`` marks it as the answer to the packet with that id, ``packet_id`` (see ``new_packet_id``)
+        fixes the id of the new packet.
+
+        Returns (node id that sent the routing ack, routing error name). Both are None if no acknowledgement
+        arrived before the timeout. An error name of "NONE" means the packet was acknowledged without error.
+        """
+        try:
+            ack_packet = await asyncio.wait_for(
+                self._interface.send_text_message(
+                    text,
+                    destination=destination_id,
+                    want_ack=True,
+                    channel_index=channel_index,
+                    packet_id=packet_id,
+                    reply_id=reply_id,
+                ),
+                timeout=ack_timeout,
+            )
+        except TimeoutError:
+            return None, None
+        except Exception as e:
+            raise MeshtasticApiClientError(str(e)) from e
+
+        if ack_packet is None:
+            return None, None
+
+        routing = ack_packet.app_payload
+        error_name = "NONE"
+        if isinstance(routing, mesh_pb2.Routing):
+            error_name = mesh_pb2.Routing.Error.Name(routing.error_reason)
+        return ack_packet.from_id, error_name
+
+    def new_packet_id(self) -> int:
+        return self._interface.generate_packet_id()
 
     @property
     def my_info(self) -> Mapping[str, Any]:
@@ -600,3 +658,61 @@ class MeshtasticApiClient:
             translation_key="request_failed",
             translation_placeholders={"error": str(error)},
         )
+
+    async def async_set_favorite(self, node: int, *, favorite: bool) -> None:
+        """Star or unstar a node in the gateway's node database."""
+        try:
+            await self._interface.set_favorite_node(node, favorite=favorite)
+        except MeshtasticError as e:
+            raise self._request_failed(e) from e
+
+    async def async_write_channel(  # noqa: PLR0913
+        self,
+        index: int,
+        *,
+        role: str,
+        name: str,
+        psk: bytes,
+        uplink_enabled: bool,
+        downlink_enabled: bool,
+        position_precision: int,
+    ) -> Mapping[str, Any]:
+        """Write a channel to the gateway and return the channel as the gateway stored it."""
+        channel = channel_pb2.Channel(index=index, role=channel_pb2.Channel.Role.Value(role))
+        channel.settings.name = name
+        channel.settings.psk = psk
+        channel.settings.uplink_enabled = uplink_enabled
+        channel.settings.downlink_enabled = downlink_enabled
+        channel.settings.module_settings.position_precision = position_precision
+        try:
+            await self._interface.write_channel(channel)
+        except MeshtasticError as e:
+            raise self._request_failed(e) from e
+        try:
+            stored = await self._interface.request_channel(index)
+        except MeshtasticError:
+            self._logger.debug("Could not read channel %s back after writing it", index, exc_info=True)
+            stored = channel
+        return self._message_to_dict(stored)
+
+    def channel_url(self, indexes: Iterable[int] | None = None, *, add: bool = False) -> str | None:
+        """
+        Build a meshtastic.org channel URL (the one the apps show as QR code).
+
+        ``indexes`` limits the URL to those channels; ``add`` marks it as "add these channels" instead of
+        "replace all channels" for the app that scans it. None if no enabled channel matches.
+        """
+        channel_set = apponly_pb2.ChannelSet()
+        for channel in self._interface.connected_node_channels() or []:
+            if channel.role == channel_pb2.Channel.Role.DISABLED:
+                continue
+            if indexes is not None and channel.index not in indexes:
+                continue
+            channel_set.settings.append(channel.settings)
+        if not channel_set.settings:
+            return None
+        local_config = self._interface.connected_node_local_config()
+        if local_config is not None:
+            channel_set.lora_config.CopyFrom(local_config.lora)
+        encoded = base64.urlsafe_b64encode(channel_set.SerializeToString()).decode("ascii").rstrip("=")
+        return f"https://meshtastic.org/e/{'?add=true' if add else ''}#{encoded}"

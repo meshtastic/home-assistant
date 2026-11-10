@@ -34,6 +34,10 @@ send_text:
       required: true
       selector:
         boolean: {}
+    sent_by:
+      required: false
+      selector:
+        text: {}
     reply_id:
       required: false
       selector:
