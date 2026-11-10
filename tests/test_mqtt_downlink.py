@@ -162,6 +162,7 @@ class FakeMqttClient:
     instances: ClassVar[list["FakeMqttClient"]] = []
 
     def __init__(self, **_kwargs: object) -> None:
+        """Record broker configuration and create a controllable incoming message stream."""
         self.config = _kwargs
         self.closed = False
         self.subscriptions: list[str] = []
@@ -173,6 +174,7 @@ class FakeMqttClient:
         return self
 
     async def __aexit__(self, *_args: object) -> None:
+        """Record that the manager closed this broker session."""
         self.closed = True
 
     async def subscribe(self, topic: str, qos: int) -> None:
@@ -198,6 +200,7 @@ class FakeMqttClient:
 
 
 async def test_connection_subscribes_forwards_and_stops(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Verify subscriptions, downlink forwarding, and clean shutdown of a broker session."""
     FakeMqttClient.instances = []
     monkeypatch.setattr(interface_module.aiomqtt, "Client", FakeMqttClient)
     interface, connection = make_interface([channel(0, "Private")])
@@ -232,6 +235,7 @@ async def test_dropped_stream_raises_so_the_connection_is_retried() -> None:
 
 
 async def test_dropped_connection_reconnects_and_forwards(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Verify a dropped broker stream reconnects, resubscribes, and resumes forwarding."""
     FakeMqttClient.instances = []
     monkeypatch.setattr(interface_module.aiomqtt, "Client", FakeMqttClient)
     monkeypatch.setattr(interface_module.asyncio, "sleep", fast_sleep)
@@ -263,6 +267,7 @@ async def test_dropped_connection_reconnects_and_forwards(monkeypatch: pytest.Mo
 
 
 async def test_client_bounds_its_incoming_queue(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Preserve queue limits and firmware message validation when reading broker settings."""
     interface, _ = make_interface([])
     mqtt = interface._connected_node_module_config.mqtt
     mqtt.enabled = True
@@ -317,6 +322,7 @@ async def test_message_the_radio_refuses_is_logged(caplog: pytest.LogCaptureFixt
 
 @pytest.mark.parametrize("update", ["channel", "lora", "mqtt"])
 async def test_live_configuration_reconnects_and_refreshes_topics(monkeypatch: pytest.MonkeyPatch, update: str) -> None:
+    """Reconnect with updated subscriptions after channel, LoRa, or MQTT settings change."""
     FakeMqttClient.instances = []
     monkeypatch.setattr(interface_module.aiomqtt, "Client", FakeMqttClient)
     interface, connection = make_interface([channel(0)])
@@ -368,6 +374,7 @@ async def test_live_configuration_reconnects_and_refreshes_topics(monkeypatch: p
 
 
 async def test_mqtt_can_be_enabled_then_disabled_without_reloading(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Wake an idle manager on enable and close its broker session on disable."""
     FakeMqttClient.instances = []
     monkeypatch.setattr(interface_module.aiomqtt, "Client", FakeMqttClient)
     interface, _ = make_interface([channel(0)])
@@ -400,6 +407,7 @@ async def test_mqtt_can_be_enabled_then_disabled_without_reloading(monkeypatch: 
     ("address", "tls", "port"), [("broker.example", True, 8883), ("broker.example:1884", False, 1884)]
 )
 def test_broker_port_and_tls(address: str, tls: bool, port: int) -> None:  # noqa: FBT001
+    """Use the TLS default port unless the radio specifies an explicit broker port."""
     interface, _ = make_interface([])
     mqtt = interface._connected_node_module_config.mqtt
     mqtt.enabled = mqtt.proxy_to_client_enabled = True
@@ -412,6 +420,7 @@ def test_broker_port_and_tls(address: str, tls: bool, port: int) -> None:  # noq
 
 
 async def test_radio_decoded_mqtt_nodeinfo_discovers_and_updates_node() -> None:
+    """Discover and rename a peer from MQTT node information decoded by the radio."""
     interface, _ = make_interface([])
     node_num = 0x12345678
     for name in ("MQTT peer", "Renamed peer"):
@@ -428,6 +437,7 @@ async def test_radio_decoded_mqtt_nodeinfo_discovers_and_updates_node() -> None:
 
 @pytest.mark.parametrize("address", ["broker.example:bad", "broker.example:0", "broker.example:65536", ":1883"])
 def test_invalid_broker_address(address: str) -> None:
+    """Reject malformed or out-of-range broker ports before constructing a client."""
     interface, _ = make_interface([])
     mqtt = interface._connected_node_module_config.mqtt
     mqtt.enabled = mqtt.proxy_to_client_enabled = True

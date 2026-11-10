@@ -175,6 +175,7 @@ class MeshInterface:
         response_timeout: dt.timedelta | None = None,
         enable_mqtt_proxy: bool = True,
     ) -> None:
+        """Initialize radio state, packet listeners, and optional MQTT proxy lifecycle state."""
         self._logger = LOGGER.getChild(self.__class__.__name__)
         self._connection = connection
         self._is_running = asyncio.Event()
@@ -737,6 +738,7 @@ class MeshInterface:
                 self._logger.debug("Heartbeat success")
 
     async def _process_connected_node_packets(self, packet: mesh_pb2.FromRadio) -> None:  # noqa: PLR0912
+        """Apply radio state updates and signal MQTT refreshes after channel changes."""
         if packet.HasField("rebooted") and packet.rebooted:
 
             async def reconnect() -> None:
@@ -773,6 +775,7 @@ class MeshInterface:
             await self._handle_mqtt_client_proxy_message(packet.mqttClientProxyMessage)
 
     def _process_connected_node_config(self, config: config_pb2.Config) -> None:
+        """Merge local configuration fields and refresh MQTT topics after LoRa updates."""
         if config.HasField("device"):
             self._connected_node_local_config.device.CopyFrom(config.device)
         if config.HasField("position"):
@@ -793,6 +796,7 @@ class MeshInterface:
             self._connected_node_local_config.security.CopyFrom(config.security)
 
     def _process_connected_node_module_config(self, module_config: module_config_pb2.ModuleConfig) -> None:  # noqa: PLR0912
+        """Merge module configuration fields and wake the MQTT manager when settings change."""
         if module_config.HasField("mqtt"):
             self._connected_node_module_config.mqtt.CopyFrom(module_config.mqtt)
             if self._mqtt_proxy_enabled:
