@@ -12,7 +12,13 @@ from aiomqtt import MqttError
 
 from custom_components.meshtastic.aiomeshtastic import MeshInterface
 from custom_components.meshtastic.aiomeshtastic import interface as interface_module
-from custom_components.meshtastic.aiomeshtastic.protobuf import channel_pb2, config_pb2, mesh_pb2
+from custom_components.meshtastic.aiomeshtastic.protobuf import (
+    channel_pb2,
+    config_pb2,
+    mesh_pb2,
+    module_config_pb2,
+    portnums_pb2,
+)
 
 Role = channel_pb2.Channel.Role
 Preset = config_pb2.Config.LoRaConfig.ModemPreset
@@ -156,6 +162,8 @@ class FakeMqttClient:
     instances: ClassVar[list["FakeMqttClient"]] = []
 
     def __init__(self, **_kwargs: object) -> None:
+        self.config = _kwargs
+        self.closed = False
         self.subscriptions: list[str] = []
         self.subscribed = asyncio.Event()
         self.queue: asyncio.Queue[aiomqtt.Message | Exception] = asyncio.Queue()
@@ -165,7 +173,7 @@ class FakeMqttClient:
         return self
 
     async def __aexit__(self, *_args: object) -> None:
-        return None
+        self.closed = True
 
     async def subscribe(self, topic: str, qos: int) -> None:
         assert qos == 1
@@ -193,7 +201,9 @@ async def test_connection_subscribes_forwards_and_stops(monkeypatch: pytest.Monk
     FakeMqttClient.instances = []
     monkeypatch.setattr(interface_module.aiomqtt, "Client", FakeMqttClient)
     interface, connection = make_interface([channel(0, "Private")])
-    interface._mqtt_config = {}
+    interface._connected_node_module_config.mqtt.enabled = True
+    interface._connected_node_module_config.mqtt.proxy_to_client_enabled = True
+    interface._connected_node_info = mesh_pb2.MyNodeInfo(my_node_num=1)
     interface._is_running.set()
 
     task = asyncio.create_task(interface._maintain_mqtt_connection())
@@ -226,7 +236,9 @@ async def test_dropped_connection_reconnects_and_forwards(monkeypatch: pytest.Mo
     monkeypatch.setattr(interface_module.aiomqtt, "Client", FakeMqttClient)
     monkeypatch.setattr(interface_module.asyncio, "sleep", fast_sleep)
     interface, connection = make_interface([channel(0, "Private")])
-    interface._mqtt_config = {}
+    interface._connected_node_module_config.mqtt.enabled = True
+    interface._connected_node_module_config.mqtt.proxy_to_client_enabled = True
+    interface._connected_node_info = mesh_pb2.MyNodeInfo(my_node_num=1)
     interface._is_running.set()
 
     task = asyncio.create_task(interface._maintain_mqtt_connection())
@@ -266,8 +278,9 @@ async def test_client_bounds_its_incoming_queue(monkeypatch: pytest.MonkeyPatch)
     monkeypatch.setattr(interface, "_add_background_task", capture)
     await interface._init_mqtt_client()
 
-    assert interface._mqtt_config["max_queued_incoming_messages"] == 100
-    assert interface._mqtt_config["queue_type"] is interface_module._MqttDownlinkQueue
+    config = interface._read_mqtt_connection_config()
+    assert config["max_queued_incoming_messages"] == 100
+    assert config["queue_type"] is interface_module._MqttDownlinkQueue
 
 
 async def test_queue_refuses_what_the_radio_cannot_take() -> None:
@@ -300,3 +313,124 @@ async def test_message_the_radio_refuses_is_logged(caplog: pytest.LogCaptureFixt
     await interface._forward_mqtt_message_to_radio(message("msh/US/2/e/Private/!1234abcd", b"\x01"))
 
     assert "Radio did not accept MQTT message on msh/US/2/e/Private/!1234abcd" in caplog.text
+
+
+@pytest.mark.parametrize("update", ["channel", "lora", "mqtt"])
+async def test_live_configuration_reconnects_and_refreshes_topics(monkeypatch: pytest.MonkeyPatch, update: str) -> None:
+    FakeMqttClient.instances = []
+    monkeypatch.setattr(interface_module.aiomqtt, "Client", FakeMqttClient)
+    interface, connection = make_interface([channel(0)])
+    mqtt = interface._connected_node_module_config.mqtt
+    mqtt.enabled = mqtt.proxy_to_client_enabled = True
+    interface._connected_node_info = mesh_pb2.MyNodeInfo(my_node_num=1)
+    interface._is_running.set()
+    task = asyncio.create_task(interface._maintain_mqtt_connection())
+    try:
+        async with asyncio.timeout(1):
+            while not FakeMqttClient.instances:
+                await real_sleep(0)
+        first = FakeMqttClient.instances[0]
+        await asyncio.wait_for(first.subscribed.wait(), 1)
+        expected = "msh/US/2/e/LongFast/+"
+        if update == "channel":
+            await interface._process_connected_node_packets(mesh_pb2.FromRadio(channel=channel(0, "New")))
+            expected = "msh/US/2/e/New/+"
+        elif update == "lora":
+            interface._process_connected_node_config(
+                config_pb2.Config(lora=config_pb2.Config.LoRaConfig(use_preset=True, modem_preset=Preset.MEDIUM_FAST))
+            )
+            expected = "msh/US/2/e/MediumFast/+"
+        else:
+            config = module_config_pb2.ModuleConfig()
+            config.mqtt.CopyFrom(mqtt)
+            config.mqtt.root = "msh/EU"
+            config.mqtt.address = "new-broker.example:1884"
+            interface._process_connected_node_module_config(config)
+            expected = "msh/EU/2/e/LongFast/+"
+        async with asyncio.timeout(1):
+            while len(FakeMqttClient.instances) < 2:
+                await real_sleep(0)
+        second = FakeMqttClient.instances[1]
+        await asyncio.wait_for(second.subscribed.wait(), 1)
+        assert first.closed
+        assert second.subscriptions[0] == expected
+        if update == "mqtt":
+            assert second.config["hostname"] == "new-broker.example"
+            assert second.config["port"] == 1884
+        second.queue.put_nowait(message(expected.replace("+", "!12345678"), b"node-info"))
+        await asyncio.wait_for(connection.has_sent.wait(), 1)
+        assert connection.sent[0].mqttClientProxyMessage.data == b"node-info"
+    finally:
+        interface._is_stopped.set()
+        await asyncio.wait_for(task, 1)
+    assert not interface._mqtt_connected
+    assert interface._mqtt_client is None
+
+
+async def test_mqtt_can_be_enabled_then_disabled_without_reloading(monkeypatch: pytest.MonkeyPatch) -> None:
+    FakeMqttClient.instances = []
+    monkeypatch.setattr(interface_module.aiomqtt, "Client", FakeMqttClient)
+    interface, _ = make_interface([channel(0)])
+    interface._connected_node_info = mesh_pb2.MyNodeInfo(my_node_num=1)
+    interface._is_running.set()
+    task = asyncio.create_task(interface._maintain_mqtt_connection())
+    try:
+        await real_sleep(0)
+        assert not FakeMqttClient.instances
+        config = module_config_pb2.ModuleConfig()
+        config.mqtt.enabled = config.mqtt.proxy_to_client_enabled = True
+        interface._process_connected_node_module_config(config)
+        async with asyncio.timeout(1):
+            while not FakeMqttClient.instances:
+                await real_sleep(0)
+        client = FakeMqttClient.instances[0]
+        await asyncio.wait_for(client.subscribed.wait(), 1)
+        config.mqtt.enabled = False
+        interface._process_connected_node_module_config(config)
+        async with asyncio.timeout(1):
+            while not client.closed or interface._mqtt_connected:
+                await real_sleep(0)
+        assert len(FakeMqttClient.instances) == 1
+    finally:
+        interface._is_stopped.set()
+        await asyncio.wait_for(task, 1)
+
+
+@pytest.mark.parametrize(
+    ("address", "tls", "port"), [("broker.example", True, 8883), ("broker.example:1884", False, 1884)]
+)
+def test_broker_port_and_tls(address: str, tls: bool, port: int) -> None:  # noqa: FBT001
+    interface, _ = make_interface([])
+    mqtt = interface._connected_node_module_config.mqtt
+    mqtt.enabled = mqtt.proxy_to_client_enabled = True
+    mqtt.address = address
+    mqtt.tls_enabled = tls
+    interface._connected_node_info = mesh_pb2.MyNodeInfo(my_node_num=1)
+    config = interface._read_mqtt_connection_config()
+    assert config["port"] == port
+    assert (config["tls_context"] is not None) == tls
+
+
+async def test_radio_decoded_mqtt_nodeinfo_discovers_and_updates_node() -> None:
+    interface, _ = make_interface([])
+    node_num = 0x12345678
+    for name in ("MQTT peer", "Renamed peer"):
+        user = mesh_pb2.User(id="!12345678", long_name=name, short_name="MQTT")
+        packet = mesh_pb2.MeshPacket(
+            **{"from": node_num},
+            via_mqtt=True,
+            decoded=mesh_pb2.Data(portnum=portnums_pb2.PortNum.NODEINFO_APP, payload=user.SerializeToString()),
+        )
+        await interface._process_packet_for_app_listener(mesh_pb2.FromRadio(packet=packet))
+        assert interface._node_database[node_num]["user"]["longName"] == name
+        assert interface.find_node(node_id=node_num).long_name == name
+
+
+@pytest.mark.parametrize("address", ["broker.example:bad", "broker.example:0", "broker.example:65536", ":1883"])
+def test_invalid_broker_address(address: str) -> None:
+    interface, _ = make_interface([])
+    mqtt = interface._connected_node_module_config.mqtt
+    mqtt.enabled = mqtt.proxy_to_client_enabled = True
+    mqtt.address = address
+    with pytest.raises(ValueError, match="Invalid MQTT broker"):
+        interface._read_mqtt_connection_config()

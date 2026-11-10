@@ -62,6 +62,7 @@ _MQTT_PROXY_DATA_MAX_SIZE = 435
 
 # broker messages waiting for the radio; a slow link (Bluetooth) drops the excess instead of growing without bound
 _MQTT_MAX_QUEUED_INCOMING_MESSAGES = 100
+_MQTT_MAX_PORT = 65535
 
 
 def _fits_mqtt_proxy_message(message: "aiomqtt.Message") -> bool:
@@ -225,6 +226,7 @@ class MeshInterface:
         if self._mqtt_proxy_enabled:
             self._mqtt_client: aiomqtt.Client | None = None
             self._mqtt_connected = False
+            self._mqtt_config_changed = asyncio.Event()
             self._mqtt_connection_task: asyncio.Task | None = None
             self._mqtt_config: dict[str, Any] | None = None
 
@@ -482,15 +484,16 @@ class MeshInterface:
         return self._connected_node_ready.is_set()
 
     async def _init_mqtt_client(self) -> None:
-        """Initialize the MQTT client if MQTT is enabled in the module config."""
+        """Start the manager even if MQTT is initially disabled on the radio."""
         if not await self.connected_node_ready():
-            self._logger.debug("Node not ready, not initializing MQTT client")
             return
+        self._mqtt_connection_task = self._add_background_task(self._maintain_mqtt_connection(), name="mqtt-connection")
 
+    def _read_mqtt_connection_config(self) -> dict[str, Any] | None:
+        """Read the current broker settings without losing the bounded incoming queue."""
         mqtt_config = self._connected_node_module_config.mqtt
         if not mqtt_config.enabled or not mqtt_config.proxy_to_client_enabled:
-            self._logger.debug("MQTT not enabled in module config, not initializing client")
-            return
+            return None
 
         # Get MQTT configuration
         broker = mqtt_config.address or "mqtt.meshtastic.org"
@@ -501,7 +504,11 @@ class MeshInterface:
         # Parse broker address
         hostname = broker.split(":", 1)[0]
         default_port = 8883 if use_tls else 1883
-        port = int(broker.split(":", 1)[1]) if ":" in broker else default_port
+        port_text = broker.split(":", 1)[1] if ":" in broker else str(default_port)
+        if not port_text.isdecimal() or not hostname or not 1 <= int(port_text) <= _MQTT_MAX_PORT:
+            msg = "Invalid MQTT broker address or port"
+            raise ValueError(msg)
+        port = int(port_text)
 
         # Get node ID for client identifier
         assert self._connected_node_info is not None  # noqa: S101  # dereferenced on the next line
@@ -511,7 +518,7 @@ class MeshInterface:
         self._logger.info("Initializing MQTT client")
 
         # Create MQTT client configuration
-        self._mqtt_config = {
+        return {
             "hostname": hostname,
             "port": port,
             "username": username or None,
@@ -522,16 +529,17 @@ class MeshInterface:
             "queue_type": _MqttDownlinkQueue,
         }
 
-        # Start connection task
-        self._mqtt_connection_task = self._add_background_task(self._maintain_mqtt_connection(), name="mqtt-connection")
-
     async def _maintain_mqtt_connection(self) -> None:
         """Maintains the MQTT connection, forwards downlink to the radio and handles reconnections."""
-        while self.is_running:
+        while self.is_running and not self._is_stopped.is_set():
             try:
+                self._mqtt_config_changed.clear()
+                self._mqtt_config = self._read_mqtt_connection_config()
+                if self._mqtt_config is None:
+                    await self._wait_for_mqtt_config_change()
+                    continue
                 self._logger.debug("Connecting to MQTT broker")
 
-                assert self._mqtt_config is not None  # noqa: S101  # ** on None would raise
                 self._mqtt_client = aiomqtt.Client(**self._mqtt_config)
 
                 # When the context manager exits, the connection is closed
@@ -542,12 +550,14 @@ class MeshInterface:
                     await self._subscribe_to_downlink_topics()
                     await self._forward_mqtt_downlink_until_stopped()
 
-                # Interface stopped, don't reconnect
-                break
-            except MqttError as e:
+                if self._is_stopped.is_set():
+                    break
+                continue
+            except (MqttError, ValueError) as e:
                 self._logger.warning("Meshtastic MQTT proxy connection error: %s", e)
             finally:
                 self._mqtt_connected = False
+                self._mqtt_client = None
                 self._logger.debug("MQTT connection closed")
 
             # Wait before attempting to reconnect
@@ -602,23 +612,35 @@ class MeshInterface:
                 # a channel name holding "+" or "#" makes an invalid filter; skip it, keep the connection
                 self._logger.warning("Not subscribing to invalid MQTT topic filter %s", topic)
 
-    async def _forward_mqtt_downlink_until_stopped(self) -> None:
-        """Forward broker messages to the radio until the interface stops or the connection drops."""
-        forward_task = asyncio.create_task(self._forward_mqtt_downlink())
-        stopped_task = asyncio.create_task(self._is_stopped.wait())
+    async def _wait_for_mqtt_config_change(self) -> None:
+        """Wait while disabled, waking on a configuration update or shutdown."""
+        changed = asyncio.create_task(self._mqtt_config_changed.wait())
+        stopped = asyncio.create_task(self._is_stopped.wait())
         try:
-            await asyncio.wait({forward_task, stopped_task}, return_when=asyncio.FIRST_COMPLETED)
+            await asyncio.wait({changed, stopped}, return_when=asyncio.FIRST_COMPLETED)
         finally:
-            forward_task.cancel()
-            stopped_task.cancel()
-        if self._is_stopped.is_set():
-            if forward_task.done() and not forward_task.cancelled():
-                forward_task.exception()  # retrieved, so asyncio does not log it as lost
-            return
-        # raises the MqttError that ended the message stream, so the caller reconnects
-        forward_task.result()
-        msg = "MQTT message stream ended"
-        raise MqttError(msg)
+            for task in (changed, stopped):
+                task.cancel()
+            await asyncio.gather(changed, stopped, return_exceptions=True)
+
+    async def _forward_mqtt_downlink_until_stopped(self) -> None:
+        """Forward until shutdown, configuration change, or broker disconnection."""
+        forward_task = asyncio.create_task(self._forward_mqtt_downlink())
+        changed_task = asyncio.create_task(self._mqtt_config_changed.wait())
+        stopped_task = asyncio.create_task(self._is_stopped.wait())
+        tasks = {forward_task, changed_task, stopped_task}
+        try:
+            done, _ = await asyncio.wait(tasks, return_when=asyncio.FIRST_COMPLETED)
+            if self._is_stopped.is_set() or self._mqtt_config_changed.is_set():
+                return
+            if forward_task in done:
+                forward_task.result()
+                msg = "MQTT message stream ended"
+                raise MqttError(msg)
+        finally:
+            for task in tasks:
+                task.cancel()
+            await asyncio.gather(*tasks, return_exceptions=True)
 
     async def _forward_mqtt_downlink(self) -> None:
         assert self._mqtt_client is not None  # noqa: S101  # dereferenced on the next line
@@ -714,7 +736,7 @@ class MeshInterface:
             else:
                 self._logger.debug("Heartbeat success")
 
-    async def _process_connected_node_packets(self, packet: mesh_pb2.FromRadio) -> None:
+    async def _process_connected_node_packets(self, packet: mesh_pb2.FromRadio) -> None:  # noqa: PLR0912
         if packet.HasField("rebooted") and packet.rebooted:
 
             async def reconnect() -> None:
@@ -737,6 +759,8 @@ class MeshInterface:
             else:
                 channels.append(packet.channel)
                 channels.sort(key=lambda c: c.index)
+            if self._mqtt_proxy_enabled:
+                self._mqtt_config_changed.set()
         elif packet.HasField("queueStatus"):
             self._connected_node_queue_status = packet.queueStatus
         elif packet.HasField("log_record"):
@@ -761,6 +785,8 @@ class MeshInterface:
             self._connected_node_local_config.display.CopyFrom(config.display)
         if config.HasField("lora"):
             self._connected_node_local_config.lora.CopyFrom(config.lora)
+            if self._mqtt_proxy_enabled:
+                self._mqtt_config_changed.set()
         if config.HasField("bluetooth"):
             self._connected_node_local_config.bluetooth.CopyFrom(config.bluetooth)
         if config.HasField("security"):
@@ -769,6 +795,8 @@ class MeshInterface:
     def _process_connected_node_module_config(self, module_config: module_config_pb2.ModuleConfig) -> None:  # noqa: PLR0912
         if module_config.HasField("mqtt"):
             self._connected_node_module_config.mqtt.CopyFrom(module_config.mqtt)
+            if self._mqtt_proxy_enabled:
+                self._mqtt_config_changed.set()
         if module_config.HasField("serial"):
             self._connected_node_module_config.serial.CopyFrom(module_config.serial)
         if module_config.HasField("external_notification"):
