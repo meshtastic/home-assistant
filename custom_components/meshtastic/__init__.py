@@ -182,10 +182,6 @@ async def _async_setup_connected_entry(
 
     if entry.state == ConfigEntryState.SETUP_IN_PROGRESS:
         await coordinator.async_config_entry_first_refresh()
-    else:
-        # reloaded after the options changed: Home Assistant only allows the first refresh helper while the entry is
-        # being set up, without data the nodes just selected get no devices and trackers until the next hourly update
-        await coordinator.async_refresh()
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     entry.async_on_unload(entry.add_update_listener(async_reload_entry))
