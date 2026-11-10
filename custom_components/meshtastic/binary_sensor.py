@@ -16,6 +16,7 @@ from homeassistant.components.binary_sensor import (
     BinarySensorEntity,
     BinarySensorEntityDescription,
 )
+from homeassistant.const import EntityCategory
 
 from . import helpers
 from .entity import MeshtasticNodeEntity
@@ -30,33 +31,55 @@ if TYPE_CHECKING:
     from .data import MeshtasticConfigEntry, MeshtasticData
 
 
+PARALLEL_UPDATES = 0
+
+
 def _build_binary_sensors(
     nodes: Mapping[int, Mapping[str, Any]], runtime_data: MeshtasticData
 ) -> Iterable[MeshtasticBinarySensor]:
     coordinator = runtime_data.coordinator
     gateway = runtime_data.client.get_own_node()
-    entities = []
+    entities: list[MeshtasticBinarySensor] = []
     entities += [
         MeshtasticBinarySensor(
             coordinator=coordinator,
             entity_description=MeshtasticBinarySensorEntityDescription(
                 key="device_powered",
-                name="Powered",
-                icon="mdi:power-plug",
                 device_class=BinarySensorDeviceClass.POWER,
-                exists_fn=lambda device: device.coordinator.data[device.node_id]
-                .get("deviceMetrics", {})
-                .get("batteryLevel", None)
-                is not None,
-                value_fn=lambda device: device.coordinator.data[device.node_id]
-                .get("deviceMetrics", {})
-                .get("batteryLevel", 0)
-                > 100,  # noqa: PLR2004
+                exists_fn=lambda device: (
+                    device.coordinator.data[device.node_id].get("deviceMetrics", {}).get("batteryLevel", None)
+                    is not None
+                ),
+                value_fn=lambda device: (
+                    device.coordinator.data[device.node_id].get("deviceMetrics", {}).get("batteryLevel", 0) > 100  # noqa: PLR2004
+                ),
             ),
             gateway=gateway,
             node_id=node_id,
         )
         for node_id, node_info in nodes.items()
+    ]
+
+    entities += [
+        MeshtasticBinarySensor(
+            coordinator=coordinator,
+            entity_description=MeshtasticBinarySensorEntityDescription(
+                key=key,
+                entity_category=EntityCategory.DIAGNOSTIC,
+                exists_fn=lambda _device: True,
+                value_fn=lambda device, field=field: bool(  # type: ignore[misc]  # mypy cannot infer a lambda with a loop-bound default
+                    device.coordinator.data[device.node_id].get(field, False)
+                ),
+            ),
+            gateway=gateway,
+            node_id=node_id,
+        )
+        for key, field in (
+            ("node_heard_on_current_lora", "heardOnCurrentLora"),
+            ("node_has_xeddsa_signed", "hasXeddsaSigned"),
+        )
+        for node_id, node_info in nodes.items()
+        if node_id != runtime_data.gateway_node["num"]
     ]
 
     return entities
@@ -78,7 +101,7 @@ async def async_unload_entry(
     return await helpers.async_unload_entry(hass, entry)
 
 
-@dataclass(kw_only=True)
+@dataclass(frozen=True, kw_only=True)
 class MeshtasticBinarySensorEntityDescription(BinarySensorEntityDescription):
     value_fn: Callable[[MeshtasticBinarySensor], bool]
     exists_fn: Callable[[MeshtasticBinarySensor], bool]

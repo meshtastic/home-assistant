@@ -38,7 +38,16 @@ send_text:
       required: false
       selector:
         text: {}
-
+    reply_id:
+      required: false
+      selector:
+        text:
+          multiline: false
+    is_reaction:
+      required: false
+      default: false
+      selector:
+        boolean: {}
 
 send_direct_message:
   fields:
@@ -55,6 +64,16 @@ send_direct_message:
     ack:
       required: true
       default: true
+      selector:
+        boolean: {}
+    reply_id:
+      required: false
+      selector:
+        text:
+          multiline: false
+    is_reaction:
+      required: false
+      default: false
       selector:
         boolean: {}
 
@@ -77,7 +96,16 @@ broadcast_channel_message:
       default: true
       selector:
         boolean: {}
-
+    reply_id:
+      required: false
+      selector:
+        text:
+          multiline: false
+    is_reaction:
+      required: false
+      default: false
+      selector:
+        boolean: {}
 
 request_telemetry:
   fields:

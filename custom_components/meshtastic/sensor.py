@@ -4,7 +4,7 @@
 
 from __future__ import annotations
 
-import datetime
+import datetime as dt
 import typing
 from dataclasses import dataclass
 from functools import partial
@@ -21,23 +21,30 @@ from homeassistant.components.sensor import (
 )
 from homeassistant.config import callback
 from homeassistant.const import (
-    CONCENTRATION_MICROGRAMS_PER_CUBIC_METER,
     DEGREE,
     LIGHT_LUX,
     PERCENTAGE,
     SIGNAL_STRENGTH_DECIBELS,
+    SIGNAL_STRENGTH_DECIBELS_MILLIWATT,
+    EntityCategory,
+    UnitOfConductivity,
+    UnitOfDensity,
     UnitOfElectricCurrent,
     UnitOfElectricPotential,
+    UnitOfInformation,
+    UnitOfIrradiance,
     UnitOfLength,
-    UnitOfMass,
     UnitOfPressure,
+    UnitOfRatio,
     UnitOfSpeed,
     UnitOfTemperature,
     UnitOfTime,
+    UnitOfVolumetricFlux,
 )
 
 from . import LOGGER, helpers
 from .entity import MeshtasticNodeEntity
+from .field_metadata import device_role_attributes
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterable, Mapping
@@ -50,14 +57,19 @@ if TYPE_CHECKING:
     from .data import MeshtasticConfigEntry, MeshtasticData
 
 
+PARALLEL_UPDATES = 0
+
+
 def _build_sensors(nodes: Mapping[int, Mapping[str, Any]], runtime_data: MeshtasticData) -> Iterable[MeshtasticSensor]:
-    entities = []
+    entities: list[MeshtasticSensor] = []
     entities += _build_node_sensors(nodes, runtime_data)
     entities += _build_device_sensors(nodes, runtime_data)
     entities += _build_local_stats_sensors(nodes, runtime_data)
     entities += _build_power_metrics_sensors(nodes, runtime_data)
     entities += _build_environment_metrics_sensors(nodes, runtime_data)
     entities += _build_air_quality_metrics_sensors(nodes, runtime_data)
+    entities += _build_soil_water_metrics_sensors(nodes, runtime_data)
+    entities += _build_host_metrics_sensors(nodes, runtime_data)
     return entities
 
 
@@ -76,10 +88,11 @@ async def async_unload_entry(
     return await helpers.async_unload_entry(hass, entry)
 
 
-@dataclass(kw_only=True)
+@dataclass(frozen=True, kw_only=True)
 class MeshtasticSensorEntityDescription(SensorEntityDescription):
     exists_fn: Callable[[MeshtasticSensor], bool] = lambda _: True
-    value_fn: Callable[[MeshtasticSensor], StateType]
+    value_fn: Callable[[MeshtasticSensor], StateType | dt.datetime]
+    attributes_fn: Callable[[MeshtasticSensor], dict[str, Any]] | None = None
 
 
 class MeshtasticSensor(MeshtasticNodeEntity, SensorEntity):
@@ -99,6 +112,8 @@ class MeshtasticSensor(MeshtasticNodeEntity, SensorEntity):
         LOGGER.debug("Updating sensor attributes: %s", self)
         self._attr_native_value = self.entity_description.value_fn(self)
         self._attr_available = self._attr_native_value is not None
+        if self.entity_description.attributes_fn is not None:
+            self._attr_extra_state_attributes = self.entity_description.attributes_fn(self)
 
 
 def _build_node_sensors(
@@ -108,19 +123,18 @@ def _build_node_sensors(
     coordinator = runtime_data.coordinator
     gateway = runtime_data.client.get_own_node()
 
-    def last_heard(device: MeshtasticNodeEntity) -> datetime.datetime | None:
+    def last_heard(device: MeshtasticNodeEntity) -> dt.datetime | None:
         last_heard_int = device.coordinator.data[device.node_id].get("lastHeard")
-        if last_heard_int is None:
+        if not last_heard_int:
             return None
-        return datetime.datetime.fromtimestamp(last_heard_int, tz=datetime.UTC)
+        return dt.datetime.fromtimestamp(last_heard_int, tz=dt.UTC)
 
     entities += [
         MeshtasticSensor(
             coordinator=coordinator,
             entity_description=MeshtasticSensorEntityDescription(
                 key="node_last_heard",
-                name="Last Heard",
-                icon="mdi:timeline-clock",
+                entity_category=EntityCategory.DIAGNOSTIC,
                 device_class=SensorDeviceClass.TIMESTAMP,
                 value_fn=last_heard,
             ),
@@ -136,11 +150,11 @@ def _build_node_sensors(
             coordinator=coordinator,
             entity_description=MeshtasticSensorEntityDescription(
                 key="node_snr",
-                name="Signal to Noise Ratio",
-                icon="mdi:signal",
+                entity_category=EntityCategory.DIAGNOSTIC,
                 native_unit_of_measurement=SIGNAL_STRENGTH_DECIBELS,
                 device_class=SensorDeviceClass.SIGNAL_STRENGTH,
                 state_class=SensorStateClass.MEASUREMENT,
+                suggested_display_precision=2,
                 value_fn=lambda device: device.coordinator.data[device.node_id].get("snr", None),
             ),
             gateway=gateway,
@@ -155,8 +169,7 @@ def _build_node_sensors(
             coordinator=coordinator,
             entity_description=MeshtasticSensorEntityDescription(
                 key="node_hops_away",
-                name="Hops away",
-                icon="mdi:rabbit",
+                entity_category=EntityCategory.DIAGNOSTIC,
                 state_class=SensorStateClass.MEASUREMENT,
                 value_fn=lambda device: device.coordinator.data[device.node_id].get("hopsAway", None),
             ),
@@ -172,9 +185,11 @@ def _build_node_sensors(
             coordinator=coordinator,
             entity_description=MeshtasticSensorEntityDescription(
                 key="node_role",
-                name="Role",
-                icon="mdi:card-account-details",
+                entity_category=EntityCategory.DIAGNOSTIC,
                 value_fn=lambda device: device.coordinator.data[device.node_id].get("user", {}).get("role", None),
+                attributes_fn=lambda device: dict(
+                    device_role_attributes(device.coordinator.data[device.node_id].get("user", {}).get("role", None))
+                ),
             ),
             gateway=gateway,
             node_id=node_id,
@@ -187,8 +202,7 @@ def _build_node_sensors(
             coordinator=coordinator,
             entity_description=MeshtasticSensorEntityDescription(
                 key="node_short_name",
-                name="Short Name",
-                icon="mdi:card-account-details",
+                entity_category=EntityCategory.DIAGNOSTIC,
                 value_fn=lambda device: device.coordinator.data[device.node_id].get("user", {}).get("shortName", None),
             ),
             gateway=gateway,
@@ -202,8 +216,7 @@ def _build_node_sensors(
             coordinator=coordinator,
             entity_description=MeshtasticSensorEntityDescription(
                 key="node_long_name",
-                name="Long Name",
-                icon="mdi:card-account-details",
+                entity_category=EntityCategory.DIAGNOSTIC,
                 value_fn=lambda device: device.coordinator.data[device.node_id].get("user", {}).get("longName", None),
             ),
             gateway=gateway,
@@ -227,14 +240,13 @@ def _build_device_sensors(
             coordinator=coordinator,
             entity_description=MeshtasticSensorEntityDescription(
                 key="device_uptime",
-                name="Uptime",
-                icon="mdi:progress-clock",
+                entity_category=EntityCategory.DIAGNOSTIC,
                 native_unit_of_measurement=UnitOfTime.SECONDS,
                 device_class=SensorDeviceClass.DURATION,
                 state_class=SensorStateClass.TOTAL_INCREASING,
-                value_fn=lambda device: device.coordinator.data[device.node_id]
-                .get("deviceMetrics", {})
-                .get("uptimeSeconds", None),
+                value_fn=lambda device: (
+                    device.coordinator.data[device.node_id].get("deviceMetrics", {}).get("uptimeSeconds", None)
+                ),
             ),
             gateway=gateway,
             node_id=node_id,
@@ -253,8 +265,6 @@ def _build_device_sensors(
             coordinator=coordinator,
             entity_description=MeshtasticSensorEntityDescription(
                 key="device_battery_level",
-                name="Battery Level",
-                icon="mdi:battery",
                 native_unit_of_measurement=PERCENTAGE,
                 device_class=SensorDeviceClass.BATTERY,
                 state_class=SensorStateClass.MEASUREMENT,
@@ -271,14 +281,13 @@ def _build_device_sensors(
             coordinator=coordinator,
             entity_description=MeshtasticSensorEntityDescription(
                 key="device_voltage",
-                name="Voltage",
-                icon="mdi:lightning-bolt",
                 native_unit_of_measurement=UnitOfElectricPotential.VOLT,
                 device_class=SensorDeviceClass.VOLTAGE,
                 state_class=SensorStateClass.MEASUREMENT,
-                value_fn=lambda device: device.coordinator.data[device.node_id]
-                .get("deviceMetrics", {})
-                .get("voltage", None),
+                suggested_display_precision=2,
+                value_fn=lambda device: (
+                    device.coordinator.data[device.node_id].get("deviceMetrics", {}).get("voltage", None)
+                ),
             ),
             gateway=gateway,
             node_id=node_id,
@@ -290,13 +299,13 @@ def _build_device_sensors(
             coordinator=coordinator,
             entity_description=MeshtasticSensorEntityDescription(
                 key="device_channel_utilization",
-                name="Channel Utilization",
-                icon="mdi:signal-distance-variant",
+                entity_category=EntityCategory.DIAGNOSTIC,
                 native_unit_of_measurement=PERCENTAGE,
                 state_class=SensorStateClass.MEASUREMENT,
-                value_fn=lambda device: device.coordinator.data[device.node_id]
-                .get("deviceMetrics", {})
-                .get("channelUtilization", None),
+                suggested_display_precision=2,
+                value_fn=lambda device: (
+                    device.coordinator.data[device.node_id].get("deviceMetrics", {}).get("channelUtilization", None)
+                ),
             ),
             gateway=gateway,
             node_id=node_id,
@@ -308,13 +317,13 @@ def _build_device_sensors(
             coordinator=coordinator,
             entity_description=MeshtasticSensorEntityDescription(
                 key="device_airtime",
-                name="Airtime",
-                icon="mdi:timer",
+                entity_category=EntityCategory.DIAGNOSTIC,
                 native_unit_of_measurement=PERCENTAGE,
                 state_class=SensorStateClass.MEASUREMENT,
-                value_fn=lambda device: device.coordinator.data[device.node_id]
-                .get("deviceMetrics", {})
-                .get("airUtilTx", None),
+                suggested_display_precision=2,
+                value_fn=lambda device: (
+                    device.coordinator.data[device.node_id].get("deviceMetrics", {}).get("airUtilTx", None)
+                ),
             ),
             gateway=gateway,
             node_id=node_id,
@@ -339,12 +348,12 @@ def _build_local_stats_sensors(
                 coordinator=coordinator,
                 entity_description=MeshtasticSensorEntityDescription(
                     key="stats_packets_tx",
-                    name="Packets sent",
-                    icon="mdi:call-made",
+                    entity_category=EntityCategory.DIAGNOSTIC,
+                    entity_registry_enabled_default=False,
                     state_class=SensorStateClass.TOTAL_INCREASING,
-                    value_fn=lambda device: device.coordinator.data[device.node_id]
-                    .get("localStats", {})
-                    .get("numPacketsTx", None),
+                    value_fn=lambda device: (
+                        device.coordinator.data[device.node_id].get("localStats", {}).get("numPacketsTx", None)
+                    ),
                 ),
                 gateway=gateway,
                 node_id=node_id,
@@ -357,12 +366,12 @@ def _build_local_stats_sensors(
                 coordinator=coordinator,
                 entity_description=MeshtasticSensorEntityDescription(
                     key="stats_packets_rx",
-                    name="Packets received",
-                    icon="mdi:call-received",
+                    entity_category=EntityCategory.DIAGNOSTIC,
+                    entity_registry_enabled_default=False,
                     state_class=SensorStateClass.TOTAL_INCREASING,
-                    value_fn=lambda device: device.coordinator.data[device.node_id]
-                    .get("localStats", {})
-                    .get("numPacketsRx", None),
+                    value_fn=lambda device: (
+                        device.coordinator.data[device.node_id].get("localStats", {}).get("numPacketsRx", None)
+                    ),
                 ),
                 gateway=gateway,
                 node_id=node_id,
@@ -375,12 +384,12 @@ def _build_local_stats_sensors(
                 coordinator=coordinator,
                 entity_description=MeshtasticSensorEntityDescription(
                     key="stats_packets_rx_bad",
-                    name="Malformed Packets received",
-                    icon="mdi:call-missed",
+                    entity_category=EntityCategory.DIAGNOSTIC,
+                    entity_registry_enabled_default=False,
                     state_class=SensorStateClass.TOTAL_INCREASING,
-                    value_fn=lambda device: device.coordinator.data[device.node_id]
-                    .get("localStats", {})
-                    .get("numPacketsRxBad", None),
+                    value_fn=lambda device: (
+                        device.coordinator.data[device.node_id].get("localStats", {}).get("numPacketsRxBad", None)
+                    ),
                 ),
                 gateway=gateway,
                 node_id=node_id,
@@ -393,12 +402,12 @@ def _build_local_stats_sensors(
                 coordinator=coordinator,
                 entity_description=MeshtasticSensorEntityDescription(
                     key="stats_packets_rx_duplicate",
-                    name="Duplicate Packets received",
-                    icon="mdi:call-split",
+                    entity_category=EntityCategory.DIAGNOSTIC,
+                    entity_registry_enabled_default=False,
                     state_class=SensorStateClass.TOTAL_INCREASING,
-                    value_fn=lambda device: device.coordinator.data[device.node_id]
-                    .get("localStats", {})
-                    .get("numRxDupe", None),
+                    value_fn=lambda device: (
+                        device.coordinator.data[device.node_id].get("localStats", {}).get("numRxDupe", None)
+                    ),
                 ),
                 gateway=gateway,
                 node_id=node_id,
@@ -411,12 +420,12 @@ def _build_local_stats_sensors(
                 coordinator=coordinator,
                 entity_description=MeshtasticSensorEntityDescription(
                     key="stats_packets_tx_relayed",
-                    name="Packets relayed",
-                    icon="mdi:call-missed",
+                    entity_category=EntityCategory.DIAGNOSTIC,
+                    entity_registry_enabled_default=False,
                     state_class=SensorStateClass.TOTAL_INCREASING,
-                    value_fn=lambda device: device.coordinator.data[device.node_id]
-                    .get("localStats", {})
-                    .get("numTxRelay", None),
+                    value_fn=lambda device: (
+                        device.coordinator.data[device.node_id].get("localStats", {}).get("numTxRelay", None)
+                    ),
                 ),
                 gateway=gateway,
                 node_id=node_id,
@@ -429,12 +438,12 @@ def _build_local_stats_sensors(
                 coordinator=coordinator,
                 entity_description=MeshtasticSensorEntityDescription(
                     key="stats_packets_tx_relay_cancelled",
-                    name="Packets relay canceled",
-                    icon="mdi:call-missed",
+                    entity_category=EntityCategory.DIAGNOSTIC,
+                    entity_registry_enabled_default=False,
                     state_class=SensorStateClass.TOTAL_INCREASING,
-                    value_fn=lambda device: device.coordinator.data[device.node_id]
-                    .get("localStats", {})
-                    .get("numTxRelayCanceled", None),
+                    value_fn=lambda device: (
+                        device.coordinator.data[device.node_id].get("localStats", {}).get("numTxRelayCanceled", None)
+                    ),
                 ),
                 gateway=gateway,
                 node_id=node_id,
@@ -447,12 +456,11 @@ def _build_local_stats_sensors(
                 coordinator=coordinator,
                 entity_description=MeshtasticSensorEntityDescription(
                     key="stats_nodes_online",
-                    name="Online Nodes",
-                    icon="mdi:radio-handheld",
+                    entity_category=EntityCategory.DIAGNOSTIC,
                     state_class=SensorStateClass.TOTAL,
-                    value_fn=lambda device: device.coordinator.data[device.node_id]
-                    .get("localStats", {})
-                    .get("numOnlineNodes", None),
+                    value_fn=lambda device: (
+                        device.coordinator.data[device.node_id].get("localStats", {}).get("numOnlineNodes", None)
+                    ),
                 ),
                 gateway=gateway,
                 node_id=node_id,
@@ -465,12 +473,70 @@ def _build_local_stats_sensors(
                 coordinator=coordinator,
                 entity_description=MeshtasticSensorEntityDescription(
                     key="stats_nodes_total",
-                    name="Total Nodes",
-                    icon="mdi:radio-handheld",
+                    entity_category=EntityCategory.DIAGNOSTIC,
                     state_class=SensorStateClass.TOTAL,
-                    value_fn=lambda device: device.coordinator.data[device.node_id]
-                    .get("localStats", {})
-                    .get("numTotalNodes", None),
+                    value_fn=lambda device: (
+                        device.coordinator.data[device.node_id].get("localStats", {}).get("numTotalNodes", None)
+                    ),
+                ),
+                gateway=gateway,
+                node_id=node_id,
+            )
+            for node_id, node_info in nodes_with_local_stats.items()
+        ]
+
+        entities += [
+            MeshtasticSensor(
+                coordinator=coordinator,
+                entity_description=MeshtasticSensorEntityDescription(
+                    key="stats_heap_total_bytes",
+                    entity_category=EntityCategory.DIAGNOSTIC,
+                    entity_registry_enabled_default=False,
+                    native_unit_of_measurement=UnitOfInformation.BYTES,
+                    device_class=SensorDeviceClass.DATA_SIZE,
+                    state_class=SensorStateClass.MEASUREMENT,
+                    value_fn=lambda device: (
+                        device.coordinator.data[device.node_id].get("localStats", {}).get("heapTotalBytes", None)
+                    ),
+                ),
+                gateway=gateway,
+                node_id=node_id,
+            )
+            for node_id, node_info in nodes_with_local_stats.items()
+        ]
+
+        entities += [
+            MeshtasticSensor(
+                coordinator=coordinator,
+                entity_description=MeshtasticSensorEntityDescription(
+                    key="stats_heap_free_bytes",
+                    entity_category=EntityCategory.DIAGNOSTIC,
+                    entity_registry_enabled_default=False,
+                    native_unit_of_measurement=UnitOfInformation.BYTES,
+                    device_class=SensorDeviceClass.DATA_SIZE,
+                    state_class=SensorStateClass.MEASUREMENT,
+                    value_fn=lambda device: (
+                        device.coordinator.data[device.node_id].get("localStats", {}).get("heapFreeBytes", None)
+                    ),
+                ),
+                gateway=gateway,
+                node_id=node_id,
+            )
+            for node_id, node_info in nodes_with_local_stats.items()
+        ]
+
+        entities += [
+            MeshtasticSensor(
+                coordinator=coordinator,
+                entity_description=MeshtasticSensorEntityDescription(
+                    key="stats_noise_floor",
+                    entity_category=EntityCategory.DIAGNOSTIC,
+                    native_unit_of_measurement=SIGNAL_STRENGTH_DECIBELS_MILLIWATT,
+                    device_class=SensorDeviceClass.SIGNAL_STRENGTH,
+                    state_class=SensorStateClass.MEASUREMENT,
+                    value_fn=lambda device: (
+                        device.coordinator.data[device.node_id].get("localStats", {}).get("noiseFloor", None)
+                    ),
                 ),
                 gateway=gateway,
                 node_id=node_id,
@@ -511,11 +577,10 @@ def _build_power_metrics_sensors(
                             coordinator=coordinator,
                             entity_description=MeshtasticSensorEntityDescription(
                                 key=f"power_ch{channel}_voltage",
-                                name=f"Channel {channel} Voltage",
-                                icon="mdi:lightning-bolt",
                                 native_unit_of_measurement=UnitOfElectricPotential.VOLT,
                                 device_class=SensorDeviceClass.VOLTAGE,
                                 state_class=SensorStateClass.MEASUREMENT,
+                                suggested_display_precision=2,
                                 value_fn=power_metrics_value_fn(voltage_key),
                             ),
                             gateway=gateway,
@@ -528,11 +593,10 @@ def _build_power_metrics_sensors(
                             coordinator=coordinator,
                             entity_description=MeshtasticSensorEntityDescription(
                                 key=f"power_ch{channel}_current",
-                                name=f"Channel {channel} Current",
-                                icon="mdi:current-dc",
                                 native_unit_of_measurement=UnitOfElectricCurrent.MILLIAMPERE,
                                 device_class=SensorDeviceClass.CURRENT,
                                 state_class=SensorStateClass.MEASUREMENT,
+                                suggested_display_precision=2,
                                 value_fn=power_metrics_value_fn(current_key),
                             ),
                             gateway=gateway,
@@ -564,7 +628,7 @@ def _build_environment_metrics_sensors(
 
     def add_sensor_base(  # noqa: PLR0913
         node_id: int,
-        node_info: dict[str, Any],
+        node_info: Mapping[str, Any],
         value_key: str,
         device_class: SensorDeviceClass | None,
         unit_of_measurement: str | None = None,
@@ -578,6 +642,9 @@ def _build_environment_metrics_sensors(
                     entity_description=MeshtasticSensorEntityDescription(
                         key="environment_" + key,
                         translation_key="environment_" + key,
+                        entity_registry_enabled_default=not value_key.startswith(
+                            ("adcVoltageCh", "oneWireTemperatureCh")
+                        ),
                         native_unit_of_measurement=unit_of_measurement,
                         device_class=device_class,
                         state_class=state_class,
@@ -595,25 +662,111 @@ def _build_environment_metrics_sensors(
             add_sensor("temperature", SensorDeviceClass.TEMPERATURE, UnitOfTemperature.CELSIUS)
             add_sensor("relativeHumidity", SensorDeviceClass.HUMIDITY, PERCENTAGE)
             add_sensor("barometricPressure", SensorDeviceClass.ATMOSPHERIC_PRESSURE, UnitOfPressure.HPA)
-            add_sensor("gasResistance", None, UnitOfPressure.HPA)
+            add_sensor("gasResistance", None, "kΩ")
             add_sensor("iaq", SensorDeviceClass.AQI, None)
 
             add_sensor("distance", SensorDeviceClass.DISTANCE, UnitOfLength.MILLIMETERS)
 
             add_sensor("lux", SensorDeviceClass.ILLUMINANCE, LIGHT_LUX)
-            add_sensor("white_lux", SensorDeviceClass.ILLUMINANCE, LIGHT_LUX)
-            add_sensor("ir_lux", SensorDeviceClass.ILLUMINANCE, LIGHT_LUX)
-            add_sensor("uv_lux", SensorDeviceClass.ILLUMINANCE, LIGHT_LUX)
+            add_sensor("whiteLux", SensorDeviceClass.ILLUMINANCE, LIGHT_LUX)
+            add_sensor("irLux", SensorDeviceClass.ILLUMINANCE, LIGHT_LUX)
+            add_sensor("uvLux", SensorDeviceClass.ILLUMINANCE, LIGHT_LUX)
 
-            add_sensor("wind_direction", SensorDeviceClass.WIND_SPEED, DEGREE)
-            add_sensor("wind_speed", SensorDeviceClass.WIND_SPEED, UnitOfSpeed.METERS_PER_SECOND)
-            add_sensor("wind_gust", SensorDeviceClass.WIND_SPEED, UnitOfSpeed.METERS_PER_SECOND)
-            add_sensor("wind_lull", SensorDeviceClass.WIND_SPEED, UnitOfSpeed.METERS_PER_SECOND)
+            add_sensor("windDirection", SensorDeviceClass.WIND_DIRECTION, DEGREE, SensorStateClass.MEASUREMENT_ANGLE)
+            add_sensor("windSpeed", SensorDeviceClass.WIND_SPEED, UnitOfSpeed.METERS_PER_SECOND)
+            add_sensor("windGust", SensorDeviceClass.WIND_SPEED, UnitOfSpeed.METERS_PER_SECOND)
+            add_sensor("windLull", SensorDeviceClass.WIND_SPEED, UnitOfSpeed.METERS_PER_SECOND)
 
-            add_sensor("weight", SensorDeviceClass.WEIGHT, UnitOfMass.KILOGRAMS)
+            # deprecated in favor of power metrics
+            add_sensor("voltage", SensorDeviceClass.VOLTAGE, UnitOfElectricPotential.VOLT)
+            add_sensor("current", SensorDeviceClass.CURRENT, UnitOfElectricCurrent.AMPERE)
+
+            add_sensor(
+                "rainfall1h", SensorDeviceClass.PRECIPITATION_INTENSITY, UnitOfVolumetricFlux.MILLIMETERS_PER_HOUR
+            )
+            add_sensor(
+                "rainfall24h", SensorDeviceClass.PRECIPITATION_INTENSITY, UnitOfVolumetricFlux.MILLIMETERS_PER_DAY
+            )
+
+            add_sensor("soilMoisture", SensorDeviceClass.MOISTURE, PERCENTAGE)
+            add_sensor("soilTemperature", SensorDeviceClass.TEMPERATURE, UnitOfTemperature.CELSIUS)
+
+            add_sensor("lightningDistanceKm", SensorDeviceClass.DISTANCE, UnitOfLength.KILOMETERS)
+            add_sensor("lightningStrikeCount1h", None, None)
+
+            for channel in range(8):
+                add_sensor(f"adcVoltageCh{channel}", SensorDeviceClass.VOLTAGE, UnitOfElectricPotential.VOLT)
+                add_sensor(f"oneWireTemperatureCh{channel}", SensorDeviceClass.TEMPERATURE, UnitOfTemperature.CELSIUS)
 
     except:  # noqa: E722
         LOGGER.warning("Failed to create environment metric entities", exc_info=True)
+
+    return entities
+
+
+def _build_host_metrics_sensors(
+    nodes: Mapping[int, Mapping[str, Any]], runtime_data: MeshtasticData
+) -> Iterable[MeshtasticSensor]:
+    coordinator = runtime_data.coordinator
+    gateway = runtime_data.client.get_own_node()
+    nodes_with_host_metrics = {node_id: node_info for node_id, node_info in nodes.items() if "hostMetrics" in node_info}
+    if not nodes_with_host_metrics:
+        return []
+
+    entities = []
+
+    def host_metrics_value_fn(key: str) -> Callable[[MeshtasticSensor], str | None]:
+        return lambda device: device.coordinator.data[device.node_id].get("hostMetrics", {}).get(key, None)
+
+    def add_sensor_base(  # noqa: PLR0913
+        node_id: int,
+        node_info: Mapping[str, Any],
+        value_key: str,
+        device_class: SensorDeviceClass | None,
+        unit_of_measurement: str | None = None,
+        state_class: SensorStateClass | None = SensorStateClass.MEASUREMENT,
+    ) -> None:
+        key = "".join(["_" + c.lower() if c.isupper() else c for c in value_key]).lstrip("_")
+        if value_key in node_info["hostMetrics"]:
+            entities.append(
+                MeshtasticSensor(
+                    coordinator=coordinator,
+                    entity_description=MeshtasticSensorEntityDescription(
+                        key="host_" + key,
+                        translation_key="host_" + key,
+                        entity_category=EntityCategory.DIAGNOSTIC,
+                        entity_registry_enabled_default=False,
+                        native_unit_of_measurement=unit_of_measurement,
+                        device_class=device_class,
+                        state_class=state_class,
+                        value_fn=host_metrics_value_fn(value_key),
+                    ),
+                    gateway=gateway,
+                    node_id=node_id,
+                )
+            )
+
+    try:
+        for node_id, node_info in nodes_with_host_metrics.items():
+            add_sensor = partial(add_sensor_base, node_id, node_info)
+
+            add_sensor(
+                "uptimeSeconds",
+                SensorDeviceClass.DURATION,
+                UnitOfTime.SECONDS,
+                SensorStateClass.TOTAL_INCREASING,
+            )
+            add_sensor("freememBytes", SensorDeviceClass.DATA_SIZE, UnitOfInformation.BYTES)
+            add_sensor("diskfree1Bytes", SensorDeviceClass.DATA_SIZE, UnitOfInformation.BYTES)
+            add_sensor("diskfree2Bytes", SensorDeviceClass.DATA_SIZE, UnitOfInformation.BYTES)
+            add_sensor("diskfree3Bytes", SensorDeviceClass.DATA_SIZE, UnitOfInformation.BYTES)
+            add_sensor("load1", None, PERCENTAGE)
+            add_sensor("load5", None, PERCENTAGE)
+            add_sensor("load15", None, PERCENTAGE)
+            add_sensor("userString", None, None, None)
+
+    except:  # noqa: E722
+        LOGGER.warning("Failed to create host metric entities", exc_info=True)
 
     return entities
 
@@ -636,7 +789,7 @@ def _build_air_quality_metrics_sensors(
 
     def add_sensor_base(  # noqa: PLR0913
         node_id: int,
-        node_info: dict[str, Any],
+        node_info: Mapping[str, Any],
         value_key: str,
         device_class: SensorDeviceClass | None,
         unit_of_measurement: str | None = None,
@@ -664,21 +817,96 @@ def _build_air_quality_metrics_sensors(
         for node_id, node_info in nodes_with_environment_metrics.items():
             add_sensor = partial(add_sensor_base, node_id, node_info)
 
-            add_sensor("pm10Standard", SensorDeviceClass.PM10, CONCENTRATION_MICROGRAMS_PER_CUBIC_METER)
-            add_sensor("pm25Standard", SensorDeviceClass.PM25, CONCENTRATION_MICROGRAMS_PER_CUBIC_METER)
-            add_sensor("pm100Standard", None, CONCENTRATION_MICROGRAMS_PER_CUBIC_METER)
+            add_sensor("pm10Standard", SensorDeviceClass.PM10, UnitOfDensity.MICROGRAMS_PER_CUBIC_METER)
+            add_sensor("pm25Standard", SensorDeviceClass.PM25, UnitOfDensity.MICROGRAMS_PER_CUBIC_METER)
+            add_sensor("pm100Standard", None, UnitOfDensity.MICROGRAMS_PER_CUBIC_METER)
 
-            add_sensor("pm10Environmental", SensorDeviceClass.PM10, CONCENTRATION_MICROGRAMS_PER_CUBIC_METER)
-            add_sensor("pm25Environmental", SensorDeviceClass.PM25, CONCENTRATION_MICROGRAMS_PER_CUBIC_METER)
-            add_sensor("pm100Environmental", None, CONCENTRATION_MICROGRAMS_PER_CUBIC_METER)
+            add_sensor("pm10Environmental", SensorDeviceClass.PM10, UnitOfDensity.MICROGRAMS_PER_CUBIC_METER)
+            add_sensor("pm25Environmental", SensorDeviceClass.PM25, UnitOfDensity.MICROGRAMS_PER_CUBIC_METER)
+            add_sensor("pm100Environmental", None, UnitOfDensity.MICROGRAMS_PER_CUBIC_METER)
 
-            add_sensor("particles03um", None, CONCENTRATION_MICROGRAMS_PER_CUBIC_METER)
-            add_sensor("particles05um", None, CONCENTRATION_MICROGRAMS_PER_CUBIC_METER)
-            add_sensor("particles10um", SensorDeviceClass.PM10, CONCENTRATION_MICROGRAMS_PER_CUBIC_METER)
-            add_sensor("particles25um", SensorDeviceClass.PM25, CONCENTRATION_MICROGRAMS_PER_CUBIC_METER)
-            add_sensor("particles50um", None, CONCENTRATION_MICROGRAMS_PER_CUBIC_METER)
-            add_sensor("particles100um", None, CONCENTRATION_MICROGRAMS_PER_CUBIC_METER)
+            add_sensor("particles03um", None, UnitOfDensity.MICROGRAMS_PER_CUBIC_METER)
+            add_sensor("particles05um", None, UnitOfDensity.MICROGRAMS_PER_CUBIC_METER)
+            add_sensor("particles10um", SensorDeviceClass.PM10, UnitOfDensity.MICROGRAMS_PER_CUBIC_METER)
+            add_sensor("particles25um", SensorDeviceClass.PM25, UnitOfDensity.MICROGRAMS_PER_CUBIC_METER)
+            add_sensor("particles50um", None, UnitOfDensity.MICROGRAMS_PER_CUBIC_METER)
+            add_sensor("particles100um", None, UnitOfDensity.MICROGRAMS_PER_CUBIC_METER)
     except:  # noqa: E722
         LOGGER.warning("Failed to create air quality metric entities", exc_info=True)
+
+    return entities
+
+
+def _build_soil_water_metrics_sensors(
+    nodes: Mapping[int, Mapping[str, Any]], runtime_data: MeshtasticData
+) -> Iterable[MeshtasticSensor]:
+    coordinator = runtime_data.coordinator
+    gateway = runtime_data.client.get_own_node()
+    nodes_with_soil_water_metrics = {
+        node_id: node_info for node_id, node_info in nodes.items() if "soilWaterMetrics" in node_info
+    }
+    if not nodes_with_soil_water_metrics:
+        return []
+
+    entities = []
+
+    def soil_water_metrics_value_fn(key: str) -> Callable[[MeshtasticSensor], str | None]:
+        return lambda device: device.coordinator.data[device.node_id].get("soilWaterMetrics", {}).get(key, None)
+
+    def add_sensor_base(  # noqa: PLR0913
+        node_id: int,
+        node_info: Mapping[str, Any],
+        value_key: str,
+        device_class: SensorDeviceClass | None,
+        unit_of_measurement: str | None = None,
+        state_class: SensorStateClass = SensorStateClass.MEASUREMENT,
+    ) -> None:
+        key = "".join(["_" + c.lower() if c.isupper() else c for c in value_key]).lstrip("_")
+        if value_key in node_info["soilWaterMetrics"]:
+            entities.append(
+                MeshtasticSensor(
+                    coordinator=coordinator,
+                    entity_description=MeshtasticSensorEntityDescription(
+                        key="soil_water_" + key,
+                        translation_key="soil_water_" + key,
+                        native_unit_of_measurement=unit_of_measurement,
+                        device_class=device_class,
+                        state_class=state_class,
+                        value_fn=soil_water_metrics_value_fn(value_key),
+                    ),
+                    gateway=gateway,
+                    node_id=node_id,
+                )
+            )
+
+    try:
+        for node_id, node_info in nodes_with_soil_water_metrics.items():
+            add_sensor = partial(add_sensor_base, node_id, node_info)
+
+            add_sensor("soilPh", SensorDeviceClass.PH)
+            add_sensor("ph", SensorDeviceClass.PH)
+            add_sensor(
+                "electricalConductivity",
+                SensorDeviceClass.CONDUCTIVITY,
+                UnitOfConductivity.MILLISIEMENS_PER_CM,
+            )
+            add_sensor("salinity", None, "mg/L")
+            add_sensor("nitrogen", None, "mg/kg")
+            add_sensor("phosphorus", None, "mg/kg")
+            add_sensor("potassium", None, "mg/kg")
+            add_sensor("dissolvedOxygen", None, "mg/L")
+            add_sensor("orp", None, UnitOfElectricPotential.MILLIVOLT)
+            add_sensor("chemicalOxygenDemand", None, "mg/L")
+            add_sensor("turbidity", None, "NTU")
+            add_sensor("nitrate", None, UnitOfRatio.PARTS_PER_MILLION)
+            add_sensor("ammonium", None, UnitOfRatio.PARTS_PER_MILLION)
+            add_sensor("biochemicalOxygenDemand", None, "mg/L")
+            add_sensor(
+                "solarIrradiance",
+                SensorDeviceClass.IRRADIANCE,
+                UnitOfIrradiance.WATTS_PER_SQUARE_METER,
+            )
+    except:  # noqa: E722
+        LOGGER.warning("Failed to create soil water metric entities", exc_info=True)
 
     return entities

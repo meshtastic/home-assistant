@@ -18,6 +18,7 @@ from homeassistant.helpers import entity_registry as er
 from homeassistant.setup import async_setup_component
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
+from custom_components.meshtastic.aiomeshtastic.interface import ConnectionState
 from custom_components.meshtastic.chat import DATA_CHAT
 from custom_components.meshtastic.const import CHAT_SENT_BY_MAX_LENGTH, DOMAIN
 from custom_components.meshtastic.frontend import CHAT_PANEL_URL_PATH
@@ -26,13 +27,21 @@ from custom_components.meshtastic.ha_frontend import locate_dir
 from .test_chat import ANNA, BROADCAST, GATEWAY, FakeClient
 
 if TYPE_CHECKING:
+    from collections.abc import Callable, Generator
+
     from homeassistant.core import HomeAssistant
+    from pytest_homeassistant_custom_component.typing import ClientSessionGenerator
 
 
 class FakeApiClient(FakeClient):
     def __init__(self, *args: Any, **kwargs: Any) -> None:  # noqa: ARG002
         super().__init__()
         self.metadata = {}
+
+    connection_state = ConnectionState.CONNECTED
+
+    def add_connection_state_listener(self, listener: Any) -> Callable[[], None]:  # noqa: ARG002
+        return lambda: None
 
     async def connect(self) -> None:
         return
@@ -72,7 +81,7 @@ def _entry(options: dict[str, Any]) -> MockConfigEntry:
 
 
 @pytest.fixture
-def fake_api():
+def fake_api() -> Generator[None]:
     with (
         patch("custom_components.meshtastic.MeshtasticApiClient", FakeApiClient),
         patch("custom_components.meshtastic.fetch_meshtastic_hardware_names", AsyncMock(return_value={})),
@@ -249,7 +258,7 @@ async def test_send_text_action_without_chat(hass: HomeAssistant) -> None:
 
 
 @pytest.mark.usefixtures("fake_api")
-async def test_options_form_renders_through_http_api(hass: HomeAssistant, hass_client) -> None:
+async def test_options_form_renders_through_http_api(hass: HomeAssistant, hass_client: ClientSessionGenerator) -> None:
     """Fetch the options form the way the frontend does: it rejects some selectors that unit tests accept."""
     assert await async_setup_component(hass, "config", {})
     entry = _entry({"chat": {"enable": True}})
@@ -323,7 +332,9 @@ def test_panel_ships_the_style_sheets_it_loads() -> None:
 
 
 @pytest.mark.usefixtures("fake_api")
-async def test_options_form_tolerates_nodes_without_a_name(hass: HomeAssistant, hass_client) -> None:
+async def test_options_form_tolerates_nodes_without_a_name(
+    hass: HomeAssistant, hass_client: ClientSessionGenerator
+) -> None:
     """A real mesh has nodes the gateway only knows from their position or telemetry, without a user record."""
     assert await async_setup_component(hass, "config", {})
     entry = _entry({"chat": {"enable": True}})

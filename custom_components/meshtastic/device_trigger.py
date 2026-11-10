@@ -60,8 +60,11 @@ async def async_validate_trigger_config(hass: HomeAssistant, config: ConfigType)
     device = device_registry.async_get(config[CONF_DEVICE_ID])
 
     if not device:
-        msg = f"Trigger invalid, device with ID {config[CONF_DEVICE_ID]} not found"
-        raise InvalidDeviceAutomationConfig(msg)
+        raise InvalidDeviceAutomationConfig(
+            translation_domain=DOMAIN,
+            translation_key="trigger_device_not_found",
+            translation_placeholders={"device_id": config[CONF_DEVICE_ID]},
+        )
 
     return config
 
@@ -70,6 +73,7 @@ async def async_get_triggers(hass: HomeAssistant, device_id: str) -> list:
     device_registry = dr.async_get(hass)
     entity_registry = er.async_get(hass)
     device = device_registry.async_get(device_id)
+    assert device is not None  # noqa: S101 - dereferenced on the next line
     is_gateway = device.via_device_id is None
     triggers = []
 

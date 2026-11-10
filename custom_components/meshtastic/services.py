@@ -1,9 +1,11 @@
 # SPDX-FileCopyrightText: 2024-2025 Pascal Brogle @broglep
+# SPDX-FileCopyrightText: 2025 Ovidiu D. Nițan @ov1d1u
 #
 # SPDX-License-Identifier: MIT
 
 from collections import defaultdict
-from collections.abc import Awaitable, Callable
+from collections.abc import Awaitable, Callable, Mapping
+from typing import Any, cast
 
 import voluptuous as vol
 from homeassistant.core import (
@@ -37,6 +39,8 @@ from .const import (
     ATTR_SERVICE_DATA_ACK,
     ATTR_SERVICE_DATA_CHANNEL,
     ATTR_SERVICE_DATA_FROM,
+    ATTR_SERVICE_DATA_IS_REACTION,
+    ATTR_SERVICE_DATA_REPLY_ID,
     ATTR_SERVICE_DATA_TO,
     ATTR_SERVICE_REQUEST_TELEMETRY_DATA_TYPE,
     ATTR_SERVICE_SEND_DIRECT_MESSAGE_DATA_MESSAGE,
@@ -64,6 +68,8 @@ SERVICE_SEND_TEXT_SCHEMA = vol.Schema(
         vol.Optional(ATTR_SERVICE_DATA_CHANNEL): cv.string,
         vol.Required(ATTR_SERVICE_DATA_ACK, default=False): cv.boolean,
         vol.Optional(ATTR_SERVICE_SEND_TEXT_DATA_SENT_BY): vol.All(cv.string, vol.Length(max=CHAT_SENT_BY_MAX_LENGTH)),
+        vol.Optional(ATTR_SERVICE_DATA_REPLY_ID): cv.positive_int,
+        vol.Optional(ATTR_SERVICE_DATA_IS_REACTION, default=False): cv.boolean,
     }
 )
 
@@ -72,6 +78,8 @@ SERVICE_SEND_DIRECT_MESSAGE_SCHEMA = vol.Schema(
         vol.Required(ATTR_SERVICE_DATA_TO): cv.string,
         vol.Required(ATTR_SERVICE_SEND_DIRECT_MESSAGE_DATA_MESSAGE): cv.string,
         vol.Required(ATTR_SERVICE_DATA_ACK, default=True): cv.boolean,
+        vol.Optional(ATTR_SERVICE_DATA_REPLY_ID): cv.positive_int,
+        vol.Optional(ATTR_SERVICE_DATA_IS_REACTION, default=False): cv.boolean,
     }
 )
 
@@ -80,6 +88,8 @@ SERVICE_BROADCAST_CHANNEL_MESSAGE_SCHEMA = vol.Schema(
         vol.Required(ATTR_SERVICE_BROADCAST_CHANNEL_MESSAGE_DATA_CHANNEL): cv.string,
         vol.Required(ATTR_SERVICE_BROADCAST_CHANNEL_MESSAGE_DATA_MESSAGE): cv.string,
         vol.Required(ATTR_SERVICE_DATA_ACK, default=True): cv.boolean,
+        vol.Optional(ATTR_SERVICE_DATA_REPLY_ID): cv.positive_int,
+        vol.Optional(ATTR_SERVICE_DATA_IS_REACTION, default=False): cv.boolean,
     }
 )
 
@@ -102,7 +112,9 @@ SERVICE_REQUEST_POSITION_SCHEMA = SERVICE_BASE_REQUEST_SCHEMA.extend({})
 SERVICE_REQUEST_TRACEROUTE_SCHEMA = SERVICE_BASE_REQUEST_SCHEMA.extend({})
 
 _SERVICE_CANT_HANDLE_RESPONSE = object()
-_service_handlers: dict[str, dict[str, Callable[[ServiceCall], Awaitable[ServiceResponse]]]] = defaultdict(dict)
+_ServiceHandler = Callable[[ServiceCall], Awaitable[ServiceResponse | object]]
+_ServiceImplementation = Callable[[ServiceCall, int, int | None], Awaitable[Mapping[str, Any] | None]]
+_service_handlers: dict[str, dict[str, _ServiceHandler]] = defaultdict(dict)
 
 SUPPORTED_SERVICES = {
     SERVICE_SEND_TEXT: SupportsResponse.OPTIONAL,
@@ -127,12 +139,12 @@ async def async_setup_services(hass: HomeAssistant) -> None:
     # handler that forwards service call to appropriate handler from config entry
     async def handle_service_call(call: ServiceCall) -> ServiceResponse:
         for handler in [handlers.get(call.service, None) for handlers in _service_handlers.values()]:
+            assert handler is not None  # noqa: S101 - called on the next line
             res = await handler(call)
             if res != _SERVICE_CANT_HANDLE_RESPONSE:
-                return res
+                return cast("ServiceResponse", res)
 
-        msg = "No gateway could handle the request"
-        raise ServiceValidationError(msg)
+        raise ServiceValidationError(translation_domain=DOMAIN, translation_key="no_gateway_for_request")
 
     services = hass.services.async_services_for_domain(DOMAIN)
 
@@ -180,32 +192,43 @@ async def async_unregister_gateway(hass: HomeAssistant, entry: MeshtasticConfigE
 async def _build_default_handler(  # noqa: PLR0915
     hass: HomeAssistant,
     client: MeshtasticApiClient,
-    implementation: Callable[[ServiceCall, int, int | None], Awaitable[ServiceResponse]],
-) -> Callable[[ServiceCall], Awaitable[ServiceResponse | object]]:
+    implementation: _ServiceImplementation,
+) -> _ServiceHandler:
     device_registry = dr.async_get(hass)
     entity_registry = er.async_get(hass)
     gateway_node = await client.async_get_own_node()
 
-    def _convert_device_id_to_node_id(device_id: str) -> int:
+    def _convert_device_id_to_node_id(device_id: str) -> int | None:
         device = device_registry.async_get(device_id)
         if device is None:
-            msg = f"No device found with id {device_id}"
-            raise ServiceValidationError(msg)
+            raise ServiceValidationError(
+                translation_domain=DOMAIN,
+                translation_key="device_not_found",
+                translation_placeholders={"device_id": device_id},
+            )
 
         return next((int(i[1]) for i in device.identifiers if i[0] == DOMAIN), None)
 
     def _convert_entity_to_channel_index(entity_id: str) -> int:
         entity = entity_registry.async_get(entity_id)
         if entity is None:
-            msg = f"No entity found with id {entity_id}"
-            raise ServiceValidationError(msg)
+            raise ServiceValidationError(
+                translation_domain=DOMAIN,
+                translation_key="entity_not_found",
+                translation_placeholders={"entity_id": entity_id},
+            )
 
         channel_entity = hass.data[DATA_COMPONENT].get_entity(entity.entity_id)
         if channel_entity is None:
-            msg = f"No entity found with id {entity.entity_id}"
-            raise ServiceValidationError(msg)
+            raise ServiceValidationError(
+                translation_domain=DOMAIN,
+                translation_key="entity_not_found",
+                translation_placeholders={"entity_id": entity.entity_id},
+            )
 
-        return channel_entity.extra_state_attributes[STATE_ATTRIBUTE_CHANNEL_INDEX]
+        attributes = channel_entity.extra_state_attributes
+        assert attributes is not None  # noqa: S101 - subscripted on the next line
+        return attributes[STATE_ATTRIBUTE_CHANNEL_INDEX]
 
     async def handle_service_call(call: ServiceCall) -> ServiceResponse | object:  # noqa: PLR0912
         if ATTR_SERVICE_DATA_FROM in call.data:
@@ -228,7 +251,7 @@ async def _build_default_handler(  # noqa: PLR0915
                 elif to.isnumeric():
                     to = int(to)
                 elif to.isalnum():
-                    to = int(_convert_device_id_to_node_id(to))
+                    to = int(cast("int", _convert_device_id_to_node_id(to)))  # None raises TypeError, as before
             else:
                 to = MeshInterface.BROADCAST_ADDR
 
@@ -248,7 +271,7 @@ async def _build_default_handler(  # noqa: PLR0915
             if not call.return_response:
                 return None
 
-            service_response = {"sent": {"from": gateway_node["num"], "to": to}}
+            service_response: dict[str, Any] = {"sent": {"from": gateway_node["num"], "to": to}}
             if response:
                 service_response["data"] = response
             return service_response  # noqa: TRY300
@@ -256,8 +279,7 @@ async def _build_default_handler(  # noqa: PLR0915
             raise
         except Exception as e:
             LOGGER.warning("Error handling service call", exc_info=True)
-            msg = "Unhandled exception while handling service call"
-            raise ServiceValidationError(msg) from e
+            raise ServiceValidationError(translation_domain=DOMAIN, translation_key="service_call_failed") from e
 
     return handle_service_call
 
@@ -272,22 +294,31 @@ async def _setup_service_send_direct_message_handler(
         device_id = call.data[ATTR_SERVICE_DATA_TO]
         device_entry = device_registry.async_get(device_id)
         if device_entry is None:
-            msg = f"No device found with id {device_id}"
-            raise ServiceValidationError(msg)
+            raise ServiceValidationError(
+                translation_domain=DOMAIN,
+                translation_key="device_not_found",
+                translation_placeholders={"device_id": device_id},
+            )
 
         to_node_id = next((int(i[1]) for i in device_entry.identifiers if i[0] == DOMAIN), None)
         if to_node_id == gateway_node["num"]:
-            msg = "Can't send direct message to oneself"
-            raise ServiceValidationError(msg)
+            raise ServiceValidationError(translation_domain=DOMAIN, translation_key="direct_message_to_self")
 
         if device_entry.via_device_id:
             gateway_device_entry = device_registry.async_get(device_entry.via_device_id)
+            assert gateway_device_entry is not None  # noqa: S101 - dereferenced on the next line
             gateway_node_id = next((int(i[1]) for i in gateway_device_entry.identifiers if i[0] == DOMAIN), None)
             if gateway_node_id != gateway_node["num"]:
                 return _SERVICE_CANT_HANDLE_RESPONSE
 
         text = call.data[ATTR_SERVICE_SEND_DIRECT_MESSAGE_DATA_MESSAGE]
-        await client.send_text(text=text, destination_id=to_node_id, want_ack=call.data[ATTR_SERVICE_DATA_ACK])
+        await client.send_text(
+            text=text,
+            destination_id=cast("int", to_node_id),  # None is passed through as before
+            want_ack=call.data[ATTR_SERVICE_DATA_ACK],
+            reply_id=call.data.get(ATTR_SERVICE_DATA_REPLY_ID, None),
+            is_reaction=call.data.get(ATTR_SERVICE_DATA_IS_REACTION, False),
+        )
         return None
 
     _service_handlers[entry.entry_id][SERVICE_SEND_DIRECT_MESSAGE] = handle_service_call
@@ -303,22 +334,36 @@ async def _setup_service_broadcast_channel_message_handler(
         channel = call.data[ATTR_SERVICE_BROADCAST_CHANNEL_MESSAGE_DATA_CHANNEL]
         entity_entry = entity_registry.async_get(channel)
         if entity_entry is None:
-            msg = f"No entity found with id {channel}"
-            raise ServiceValidationError(msg)
+            raise ServiceValidationError(
+                translation_domain=DOMAIN,
+                translation_key="entity_not_found",
+                translation_placeholders={"entity_id": channel},
+            )
 
         channel_entity = hass.data[DATA_COMPONENT].get_entity(entity_entry.entity_id)
         if channel_entity is None:
-            msg = f"No entity found with id {entity_entry.entity_id}"
-            raise ServiceValidationError(msg)
+            raise ServiceValidationError(
+                translation_domain=DOMAIN,
+                translation_key="entity_not_found",
+                translation_placeholders={"entity_id": entity_entry.entity_id},
+            )
 
-        gateway_node_id = channel_entity.extra_state_attributes[STATE_ATTRIBUTE_CHANNEL_NODE]
+        attributes = channel_entity.extra_state_attributes
+        assert attributes is not None  # noqa: S101 - subscripted on the next line
+        gateway_node_id = attributes[STATE_ATTRIBUTE_CHANNEL_NODE]
         if gateway_node_id != gateway_node["num"]:
             return _SERVICE_CANT_HANDLE_RESPONSE
 
         text = call.data[ATTR_SERVICE_BROADCAST_CHANNEL_MESSAGE_DATA_MESSAGE]
-        channel_index = channel_entity.extra_state_attributes[STATE_ATTRIBUTE_CHANNEL_INDEX]
+        channel_index = attributes[STATE_ATTRIBUTE_CHANNEL_INDEX]
 
-        await client.send_text(text=text, channel_index=channel_index, want_ack=call.data[ATTR_SERVICE_DATA_ACK])
+        await client.send_text(
+            text=text,
+            channel_index=channel_index,
+            want_ack=call.data[ATTR_SERVICE_DATA_ACK],
+            reply_id=call.data.get(ATTR_SERVICE_DATA_REPLY_ID, None),
+            is_reaction=call.data.get(ATTR_SERVICE_DATA_IS_REACTION, False),
+        )
         return None
 
     _service_handlers[entry.entry_id][SERVICE_BROADCAST_CHANNEL_MESSAGE] = handle_service_call
@@ -327,7 +372,7 @@ async def _setup_service_broadcast_channel_message_handler(
 async def _setup_service_request_telemetry_handler(
     hass: HomeAssistant, entry: MeshtasticConfigEntry, client: MeshtasticApiClient
 ) -> None:
-    async def handler(call: ServiceCall, to: int, _: int | None) -> ServiceResponse:
+    async def handler(call: ServiceCall, to: int, _: int | None) -> Mapping[str, Any]:
         metric_type = next(t for t in TelemetryType if t.value == call.data[ATTR_SERVICE_REQUEST_TELEMETRY_DATA_TYPE])
         return await entry.runtime_data.client.request_telemetry(to, metric_type)
 
@@ -337,7 +382,7 @@ async def _setup_service_request_telemetry_handler(
 async def _setup_service_request_position_handler(
     hass: HomeAssistant, entry: MeshtasticConfigEntry, client: MeshtasticApiClient
 ) -> None:
-    async def handler(call: ServiceCall, to: int, channel_index: int | None) -> ServiceResponse:  # noqa: ARG001
+    async def handler(call: ServiceCall, to: int, channel_index: int | None) -> Mapping[str, Any]:  # noqa: ARG001
         return await entry.runtime_data.client.request_position(to)
 
     _service_handlers[entry.entry_id][SERVICE_REQUEST_POSITION] = await _build_default_handler(hass, client, handler)
@@ -346,7 +391,7 @@ async def _setup_service_request_position_handler(
 async def _setup_service_request_traceroute_handler(
     hass: HomeAssistant, entry: MeshtasticConfigEntry, client: MeshtasticApiClient
 ) -> None:
-    async def handler(call: ServiceCall, to: int, channel_index: int | None) -> ServiceResponse:  # noqa: ARG001
+    async def handler(call: ServiceCall, to: int, channel_index: int | None) -> Mapping[str, Any]:  # noqa: ARG001
         return await entry.runtime_data.client.request_traceroute(to)
 
     _service_handlers[entry.entry_id][SERVICE_REQUEST_TRACEROUTE] = await _build_default_handler(hass, client, handler)
@@ -357,8 +402,13 @@ async def _setup_service_send_text_handler(
 ) -> None:
     async def handler(call: ServiceCall, to: int | str, channel_index: int | None) -> None:
         text = call.data[ATTR_SERVICE_SEND_TEXT_DATA_TEXT]
-        if (chat := hass.data.get(DATA_CHAT, {}).get(entry.entry_id)) is not None:
-            # Mesh Chat is enabled for this gateway: keep the message in the chat history and track its delivery
+        reply_id = call.data.get(ATTR_SERVICE_DATA_REPLY_ID)
+        is_reaction = call.data.get(ATTR_SERVICE_DATA_IS_REACTION, False)
+        chat = hass.data.get(DATA_CHAT, {}).get(entry.entry_id)
+        # replies and reactions refer to a packet id and are sent as they are, the chat does not record them
+        if chat is not None and reply_id is None and not is_reaction:
+            # Mesh Chat is enabled for this gateway: keep the message in the chat history and, when asked for,
+            # track its delivery
             if to in (MeshInterface.BROADCAST_ADDR, MeshInterface.BROADCAST_NUM):
                 conversation = channel_conversation(channel_index or 0)
             else:
@@ -380,6 +430,8 @@ async def _setup_service_send_text_handler(
             destination_id=to,
             channel_index=channel_index,
             want_ack=call.data[ATTR_SERVICE_DATA_ACK],
+            reply_id=call.data.get(ATTR_SERVICE_DATA_REPLY_ID, None),
+            is_reaction=call.data.get(ATTR_SERVICE_DATA_IS_REACTION, False),
         )
 
     _service_handlers[entry.entry_id][SERVICE_SEND_TEXT] = await _build_default_handler(hass, client, handler)

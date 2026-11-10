@@ -18,7 +18,6 @@ from typing import TYPE_CHECKING, Any
 
 import voluptuous as vol
 from homeassistant.components import websocket_api
-from homeassistant.const import ATTR_DEVICE_ID, ATTR_ENTITY_ID
 from homeassistant.core import CALLBACK_TYPE, Event, HomeAssistant, callback
 from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers import entity_registry as er
@@ -75,10 +74,8 @@ from .const import (
     DOMAIN,
     EVENT_MESHTASTIC_CHAT_MESSAGE_SENT,
     EVENT_MESHTASTIC_DOMAIN_MESSAGE_LOG,
-    EVENT_MESHTASTIC_MESSAGE_LOG_EVENT_DATA_ATTR_FROM_NAME,
-    EVENT_MESHTASTIC_MESSAGE_LOG_EVENT_DATA_ATTR_MESSAGE,
-    EVENT_MESHTASTIC_MESSAGE_LOG_EVENT_DATA_ATTR_PKI,
     LOGGER,
+    MeshtasticDomainMessageLogEventData,
 )
 from .entity import GatewayChannelEntity, GatewayDirectMessageEntity
 
@@ -219,7 +216,11 @@ _REQUEST_ERRORS = (MeshtasticApiClientError, ValueError, TimeoutError)
 
 
 def _error_text(error: Exception) -> str:
-    return str(error) or type(error).__name__
+    # errors raised with a translation key carry the key as text; the panel shows what went wrong
+    shown: BaseException = error
+    if getattr(error, "translation_key", None) and error.__cause__ is not None:
+        shown = error.__cause__
+    return str(shown) or type(shown).__name__
 
 
 def _user_fields(node_id: int, user: Mapping[str, Any]) -> dict[str, Any]:
@@ -402,9 +403,10 @@ class MeshtasticChat:
                 "from_short": short_name,
                 "text": data.get("message", ""),
                 "status": MessageStatus.RECEIVED,
-                "snr": data.get("rx_snr"),
-                "rssi": data.get("rx_rssi"),
-                "hops": data.get("hops"),
+                # the event reports 0 for a packet without signal info (e.g. relayed through MQTT)
+                "snr": data.get("rx_snr") or None,
+                "rssi": data.get("rx_rssi") or None,
+                "hops": data.get("hops_away"),
             },
         )
 
@@ -505,7 +507,8 @@ class MeshtasticChat:
                 }
             )
         free_indexes = [i for i in range(1, CHAT_CHANNEL_COUNT) if i not in used_indexes]
-        return {"channels": channels, "nodes": nodes, "free_channel_indexes": free_indexes}
+        targets: dict[str, Any] = {"channels": channels, "nodes": nodes, "free_channel_indexes": free_indexes}
+        return targets
 
     def _device_id(self, node_id: int) -> str | None:
         device = dr.async_get(self.hass).async_get_device(identifiers={(DOMAIN, str(node_id))})
@@ -537,13 +540,13 @@ class MeshtasticChat:
             raise vol.Invalid(msg)
         user = node.get("user", {})
         metrics = node.get("deviceMetrics", {})
-        gateway_node = nodes.get(self.gateway_id) or {}
+        gateway_node = nodes.get(self.gateway_id or 0) or {}
         gateway_position = gateway_node.get("position", {})
         gateway_info = await self._gateway_info(len(nodes)) if node_id == self.gateway_id else None
         gateway_marker = None
         gateway_accuracy = None
         if gateway_position.get("latitude") is not None and gateway_position.get("longitude") is not None:
-            gateway_fields = _user_fields(self.gateway_id, gateway_node.get("user", {}))
+            gateway_fields = _user_fields(self.gateway_id or 0, gateway_node.get("user", {}))
             gateway_accuracy = precision_to_meters(gateway_position.get("precisionBits"))
             if gateway_accuracy is None:
                 gateway_accuracy = await self._gateway_position_accuracy()
@@ -616,7 +619,7 @@ class MeshtasticChat:
     async def async_map_nodes(self) -> dict[str, Any]:
         """Every node with a position, for the map view: trackers to show and nodes that have none."""
         nodes = await self.entry.runtime_data.client.async_get_all_nodes()
-        gateway_position = (nodes.get(self.gateway_id) or {}).get("position", {})
+        gateway_position = (nodes.get(self.gateway_id or 0) or {}).get("position", {})
         result = []
         gateway_accuracy = None
         for node_id, node in nodes.items():
@@ -933,7 +936,7 @@ class MeshtasticChat:
         task.add_done_callback(self._pending.discard)
         return dict(message)
 
-    async def _async_deliver(
+    async def _async_deliver(  # noqa: PLR0912
         self,
         conversation: str,
         message: dict[str, Any],
@@ -992,7 +995,9 @@ class MeshtasticChat:
         self._publish("update", conversation, message)
 
         if message["status"] != MessageStatus.FAILED:
-            self._log_sent_message(message, destination, channel_index)
+            if want_ack:
+                # without ack the client's own text_message_out event already put the message in the logbook
+                self._log_sent_message(message, destination, channel_index)
             self.hass.bus.async_fire(
                 EVENT_MESHTASTIC_CHAT_MESSAGE_SENT,
                 {
@@ -1027,16 +1032,14 @@ class MeshtasticChat:
         if entity_id is None:
             return
         device = dr.async_get(self.hass).async_get_device(identifiers={(DOMAIN, str(gateway_id))})
-        self.hass.bus.async_fire(
-            EVENT_MESHTASTIC_DOMAIN_MESSAGE_LOG,
-            {
-                ATTR_ENTITY_ID: entity_id,
-                ATTR_DEVICE_ID: device.id if device else None,
-                EVENT_MESHTASTIC_MESSAGE_LOG_EVENT_DATA_ATTR_FROM_NAME: from_name,
-                EVENT_MESHTASTIC_MESSAGE_LOG_EVENT_DATA_ATTR_PKI: channel_index is None,
-                EVENT_MESHTASTIC_MESSAGE_LOG_EVENT_DATA_ATTR_MESSAGE: message["text"],
-            },
-        )
+        log_event: MeshtasticDomainMessageLogEventData = {
+            "entity_id": entity_id,
+            "device_id": device.id if device else None,
+            "from_name": from_name,
+            "pki": channel_index is None,
+            "message": message["text"],
+        }
+        self.hass.bus.async_fire(event_type=EVENT_MESHTASTIC_DOMAIN_MESSAGE_LOG, event_data=log_event)
 
 
 async def async_setup_chat(hass: HomeAssistant, entry: MeshtasticConfigEntry) -> MeshtasticChat:
@@ -1057,7 +1060,7 @@ async def async_unload_chat(hass: HomeAssistant, entry: ConfigEntry) -> None:
 
 
 def any_chat_loaded(hass: HomeAssistant) -> bool:
-    return bool(hass.data.get(DATA_CHAT))
+    return bool(hass.data.get(DATA_CHAT, {}))
 
 
 def all_chats_require_admin(hass: HomeAssistant) -> bool:
@@ -1111,7 +1114,7 @@ async def websocket_chat_gateways(
         try:
             targets = await chat.async_targets()
             available = True
-        except Exception:  # noqa: BLE001
+        except Exception:
             _LOGGER.debug("Failed to load chat targets", exc_info=True)
             targets = {"channels": [], "nodes": []}
             available = False
@@ -1233,7 +1236,7 @@ async def websocket_chat_node(
     except vol.Invalid as e:
         connection.send_error(msg["id"], websocket_api.ERR_NOT_FOUND, str(e))
         return
-    except Exception as e:  # noqa: BLE001
+    except Exception as e:
         _LOGGER.debug("Failed to load node details", exc_info=True)
         connection.send_error(msg["id"], websocket_api.ERR_UNKNOWN_ERROR, _error_text(e))
         return
@@ -1309,7 +1312,7 @@ async def websocket_chat_channel(
     except vol.Invalid as e:
         connection.send_error(msg["id"], websocket_api.ERR_NOT_FOUND, str(e))
         return
-    except Exception as e:  # noqa: BLE001
+    except Exception as e:
         _LOGGER.debug("Failed to load channel details", exc_info=True)
         connection.send_error(msg["id"], websocket_api.ERR_UNKNOWN_ERROR, _error_text(e))
         return
@@ -1371,7 +1374,7 @@ async def websocket_chat_map(
         return
     try:
         result = await chat.async_map_nodes()
-    except Exception as e:  # noqa: BLE001
+    except Exception as e:
         _LOGGER.debug("Failed to load map nodes", exc_info=True)
         connection.send_error(msg["id"], websocket_api.ERR_UNKNOWN_ERROR, _error_text(e))
         return

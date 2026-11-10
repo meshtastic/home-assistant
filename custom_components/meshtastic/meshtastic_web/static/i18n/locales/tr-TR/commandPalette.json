@@ -1,0 +1,51 @@
+{
+  "emptyState": "Sonuç bulunamadı.",
+  "page": {
+    "title": "Komut Menüsü"
+  },
+  "pinGroup": {
+    "label": "Komut grubunu sabitle"
+  },
+  "unpinGroup": {
+    "label": "Komut grubunun sabitlemesini kaldır"
+  },
+  "goto": {
+    "label": "Git",
+    "command": {
+      "messages": "Mesajlar",
+      "map": "Harita",
+      "config": "Yapılandır",
+      "nodes": "Düğümler"
+    }
+  },
+  "manage": {
+    "label": "Yönet",
+    "command": {
+      "switchNode": "Node değiştir",
+      "connectNewNode": "Yeni Node Ekle"
+    }
+  },
+  "contextual": {
+    "label": "Bağlamsal",
+    "command": {
+      "qrCode": "QR Kodu",
+      "qrGenerator": "Oluşturucu",
+      "qrImport": "İçeri aktar",
+      "scheduleShutdown": "Kapatmayı Planla",
+      "scheduleReboot": "Reboot Device",
+      "resetNodeDb": "Node Veri Tabanını Sıfırla",
+      "dfuMode": "DFU Moduna Gir",
+      "factoryResetDevice": "Cihazı Fabrika Ayarlarına Sıfırlayın",
+      "factoryResetConfig": "Fabrika Ayarları Yapılandırması",
+      "disconnect": "Bağlantıyı Kes"
+    }
+  },
+  "debug": {
+    "label": "Hata Ayıklama",
+    "command": {
+      "reconfigure": "Yeniden yapılandır",
+      "clearAllStoredMessages": "Depolanan Tüm Mesajları Sil",
+      "clearAllStores": "Clear All Local Storage"
+    }
+  }
+}

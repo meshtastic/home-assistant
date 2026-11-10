@@ -35,6 +35,7 @@ from custom_components.meshtastic.chat import (
     DATA_CHAT,
     MeshtasticChat,
     MessageStatus,
+    _error_text,
     async_setup_chat,
     async_unload_chat,
     bearing,
@@ -44,7 +45,12 @@ from custom_components.meshtastic.chat import (
 from custom_components.meshtastic.const import CHAT_CHANNEL_NAME_MAX_BYTES, CHAT_MAX_TEXT_BYTES, DOMAIN
 
 if TYPE_CHECKING:
+    from collections.abc import AsyncGenerator
+
     from homeassistant.core import HomeAssistant
+    from pytest_homeassistant_custom_component.typing import WebSocketGenerator
+
+    ChatSetup = tuple[MockConfigEntry, MeshtasticChat, "FakeClient"]
 
 GATEWAY = 0x4904
 ANNA = 0xA1B2C3D4
@@ -113,6 +119,7 @@ class FakeClient:
         want_ack: bool = False,
         packet_id: int | None = None,
         reply_id: int | None = None,
+        is_reaction: bool = False,  # noqa: ARG002
     ) -> bool:
         self.sent.append({"text": text, "to": destination_id, "channel": channel_index, "ack": want_ack})
         self.sent_ids.append((packet_id, reply_id))
@@ -242,10 +249,10 @@ def _fire_text(  # noqa: PLR0913
     hass: HomeAssistant,
     entry: MockConfigEntry,
     *,
-    to_node=None,
-    channel=None,
-    message_id=1,
-    text="hi",
+    to_node: int | None = None,
+    channel: int | None = None,
+    message_id: int = 1,
+    text: str = "hi",
     signal: dict[str, Any] | None = None,
 ) -> None:
     hass.bus.async_fire(
@@ -266,7 +273,7 @@ def _fire_text(  # noqa: PLR0913
 
 
 @pytest.fixture
-async def chat_setup(hass: HomeAssistant):
+async def chat_setup(hass: HomeAssistant) -> AsyncGenerator[ChatSetup]:
     client = FakeClient()
     entry = _make_entry(hass, client)
     chat = await async_setup_chat(hass, entry)
@@ -281,7 +288,7 @@ def test_short_user_name() -> None:
     assert short_user_name(None) is None
 
 
-async def test_receive_channel_and_direct_messages(hass: HomeAssistant, chat_setup) -> None:
+async def test_receive_channel_and_direct_messages(hass: HomeAssistant, chat_setup: ChatSetup) -> None:
     entry, chat, _ = chat_setup
 
     _fire_text(hass, entry, channel=1, message_id=10, text="on channel")
@@ -306,7 +313,9 @@ async def test_receive_channel_and_direct_messages(hass: HomeAssistant, chat_set
     # messages without signal data (older events, bridges) store None
     assert (channel[0]["snr"], channel[0]["rssi"], channel[0]["hops"]) == (None, None, None)
 
-    _fire_text(hass, entry, channel=1, message_id=13, text="heard", signal={"rx_snr": 1.25, "rx_rssi": -103, "hops": 1})
+    _fire_text(
+        hass, entry, channel=1, message_id=13, text="heard", signal={"rx_snr": 1.25, "rx_rssi": -103, "hops_away": 1}
+    )
     await hass.async_block_till_done()
     heard = chat.history("channel:1")[-1]
     assert (heard["snr"], heard["rssi"], heard["hops"]) == (1.25, -103, 1)
@@ -329,7 +338,13 @@ async def test_receive_channel_and_direct_messages(hass: HomeAssistant, chat_set
     ],
 )
 async def test_send_status(  # noqa: PLR0913
-    hass: HomeAssistant, chat_setup, conversation, ack, expected_status, expected_to, expected_channel
+    hass: HomeAssistant,
+    chat_setup: ChatSetup,
+    conversation: str,
+    ack: tuple[int | None, str | None] | Exception,
+    expected_status: MessageStatus,
+    expected_to: int,
+    expected_channel: int | None,
 ) -> None:
     _, chat, client = chat_setup
     client.ack = ack
@@ -346,7 +361,7 @@ async def test_send_status(  # noqa: PLR0913
     assert client.sent[-1]["channel"] == expected_channel
 
 
-async def test_send_on_behalf_of_someone_else(hass: HomeAssistant, chat_setup) -> None:
+async def test_send_on_behalf_of_someone_else(hass: HomeAssistant, chat_setup: ChatSetup) -> None:
     entry, chat, client = chat_setup
     events = async_capture_events(hass, "meshtastic_chat_message_sent")
 
@@ -408,7 +423,7 @@ async def test_send_prefix_and_limits(hass: HomeAssistant) -> None:
     await async_unload_chat(hass, entry)
 
 
-async def test_history_is_persisted_and_trimmed(hass: HomeAssistant, hass_storage) -> None:
+async def test_history_is_persisted_and_trimmed(hass: HomeAssistant, hass_storage: dict[str, Any]) -> None:
     client = FakeClient()
     entry = _make_entry(hass, client, history_size=10)
     await async_setup_chat(hass, entry)
@@ -446,7 +461,7 @@ async def test_pending_send_is_settled_on_unload(hass: HomeAssistant) -> None:
     assert chat.history("channel:1")[-1]["status"] == MessageStatus.NO_ACK
 
 
-async def test_websocket_api(hass: HomeAssistant, hass_ws_client, chat_setup) -> None:
+async def test_websocket_api(hass: HomeAssistant, hass_ws_client: WebSocketGenerator, chat_setup: ChatSetup) -> None:
     entry, _, client = chat_setup
     ws = await hass_ws_client(hass)
 
@@ -506,7 +521,7 @@ async def test_websocket_api(hass: HomeAssistant, hass_ws_client, chat_setup) ->
 
 
 async def test_websocket_requires_admin(
-    hass: HomeAssistant, hass_ws_client, hass_read_only_access_token, chat_setup
+    hass: HomeAssistant, hass_ws_client: WebSocketGenerator, hass_read_only_access_token: str, chat_setup: ChatSetup
 ) -> None:
     entry, _, _ = chat_setup
     ws = await hass_ws_client(hass, hass_read_only_access_token)
@@ -522,7 +537,9 @@ async def test_websocket_requires_admin(
     assert response["error"]["code"] == "not_found"
 
 
-async def test_websocket_non_admin_allowed(hass: HomeAssistant, hass_ws_client, hass_read_only_access_token) -> None:
+async def test_websocket_non_admin_allowed(
+    hass: HomeAssistant, hass_ws_client: WebSocketGenerator, hass_read_only_access_token: str
+) -> None:
     client = FakeClient()
     entry = _make_entry(hass, client, require_admin=False)
     await async_setup_chat(hass, entry)
@@ -552,7 +569,7 @@ def test_position_helpers() -> None:
     assert bearing(47.0, 8.0, 46.99, 8.0) == pytest.approx(180.0)
 
 
-async def test_node_details(hass: HomeAssistant, chat_setup) -> None:
+async def test_node_details(hass: HomeAssistant, chat_setup: ChatSetup) -> None:
     entry, chat, _ = chat_setup
     device = dr.async_get(hass).async_get_or_create(
         config_entry_id=entry.entry_id, identifiers={(DOMAIN, str(ANNA))}, name="Anna Hiking"
@@ -592,7 +609,7 @@ async def test_node_details(hass: HomeAssistant, chat_setup) -> None:
         await chat.async_node_details(0x22222222)
 
 
-async def test_node_requests(chat_setup) -> None:
+async def test_node_requests(chat_setup: ChatSetup) -> None:
     _, chat, client = chat_setup
 
     telemetry = await chat.async_node_request(ANNA, "telemetry")
@@ -616,7 +633,7 @@ async def test_node_requests(chat_setup) -> None:
         await chat.async_node_request(ANNA, "reboot")
 
 
-async def test_channel_details_and_activity(hass: HomeAssistant, chat_setup) -> None:
+async def test_channel_details_and_activity(hass: HomeAssistant, chat_setup: ChatSetup) -> None:
     entry, chat, _ = chat_setup
     _fire_text(hass, entry, channel=1, message_id=1, text="first")
     _fire_text(hass, entry, channel=1, message_id=2, text="second")
@@ -660,7 +677,9 @@ async def test_channel_details_and_activity(hass: HomeAssistant, chat_setup) -> 
         await chat.async_channel_details(2)  # disabled
 
 
-async def test_websocket_details_and_favorites(hass: HomeAssistant, hass_ws_client, chat_setup) -> None:
+async def test_websocket_details_and_favorites(
+    hass: HomeAssistant, hass_ws_client: WebSocketGenerator, chat_setup: ChatSetup
+) -> None:
     entry, _, client = chat_setup
     ws = await hass_ws_client(hass)
 
@@ -743,7 +762,7 @@ async def test_websocket_details_and_favorites(hass: HomeAssistant, hass_ws_clie
 
 
 async def test_websocket_favorite_requires_admin(
-    hass: HomeAssistant, hass_ws_client, hass_read_only_access_token
+    hass: HomeAssistant, hass_ws_client: WebSocketGenerator, hass_read_only_access_token: str
 ) -> None:
     client = FakeClient()
     entry = _make_entry(hass, client, require_admin=False)
@@ -769,8 +788,8 @@ async def test_websocket_favorite_requires_admin(
 
 async def test_interface_set_favorite_node() -> None:
     interface = MeshInterface(connection=MagicMock())
-    interface._connected_node_info = mesh_pb2.MyNodeInfo(my_node_num=GATEWAY)  # noqa: SLF001
-    interface._node_database[ANNA] = {  # noqa: SLF001
+    interface._connected_node_info = mesh_pb2.MyNodeInfo(my_node_num=GATEWAY)
+    interface._node_database[ANNA] = {
         "num": ANNA,
         "user": {"id": "!a1b2c3d4", "longName": "Anna Hiking", "shortName": "ANNA"},
     }
@@ -797,13 +816,16 @@ async def test_interface_set_favorite_node() -> None:
 
 async def test_api_client_set_favorite_wraps_errors() -> None:
     client = MeshtasticApiClient.__new__(MeshtasticApiClient)
-    client._interface = SimpleNamespace(set_favorite_node=AsyncMock(side_effect=MeshtasticError("no ack")))  # noqa: SLF001
-    with pytest.raises(MeshtasticApiClientError, match="no ack"):
+    client._interface = SimpleNamespace(set_favorite_node=AsyncMock(side_effect=MeshtasticError("no ack")))
+    with pytest.raises(MeshtasticApiClientError) as raised:
         await client.async_set_favorite(ANNA, favorite=True)
-    client._interface.set_favorite_node.assert_awaited_once_with(ANNA, favorite=True)  # noqa: SLF001
+    assert raised.value.translation_key == "request_failed"
+    assert raised.value.translation_placeholders == {"error": "no ack"}
+    assert _error_text(raised.value) == "no ack"
+    client._interface.set_favorite_node.assert_awaited_once_with(ANNA, favorite=True)
 
 
-async def test_set_channel(chat_setup) -> None:
+async def test_set_channel(chat_setup: ChatSetup) -> None:
     _, chat, client = chat_setup
     user = SimpleNamespace(name="Steve Smith", is_admin=True)
 
@@ -872,7 +894,13 @@ async def test_set_channel(chat_setup) -> None:
     [("off", False, False), ("admin", True, False), ("all", True, True)],
 )
 async def test_websocket_channel_set_permissions(  # noqa: PLR0913
-    hass: HomeAssistant, hass_ws_client, hass_read_only_access_token, level, admin_allowed, user_allowed
+    hass: HomeAssistant,
+    hass_ws_client: WebSocketGenerator,
+    hass_read_only_access_token: str,
+    *,
+    level: str,
+    admin_allowed: bool,
+    user_allowed: bool,
 ) -> None:
     client = FakeClient()
     entry = _make_entry(hass, client, require_admin=False, channel_management=level)
@@ -897,7 +925,7 @@ async def test_websocket_channel_set_permissions(  # noqa: PLR0913
         if allowed:
             assert response["success"]
             assert response["result"]["name"] == "New"
-            client.channels[2] = FakeClient._channel(2, "DISABLED", "", "")  # noqa: SLF001
+            client.channels[2] = FakeClient._channel(2, "DISABLED", "", "")
         else:
             assert response["error"]["code"] == "unauthorized"
 
@@ -921,9 +949,9 @@ async def test_websocket_channel_set_permissions(  # noqa: PLR0913
 
 async def test_interface_write_and_request_channel() -> None:
     interface = MeshInterface(connection=MagicMock())
-    interface._connected_node_info = mesh_pb2.MyNodeInfo(my_node_num=GATEWAY)  # noqa: SLF001
-    interface._connected_node_channels = [channel_pb2.Channel(index=0, role=channel_pb2.Channel.Role.PRIMARY)]  # noqa: SLF001
-    interface._connected_node_ready.set()  # noqa: SLF001
+    interface._connected_node_info = mesh_pb2.MyNodeInfo(my_node_num=GATEWAY)
+    interface._connected_node_channels = [channel_pb2.Channel(index=0, role=channel_pb2.Channel.Role.PRIMARY)]
+    interface._connected_node_ready.set()
     channel = channel_pb2.Channel(index=3, role=channel_pb2.Channel.Role.SECONDARY)
     channel.settings.name = "Hikers"
     channel.settings.psk = b"k" * 32
@@ -948,7 +976,7 @@ async def test_interface_write_and_request_channel() -> None:
 
 async def test_api_client_channel_url_and_write() -> None:
     client = MeshtasticApiClient.__new__(MeshtasticApiClient)
-    client._logger = MagicMock()  # noqa: SLF001
+    client._logger = MagicMock()
     primary = channel_pb2.Channel(index=0, role=channel_pb2.Channel.Role.PRIMARY)
     primary.settings.psk = b"\x01"
     second = channel_pb2.Channel(index=1, role=channel_pb2.Channel.Role.SECONDARY)
@@ -956,7 +984,7 @@ async def test_api_client_channel_url_and_write() -> None:
     second.settings.psk = b"s" * 16
     local_config = localonly_pb2.LocalConfig()
     local_config.lora.region = config_pb2.Config.LoRaConfig.RegionCode.EU_868
-    client._interface = SimpleNamespace(  # noqa: SLF001
+    client._interface = SimpleNamespace(
         connected_node_channels=lambda: [primary, second, channel_pb2.Channel(index=2)],
         connected_node_local_config=lambda: local_config,
         write_channel=AsyncMock(),
@@ -987,7 +1015,7 @@ async def test_api_client_channel_url_and_write() -> None:
         downlink_enabled=False,
         position_precision=13,
     )
-    written = client._interface.write_channel.call_args.args[0]  # noqa: SLF001
+    written = client._interface.write_channel.call_args.args[0]
     assert written.index == 3
     assert written.role == channel_pb2.Channel.Role.SECONDARY
     assert written.settings.uplink_enabled is True
@@ -997,7 +1025,7 @@ async def test_api_client_channel_url_and_write() -> None:
     assert stored["settings"]["psk"] == base64.b64encode(b"k" * 32).decode()
 
 
-async def test_gateway_details_and_map(hass: HomeAssistant, chat_setup) -> None:
+async def test_gateway_details_and_map(hass: HomeAssistant, chat_setup: ChatSetup) -> None:
     entry, chat, _ = chat_setup
 
     details = await chat.async_node_details(GATEWAY)
@@ -1033,7 +1061,7 @@ async def test_gateway_details_and_map(hass: HomeAssistant, chat_setup) -> None:
     assert nodes["nodes"][1]["position"]["accuracy"] == 2918
 
 
-async def test_websocket_map(hass: HomeAssistant, hass_ws_client, chat_setup) -> None:
+async def test_websocket_map(hass: HomeAssistant, hass_ws_client: WebSocketGenerator, chat_setup: ChatSetup) -> None:
     entry, _, _ = chat_setup
     ws = await hass_ws_client(hass)
     await ws.send_json({"id": 1, "type": "meshtastic/chat/map", "entry_id": entry.entry_id})
@@ -1044,9 +1072,9 @@ async def test_websocket_map(hass: HomeAssistant, hass_ws_client, chat_setup) ->
 
 async def test_api_text_message_event_carries_the_signal() -> None:
     client = MeshtasticApiClient.__new__(MeshtasticApiClient)
-    client._hass = MagicMock()  # noqa: SLF001
-    client._config_entry_id = "e1"  # noqa: SLF001
-    client._interface = SimpleNamespace(connected_node=lambda: {"num": GATEWAY})  # noqa: SLF001
+    client._hass = MagicMock()
+    client._config_entry_id = "e1"
+    client._interface = SimpleNamespace(connected_node=lambda: {"num": GATEWAY})
     node = MeshNode(id=ANNA, user_id="!a1b2c3d4", short_name="ANNA", long_name="Anna Hiking")
 
     def packet(reply_id: int = 0, **mesh: Any) -> SimpleNamespace:
@@ -1057,38 +1085,48 @@ async def test_api_text_message_event_carries_the_signal() -> None:
             app_payload="hello",
             data=SimpleNamespace(reply_id=reply_id),
             mesh_packet=SimpleNamespace(
-                **{"id": 42, "rx_snr": 0.0, "rx_rssi": 0, "hop_start": 0, "hop_limit": 0, **mesh}
+                **{
+                    "id": 42,
+                    "rx_snr": 0.0,
+                    "rx_rssi": 0,
+                    "hop_start": 0,
+                    "hop_limit": 0,
+                    "via_mqtt": False,
+                    "xeddsa_signed": False,
+                    "decoded": SimpleNamespace(reply_id=reply_id, emoji=0),
+                    **mesh,
+                }
             ),
         )
 
-    await client._on_text_message(node, packet(rx_snr=1.25, rx_rssi=-103, hop_start=3, hop_limit=2))  # noqa: SLF001
-    event = client._hass.bus.async_fire.call_args.args[1]  # noqa: SLF001
+    await client._on_text_message(node, packet(rx_snr=1.25, rx_rssi=-103, hop_start=3, hop_limit=2))
+    event = client._hass.bus.async_fire.call_args.args[1]
     assert event["data"]["to"] == {"node": None, "channel": 1}
-    assert (event["data"]["rx_snr"], event["data"]["rx_rssi"], event["data"]["hops"]) == (1.25, -103, 1)
+    assert (event["data"]["rx_snr"], event["data"]["rx_rssi"], event["data"]["hops_away"]) == (1.25, -103, 1)
     assert event["message_id"] == 42
 
-    # a packet without signal info (e.g. relayed through MQTT) reports None rather than zeros
-    await client._on_text_message(node, packet())  # noqa: SLF001
-    event = client._hass.bus.async_fire.call_args.args[1]  # noqa: SLF001
-    assert (event["data"]["rx_snr"], event["data"]["rx_rssi"], event["data"]["hops"]) == (None, None, None)
+    # a packet from firmware that does not report the hops (hop_start 0) has an unknown hop count
+    await client._on_text_message(node, packet())
+    event = client._hass.bus.async_fire.call_args.args[1]
+    assert event["data"]["hops_away"] is None
     assert event["data"]["reply_id"] is None
 
     # a reply names the packet it answers
-    await client._on_text_message(node, packet(reply_id=777))  # noqa: SLF001
-    event = client._hass.bus.async_fire.call_args.args[1]  # noqa: SLF001
+    await client._on_text_message(node, packet(reply_id=777))
+    event = client._hass.bus.async_fire.call_args.args[1]
     assert event["data"]["reply_id"] == 777
 
 
 async def test_interface_sends_a_reply_with_its_own_packet_id() -> None:
     interface = MeshInterface(connection=MagicMock())
-    interface._connected_node_info = SimpleNamespace(my_node_num=GATEWAY)  # noqa: SLF001
-    interface._connection.send_mesh_packet = AsyncMock(return_value=None)  # noqa: SLF001
+    interface._connected_node_info = SimpleNamespace(my_node_num=GATEWAY)
+    interface._connection.send_mesh_packet = AsyncMock(return_value=None)
 
     await interface.send_text_message("agreed", ANNA, packet_id=555, reply_id=321)
-    kwargs = interface._connection.send_mesh_packet.call_args.kwargs  # noqa: SLF001
+    kwargs = interface._connection.send_mesh_packet.call_args.kwargs
     assert (kwargs["packet_id"], kwargs["reply_id"], kwargs["message"]) == (555, 321, b"agreed")
 
-    interface._connection.generate_packet_id = lambda: 99  # noqa: SLF001
+    interface._connection.generate_packet_id = lambda: 99
     assert interface.generate_packet_id() == 99
 
 
@@ -1101,7 +1139,7 @@ async def test_connection_marks_the_packet_as_a_reply() -> None:
             return True
 
     connection = Connection.__new__(Connection)
-    connection._current_packet_id = None  # noqa: SLF001
+    connection._current_packet_id = None
     await connection.send_mesh_packet(ANNA, b"hi", packet_id=555, reply_id=321)
     assert (sent[-1].id, sent[-1].decoded.reply_id) == (555, 321)
 
@@ -1110,7 +1148,9 @@ async def test_connection_marks_the_packet_as_a_reply() -> None:
     assert sent[-1].decoded.reply_id == 0
 
 
-async def test_reply_is_sent_with_the_packet_id_and_kept_with_the_quote(hass: HomeAssistant, chat_setup) -> None:
+async def test_reply_is_sent_with_the_packet_id_and_kept_with_the_quote(
+    hass: HomeAssistant, chat_setup: ChatSetup
+) -> None:
     entry, chat, client = chat_setup
     _fire_text(hass, entry, channel=1, message_id=7001, text="Who is up for a hike on Saturday afternoon?")
     await hass.async_block_till_done()
@@ -1138,12 +1178,12 @@ async def test_reply_is_sent_with_the_packet_id_and_kept_with_the_quote(hass: Ho
     for reply_to in ("nope", original["id"]):
         with pytest.raises(vol.Invalid, match="not available"):
             await chat.async_send("channel:0", "x", reply_to=reply_to)
-    chat._conversations["channel:1"][0]["packet_id"] = None  # noqa: SLF001
+    chat._conversations["channel:1"][0]["packet_id"] = None
     with pytest.raises(vol.Invalid, match="not available"):
         await chat.async_send("channel:1", "x", reply_to=chat.history("channel:1")[0]["id"])
 
 
-async def test_received_reply_is_linked_to_the_quoted_message(hass: HomeAssistant, chat_setup) -> None:
+async def test_received_reply_is_linked_to_the_quoted_message(hass: HomeAssistant, chat_setup: ChatSetup) -> None:
     entry, chat, _ = chat_setup
     _fire_text(hass, entry, channel=1, message_id=7001, text="x" * 120)
     for message_id, text, reply_id in ((7002, "agreed", 7001), (7003, "late", 1)):
@@ -1167,7 +1207,9 @@ async def test_received_reply_is_linked_to_the_quoted_message(hass: HomeAssistan
     assert unknown["reply_preview"] is None
 
 
-async def test_websocket_send_a_reply(hass: HomeAssistant, hass_ws_client, chat_setup) -> None:
+async def test_websocket_send_a_reply(
+    hass: HomeAssistant, hass_ws_client: WebSocketGenerator, chat_setup: ChatSetup
+) -> None:
     entry, chat, _ = chat_setup
     ws = await hass_ws_client(hass)
     _fire_text(hass, entry, channel=1, message_id=7001, text="question")
@@ -1192,7 +1234,7 @@ async def test_websocket_send_a_reply(hass: HomeAssistant, hass_ws_client, chat_
     assert "not available" in response["error"]["message"]
 
 
-async def test_gateway_position_accuracy_follows_its_primary_channel(chat_setup) -> None:
+async def test_gateway_position_accuracy_follows_its_primary_channel(chat_setup: ChatSetup) -> None:
     _, chat, client = chat_setup
     # no precision on the channel: nothing to draw (an exact position)
     assert (await chat.async_node_details(GATEWAY))["position"]["accuracy"] is None
@@ -1224,6 +1266,10 @@ def test_routing_error_names_the_error_and_says_what_it_means() -> None:
 
 async def test_api_client_telemetry_failure_names_the_routing_error() -> None:
     client = MeshtasticApiClient.__new__(MeshtasticApiClient)
-    client._interface = SimpleNamespace(request_telemetry=AsyncMock(side_effect=MeshRoutingError(5)))  # noqa: SLF001
-    with pytest.raises(MeshtasticApiClientError, match="No response for device_metrics: Routing error: MAX_RETRANSMIT"):
+    client._interface = SimpleNamespace(request_telemetry=AsyncMock(side_effect=MeshRoutingError(5)))
+    with pytest.raises(MeshtasticApiClientError) as raised:
         await client.request_telemetry(ANNA, TelemetryType.DEVICE_METRICS)
+    assert raised.value.translation_key == "no_telemetry_response"
+    assert raised.value.translation_placeholders == {"telemetry_type": str(TelemetryType.DEVICE_METRICS)}
+    # the chat shows what went wrong, not the translation key
+    assert _error_text(raised.value).startswith("Routing error: MAX_RETRANSMIT")

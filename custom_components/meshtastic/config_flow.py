@@ -6,7 +6,7 @@ from __future__ import annotations
 
 import socket
 from copy import deepcopy
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 import homeassistant.helpers.config_validation as cv
 import voluptuous as vol
@@ -68,24 +68,30 @@ from .const import (
     ConfigOptionNotifyPlatformNodes,
     ConnectionType,
 )
+from .renumber import is_same_gateway, node_public_key
 
 if TYPE_CHECKING:
     import asyncio
-    from collections.abc import Mapping
+    from collections.abc import Callable, Mapping
     from typing import Any
 
     from habluetooth import BluetoothServiceInfo
-    from homeassistant.components import zeroconf
     from homeassistant.components.usb import UsbServiceInfo
-    from homeassistant.components.zeroconf import ZeroconfServiceInfo
     from homeassistant.config_entries import ConfigEntry, ConfigFlowResult
     from homeassistant.core import HomeAssistant
-    from homeassistant.data_entry_flow import FlowResult
+    from homeassistant.helpers.service_info.zeroconf import ZeroconfServiceInfo
 
 _LOGGER = LOGGER.getChild(__name__)
 
+CONNECTION_DATA_KEYS = (
+    CONF_CONNECTION_TCP_HOST,
+    CONF_CONNECTION_TCP_PORT,
+    CONF_CONNECTION_SERIAL_PORT,
+    CONF_CONNECTION_BLUETOOTH_ADDRESS,
+)
 
-def _step_user_data_connection_tcp_schema_factory(host: str = "", port: int | None = None) -> vol.Schema:
+
+def _step_user_data_connection_tcp_schema_factory(host: str | None = "", port: int | None = None) -> vol.Schema:
     return vol.Schema(
         {
             vol.Required(CONF_CONNECTION_TCP_HOST, default=host): cv.string,
@@ -94,7 +100,7 @@ def _step_user_data_connection_tcp_schema_factory(host: str = "", port: int | No
     )
 
 
-def _step_user_data_connection_bluetooth_schema_factory(address: str = "") -> vol.Schema:
+def _step_user_data_connection_bluetooth_schema_factory(address: str | None = "") -> vol.Schema:
     return vol.Schema(
         {
             vol.Required(CONF_CONNECTION_BLUETOOTH_ADDRESS, default=address): cv.string,
@@ -102,7 +108,7 @@ def _step_user_data_connection_bluetooth_schema_factory(address: str = "") -> vo
     )
 
 
-def _step_user_data_connection_serial_schema_factory(device: str = "") -> vol.Schema:
+def _step_user_data_connection_serial_schema_factory(device: str | None = "") -> vol.Schema:
     return vol.Schema(
         {
             vol.Required(CONF_CONNECTION_SERIAL_PORT, default=device): cv.string,
@@ -128,8 +134,8 @@ def _node_long_name(node_id: int, node: Mapping[str, Any]) -> str:
 
 
 def _build_add_node_schema(
-    options: dict[str, Any],
-    nodes: dict[int, Any],
+    options: Mapping[str, Any],
+    nodes: Mapping[int, Any],
     node_selection_required: bool = True,  # noqa: FBT001, FBT002
 ) -> vol.Schema:
     already_selected_node_nums = [el["id"] for el in options[CONF_OPTION_FILTER_NODES]]
@@ -261,7 +267,7 @@ def _build_chat_schema(
 
 
 async def validate_input_for_connection(
-    hass: HomeAssistant, data: dict[str, Any], *, no_nodes: bool = False
+    hass: HomeAssistant, data: Mapping[str, Any], *, no_nodes: bool = False
 ) -> tuple[Mapping[str, Any], Mapping[int, Mapping[str, Any]]]:
     try:
         async with MeshtasticApiClient(
@@ -325,9 +331,10 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         self._bluetooth_discovery_info: BluetoothServiceInfo | None = None
         self._zeroconf_discovery_info: ZeroconfServiceInfo | None = None
         self._usb_discovery_info: UsbServiceInfo | None = None
-        self.user_input_from_step_user: dict = None
-        self.data = {}
-        self.options = {}
+        self.user_input_from_step_user: dict | None = None
+        self.data: dict[str, Any] = {}
+        self.options: dict[str, Any] = {}
+        self.nodes: Mapping[int, Mapping[str, Any]]
 
         self._load_nodes_task: asyncio.Task | None = None
 
@@ -335,6 +342,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         self, errors: dict[str, str], user_input: dict[str, Any] | None = None, *, no_full_load: bool = False
     ) -> ConfigFlowResult | None:
         try:
+            assert user_input is not None  # noqa: S101 - data.update(None) below would raise
             data = dict(self.data)
             data.update(user_input)
             gateway_node, nodes = await validate_input_for_connection(self.hass, data, no_nodes=no_full_load)
@@ -361,10 +369,10 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     async def async_step_user(
         self,
         user_input: dict[str, Any] | None = None,  # noqa: ARG002
-    ) -> FlowResult:
+    ) -> ConfigFlowResult:
         return self.async_show_menu(step_id="user", menu_options=["manual_tcp", "manual_bluetooth", "manual_serial"])
 
-    async def async_step_manual_tcp(self, user_input: dict[str, Any] | None = None) -> FlowResult:
+    async def async_step_manual_tcp(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         self.data[CONF_CONNECTION_TYPE] = ConnectionType.TCP.value
         errors: dict[str, str] = {}
         if user_input is not None:
@@ -381,7 +389,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             errors=errors,
         )
 
-    async def async_step_manual_bluetooth(self, user_input: dict[str, Any] | None = None) -> FlowResult:
+    async def async_step_manual_bluetooth(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         self.data[CONF_CONNECTION_TYPE] = ConnectionType.BLUETOOTH.value
         errors: dict[str, str] = {}
         if user_input is not None:
@@ -397,7 +405,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             errors=errors,
         )
 
-    async def async_step_manual_serial(self, user_input: dict[str, Any] | None = None) -> FlowResult:
+    async def async_step_manual_serial(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         self.data[CONF_CONNECTION_TYPE] = ConnectionType.SERIAL.value
         errors: dict[str, str] = {}
         if user_input is not None:
@@ -443,6 +451,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     async def async_step_discovery_bluetooth_confirm(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
+        assert self._bluetooth_discovery_info is not None  # noqa: S101 - dereferenced on the next line
         title = f"{self._bluetooth_discovery_info.name} ({self._bluetooth_discovery_info.address})"
         errors: dict[str, str] = {}
 
@@ -464,7 +473,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             errors=errors,
         )
 
-    async def async_step_zeroconf(self, discovery_info: zeroconf.ZeroconfServiceInfo) -> ConfigFlowResult:
+    async def async_step_zeroconf(self, discovery_info: ZeroconfServiceInfo) -> ConfigFlowResult:
         self._zeroconf_discovery_info = discovery_info
         if discovery_info.type == "_http._tcp.local." and discovery_info.name != "Meshtastic._http._tcp.local.":
             return self.async_abort(reason="not_meshtastic_device")
@@ -502,6 +511,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         return await self.async_step_discovery_zeroconf_confirm()
 
     async def async_step_discovery_zeroconf_confirm(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
+        assert self._zeroconf_discovery_info is not None  # noqa: S101 - dereferenced on the next line
         title = self._zeroconf_discovery_info.host
         errors: dict[str, str] = {}
 
@@ -553,7 +563,8 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         return await self.async_step_discovery_usb_confirm()
 
     async def async_step_discovery_usb_confirm(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
-        device_name = self._usb_discovery_info.manufacturer
+        assert self._usb_discovery_info is not None  # noqa: S101 - dereferenced on the next line
+        device_name = cast("str", self._usb_discovery_info.manufacturer)  # None is concatenated below as before
         if self._usb_discovery_info.description:
             device_name += " " + self._usb_discovery_info.description
         title = f"{device_name} ({self._usb_discovery_info.device})"
@@ -578,7 +589,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     async def async_step_node(
         self, user_input: dict[str, Any] | None = None, *, load_nodes: bool = False
-    ) -> FlowResult:
+    ) -> ConfigFlowResult:
         errors: dict[str, str] = {}
         if user_input is not None:
             node_id = int(user_input[CONF_OPTION_NODE])
@@ -602,7 +613,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         schema = _build_add_node_schema(self.options, self.nodes)
         return self.async_show_form(step_id="node", data_schema=schema, errors=errors)
 
-    async def async_step_notify_platform(self, user_input: dict[str, Any] | None = None) -> FlowResult:
+    async def async_step_notify_platform(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         errors: dict[str, str] = {}
         if user_input is not None:
             self.options[CONF_OPTION_NOTIFY_PLATFORM] = user_input
@@ -611,7 +622,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         schema = _build_notify_platform_schema(user_input or {})
         return self.async_show_form(step_id="notify_platform", data_schema=schema, errors=errors)
 
-    async def async_step_web_client(self, user_input: dict[str, Any] | None = None) -> FlowResult:
+    async def async_step_web_client(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         errors: dict[str, str] = {}
         if user_input is not None:
             self.options[CONF_OPTION_WEB_CLIENT] = user_input
@@ -620,7 +631,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         schema = _build_meshtastic_web_schema(user_input or {})
         return self.async_show_form(step_id="web_client", data_schema=schema, errors=errors)
 
-    async def async_step_tcp_proxy(self, user_input: dict[str, Any] | None = None) -> FlowResult:
+    async def async_step_tcp_proxy(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         errors: dict[str, str] = {}
         if user_input is not None:
             if not await validate_tcp_proxy_port(self.hass, None, {CONF_OPTION_TCP_PROXY: user_input}):
@@ -633,7 +644,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         schema = _build_meshtastic_tcp_schema(user_input or {})
         return self.async_show_form(step_id="tcp_proxy", data_schema=schema, errors=errors)
 
-    async def async_step_chat(self, user_input: dict[str, Any] | None = None) -> FlowResult:
+    async def async_step_chat(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         if user_input is not None:
             self.options[CONF_OPTION_CHAT] = user_input
             return await self._finish_steps()
@@ -648,21 +659,94 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     @staticmethod
     @callback
-    def async_get_options_flow(config_entry: ConfigEntry) -> OptionsFlowHandler:
-        return OptionsFlowHandler(config_entry)
+    def async_get_options_flow(config_entry: ConfigEntry) -> OptionsFlowHandler:  # noqa: ARG004
+        return OptionsFlowHandler()
 
-    async def async_step_reconfigure(self, user_input: dict[str, Any] | None = None) -> FlowResult:  # noqa: ARG002
-        config_entry = self.hass.config_entries.async_get_entry(self.context.get("entry_id"))
+    async def async_step_reconfigure(
+        self,
+        user_input: dict[str, Any] | None = None,  # noqa: ARG002
+    ) -> ConfigFlowResult:
+        return self.async_show_menu(
+            step_id="reconfigure",
+            menu_options=["reconfigure_tcp", "reconfigure_bluetooth", "reconfigure_serial"],
+        )
 
-        self.data.update(config_entry.data)
-        connection_type = config_entry.data[CONF_CONNECTION_TYPE]
-        if connection_type == ConnectionType.TCP.value:
-            return await self.async_step_manual_tcp()
-        if connection_type == ConnectionType.BLUETOOTH.value:
-            return await self.async_step_manual_bluetooth()
-        if connection_type == ConnectionType.SERIAL.value:
-            return await self.async_step_manual_serial()
-        return self.async_abort(reason="invalid_connection_type")
+    async def async_step_reconfigure_tcp(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
+        return await self._async_reconfigure_connection(
+            ConnectionType.TCP,
+            "reconfigure_tcp",
+            lambda d: _step_user_data_connection_tcp_schema_factory(
+                d.get(CONF_CONNECTION_TCP_HOST, ""), d.get(CONF_CONNECTION_TCP_PORT)
+            ),
+            user_input,
+        )
+
+    async def async_step_reconfigure_bluetooth(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
+        return await self._async_reconfigure_connection(
+            ConnectionType.BLUETOOTH,
+            "reconfigure_bluetooth",
+            lambda d: _step_user_data_connection_bluetooth_schema_factory(d.get(CONF_CONNECTION_BLUETOOTH_ADDRESS, "")),
+            user_input,
+        )
+
+    async def async_step_reconfigure_serial(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
+        return await self._async_reconfigure_connection(
+            ConnectionType.SERIAL,
+            "reconfigure_serial",
+            lambda d: _step_user_data_connection_serial_schema_factory(d.get(CONF_CONNECTION_SERIAL_PORT, "")),
+            user_input,
+        )
+
+    async def _async_reconfigure_connection(
+        self,
+        connection_type: ConnectionType,
+        step_id: str,
+        schema_factory: Callable[[Mapping[str, Any]], vol.Schema],
+        user_input: dict[str, Any] | None,
+    ) -> ConfigFlowResult:
+        entry = self._get_reconfigure_entry()
+        errors: dict[str, str] = {}
+        if user_input is not None:
+            # stale keys of the previous connection type must not survive a switch
+            new_data = {k: v for k, v in entry.data.items() if k not in CONNECTION_DATA_KEYS}
+            new_data |= {CONF_CONNECTION_TYPE: connection_type.value, **user_input}
+            try:
+                # the entry's own client may hold the only API connection, so this can fail until it is released
+                gateway_node, _ = await validate_input_for_connection(self.hass, new_data, no_nodes=True)
+                if not gateway_node.get("num"):
+                    raise CannotConnectError  # noqa: TRY301
+            except CannotConnectError:
+                errors["base"] = "cannot_connect"
+            except:  # noqa: E722
+                _LOGGER.warning("Unexpected exception", exc_info=True)
+                errors["base"] = "unknown"
+            else:
+                known_num, known_key = _known_gateway_identity(entry)
+                if not is_same_gateway(known_num, known_key, gateway_node):
+                    return self.async_abort(reason="different_device")
+                return self.async_update_reload_and_abort(entry, data=new_data)
+
+        return self.async_show_form(
+            step_id=step_id,
+            data_schema=schema_factory(user_input or entry.data),
+            errors=errors,
+        )
+
+
+def _known_gateway_identity(entry: ConfigEntry) -> tuple[int | None, str | None]:
+    """Return the gateway node number and public key last seen by the entry, where known."""
+    runtime_data = getattr(entry, "runtime_data", None)
+    live_node = runtime_data.gateway_node if runtime_data else None
+    known_num = live_node.get("num") if live_node else None
+    if known_num is None and entry.unique_id and entry.unique_id.isdigit():
+        known_num = int(entry.unique_id)
+    known_key = node_public_key(live_node)
+    if known_key is None:
+        known_key = next(
+            (el.get("public_key") for el in entry.options.get(CONF_OPTION_FILTER_NODES, []) if el["id"] == known_num),
+            None,
+        )
+    return known_num, known_key
 
 
 class CannotConnectError(HomeAssistantError):
@@ -670,19 +754,18 @@ class CannotConnectError(HomeAssistantError):
 
 
 class OptionsFlowHandler(config_entries.OptionsFlow):
-    def __init__(self, config_entry: config_entries.ConfigEntry) -> None:  # noqa: ARG002
-        self.options = {}
-        self.nodes = None
+    def __init__(self) -> None:
+        """Initialize options flow."""
+        self.options: dict[str, Any] = {}
+        self.nodes: Mapping[int, Mapping[str, Any]] | None = None
 
-    async def async_step_init(self, user_input: dict[str, Any] | None = None) -> dict[str, Any]:  # noqa: PLR0912
+    async def async_step_init(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:  # noqa: PLR0912
         errors: dict[str, str] = {}
 
-        if (
-            hasattr(self.config_entry, "runtime_data")
-            and self.config_entry.runtime_data
-            and self.config_entry.runtime_data.client
-        ):
-            self.nodes = await self.config_entry.runtime_data.client.async_get_all_nodes()
+        # runtime_data is unset on an entry that never loaded, and None after a failed setup
+        runtime_data = getattr(self.config_entry, "runtime_data", None)
+        if runtime_data and runtime_data.client:
+            self.nodes = await runtime_data.client.async_get_all_nodes()
 
         if self.nodes is None:
             try:
@@ -695,6 +778,8 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
 
         if errors:
             return self.async_show_form(step_id="init", errors=errors)
+
+        assert self.nodes is not None  # noqa: S101 - dereferenced below; errors is set whenever it stayed None
 
         current_filter_node_option = (
             self.options[CONF_OPTION_FILTER_NODES]

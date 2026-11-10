@@ -15,9 +15,11 @@ from homeassistant.components.text import (
     TextEntity,
     TextEntityDescription,
 )
+from homeassistant.const import EntityCategory
 
 from . import helpers
 from .entity import MeshtasticNodeEntity
+from .field_metadata import device_role_attributes
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterable, Mapping
@@ -29,6 +31,9 @@ if TYPE_CHECKING:
     from .data import MeshtasticConfigEntry, MeshtasticData
 
 
+PARALLEL_UPDATES = 0
+
+
 def _build_texts(nodes: Mapping[int, Mapping[str, Any]], runtime_data: MeshtasticData) -> Iterable[MeshtasticText]:
     coordinator = runtime_data.coordinator
     gateway = runtime_data.client.get_own_node()
@@ -38,9 +43,11 @@ def _build_texts(nodes: Mapping[int, Mapping[str, Any]], runtime_data: Meshtasti
             coordinator=coordinator,
             entity_description=MeshtasticTextEntityDescription(
                 key="node_role",
-                name="Role",
-                icon="mdi:card-account-details",
+                entity_category=EntityCategory.DIAGNOSTIC,
                 value_fn=lambda device: device.coordinator.data[device.node_id].get("user", {}).get("role", None),
+                attributes_fn=lambda device: dict(
+                    device_role_attributes(device.coordinator.data[device.node_id].get("user", {}).get("role", None))
+                ),
             ),
             gateway=gateway,
             node_id=node_id,
@@ -52,8 +59,7 @@ def _build_texts(nodes: Mapping[int, Mapping[str, Any]], runtime_data: Meshtasti
             coordinator=coordinator,
             entity_description=MeshtasticTextEntityDescription(
                 key="node_short_name",
-                name="Short Name",
-                icon="mdi:card-account-details",
+                entity_category=EntityCategory.DIAGNOSTIC,
                 value_fn=lambda device: device.coordinator.data[device.node_id].get("user", {}).get("shortName", None),
             ),
             gateway=gateway,
@@ -67,8 +73,7 @@ def _build_texts(nodes: Mapping[int, Mapping[str, Any]], runtime_data: Meshtasti
             coordinator=coordinator,
             entity_description=MeshtasticTextEntityDescription(
                 key="node_long_name",
-                name="Long Name",
-                icon="mdi:card-account-details",
+                entity_category=EntityCategory.DIAGNOSTIC,
                 value_fn=lambda device: device.coordinator.data[device.node_id].get("user", {}).get("longName", None),
             ),
             gateway=gateway,
@@ -95,9 +100,10 @@ async def async_unload_entry(
     return await helpers.async_unload_entry(hass, entry)
 
 
-@dataclass(kw_only=True)
+@dataclass(frozen=True, kw_only=True)
 class MeshtasticTextEntityDescription(TextEntityDescription):
     value_fn: Callable[[MeshtasticText], str]
+    attributes_fn: Callable[[MeshtasticText], dict[str, Any]] | None = None
 
 
 class MeshtasticText(MeshtasticNodeEntity, TextEntity):
@@ -114,3 +120,5 @@ class MeshtasticText(MeshtasticNodeEntity, TextEntity):
 
     def _async_update_attrs(self) -> None:
         self._attr_native_value = self.entity_description.value_fn(self)
+        if self.entity_description.attributes_fn is not None:
+            self._attr_extra_state_attributes = self.entity_description.attributes_fn(self)

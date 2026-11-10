@@ -142,13 +142,13 @@ class _HardwareModelEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._
     """
     RAK11310 (RP2040 + SX1262)
     """
-    SENSELORA_RP2040: _HardwareModel.ValueType  # 27
+    MAKERFABS_TRACKER: _HardwareModel.ValueType  # 27
     """
-    Makerfabs SenseLoRA Receiver (RP2040 + RFM96)
+    Makerfabs Tracker Reserved
     """
-    SENSELORA_S3: _HardwareModel.ValueType  # 28
+    MAKERFABS_RESERVED: _HardwareModel.ValueType  # 28
     """
-    Makerfabs SenseLoRA Industrial Monitor (ESP32-S3 + RFM96)
+    Makerfabs Reserved
     """
     CANARYONE: _HardwareModel.ValueType  # 29
     """
@@ -168,9 +168,9 @@ class _HardwareModelEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._
     Less common/prototype boards listed here (needs one more byte over the air)
     ---------------------------------------------------------------------------
     """
-    NRF52840DK: _HardwareModel.ValueType  # 33
+    T_ECHO_PLUS: _HardwareModel.ValueType  # 33
     """
-    TODO: REPLACE
+    T-Echo Plus device from LilyGo
     """
     PPR: _HardwareModel.ValueType  # 34
     """
@@ -295,7 +295,7 @@ class _HardwareModelEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._
     """
     TWC_MESH_V4: _HardwareModel.ValueType  # 62
     """
-    TWC_MESH_V4 
+    TWC_MESH_V4
     Adafruit NRF52840 feather express with SX1262, SSD1306 OLED and NEO6M GPS
     """
     NRF52_PROMICRO_DIY: _HardwareModel.ValueType  # 63
@@ -396,6 +396,267 @@ class _HardwareModelEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._
     """
     Mesh-Tab, esp32 based
     https://github.com/valzzu/Mesh-Tab
+    """
+    MESHLINK: _HardwareModel.ValueType  # 87
+    """
+    MeshLink board developed by LoraItalia. NRF52840, eByte E22900M22S (Will also come with other frequencies), 25w MPPT solar charger (5v,12v,18v selectable), support for gps, buzzer, oled or e-ink display, 10 gpios, hardware watchdog
+    https://www.loraitalia.it
+    """
+    XIAO_NRF52_KIT: _HardwareModel.ValueType  # 88
+    """
+    Seeed XIAO nRF52840 + Wio SX1262 kit
+    """
+    THINKNODE_M1: _HardwareModel.ValueType  # 89
+    """
+    Elecrow ThinkNode M1 & M2
+    https://www.elecrow.com/wiki/ThinkNode-M1_Transceiver_Device(Meshtastic)_Power_By_nRF52840.html
+    https://www.elecrow.com/wiki/ThinkNode-M2_Transceiver_Device(Meshtastic)_Power_By_NRF52840.html (this actually uses ESP32-S3)
+    """
+    THINKNODE_M2: _HardwareModel.ValueType  # 90
+    T_ETH_ELITE: _HardwareModel.ValueType  # 91
+    """
+    Lilygo T-ETH-Elite
+    """
+    HELTEC_SENSOR_HUB: _HardwareModel.ValueType  # 92
+    """
+    Heltec HRI-3621 industrial probe
+    """
+    MUZI_BASE: _HardwareModel.ValueType  # 93
+    """
+    Muzi Works Muzi-Base device
+    """
+    HELTEC_MESH_POCKET: _HardwareModel.ValueType  # 94
+    """
+    Heltec Magnetic Power Bank with Meshtastic compatible
+    """
+    SEEED_SOLAR_NODE: _HardwareModel.ValueType  # 95
+    """
+    Seeed Solar Node
+    """
+    NOMADSTAR_METEOR_PRO: _HardwareModel.ValueType  # 96
+    """
+    NomadStar Meteor Pro https://nomadstar.ch/
+    """
+    CROWPANEL: _HardwareModel.ValueType  # 97
+    """
+    Elecrow CrowPanel Advance models, ESP32-S3 and TFT with SX1262 radio plugin
+    """
+    LINK_32: _HardwareModel.ValueType  # 98
+    """
+    Lilygo LINK32 board with sensors
+    """
+    SEEED_WIO_TRACKER_L1: _HardwareModel.ValueType  # 99
+    """
+    Seeed Tracker L1
+    """
+    SEEED_WIO_TRACKER_L1_EINK: _HardwareModel.ValueType  # 100
+    """
+    Seeed Tracker L1 EINK driver
+    """
+    MUZI_R1_NEO: _HardwareModel.ValueType  # 101
+    """
+    Muzi Works R1 Neo
+    """
+    T_DECK_PRO: _HardwareModel.ValueType  # 102
+    """
+    Lilygo T-Deck Pro
+    """
+    T_LORA_PAGER: _HardwareModel.ValueType  # 103
+    """
+    Lilygo TLora Pager
+    """
+    M5STACK_RESERVED: _HardwareModel.ValueType  # 104
+    """
+    M5Stack Reserved
+    0x68
+    """
+    WISMESH_TAG: _HardwareModel.ValueType  # 105
+    """
+    RAKwireless WisMesh Tag
+    """
+    RAK3312: _HardwareModel.ValueType  # 106
+    """
+    RAKwireless WisBlock Core RAK3312 https://docs.rakwireless.com/product-categories/wisduo/rak3112-module/overview/
+    """
+    THINKNODE_M5: _HardwareModel.ValueType  # 107
+    """
+    Elecrow ThinkNode M5 https://www.elecrow.com/wiki/ThinkNode_M5_Meshtastic_LoRa_Signal_Transceiver_ESP32-S3.html
+    """
+    HELTEC_MESH_SOLAR: _HardwareModel.ValueType  # 108
+    """
+    MeshSolar is an integrated power management and communication solution designed for outdoor low-power devices.
+    https://heltec.org/project/meshsolar/
+    """
+    T_ECHO_LITE: _HardwareModel.ValueType  # 109
+    """
+    Lilygo T-Echo Lite
+    """
+    HELTEC_V4: _HardwareModel.ValueType  # 110
+    """
+    New Heltec LoRA32 with ESP32-S3 CPU
+    """
+    M5STACK_C6L: _HardwareModel.ValueType  # 111
+    """
+    M5Stack C6L
+    """
+    M5STACK_CARDPUTER_ADV: _HardwareModel.ValueType  # 112
+    """
+    M5Stack Cardputer Adv
+    """
+    HELTEC_WIRELESS_TRACKER_V2: _HardwareModel.ValueType  # 113
+    """
+    ESP32S3 main controller with GPS and TFT screen.
+    """
+    T_WATCH_ULTRA: _HardwareModel.ValueType  # 114
+    """
+    LilyGo T-Watch Ultra
+    """
+    THINKNODE_M3: _HardwareModel.ValueType  # 115
+    """
+    Elecrow ThinkNode M3
+    """
+    WISMESH_TAP_V2: _HardwareModel.ValueType  # 116
+    """
+    RAK WISMESH_TAP_V2 with ESP32-S3 CPU
+    """
+    RAK3401: _HardwareModel.ValueType  # 117
+    """
+    RAK3401
+    """
+    RAK6421: _HardwareModel.ValueType  # 118
+    """
+    RAK6421 Hat+
+    """
+    THINKNODE_M4: _HardwareModel.ValueType  # 119
+    """
+    Elecrow ThinkNode M4
+    """
+    THINKNODE_M6: _HardwareModel.ValueType  # 120
+    """
+    Elecrow ThinkNode M6
+    """
+    MESHSTICK_1262: _HardwareModel.ValueType  # 121
+    """
+    Elecrow Meshstick 1262
+    """
+    TBEAM_1_WATT: _HardwareModel.ValueType  # 122
+    """
+    LilyGo T-Beam 1W
+    """
+    T5_S3_EPAPER_PRO: _HardwareModel.ValueType  # 123
+    """
+    LilyGo T5 S3 ePaper Pro (V1 and V2)
+    """
+    TBEAM_BPF: _HardwareModel.ValueType  # 124
+    """
+    LilyGo T-Beam BPF (144-148Mhz)
+    """
+    MINI_EPAPER_S3: _HardwareModel.ValueType  # 125
+    """
+    LilyGo T-Mini E-paper S3 Kit
+    """
+    TDISPLAY_S3_PRO: _HardwareModel.ValueType  # 126
+    """
+    LilyGo T-Display S3 Pro LR1121
+    """
+    HELTEC_MESH_NODE_T096: _HardwareModel.ValueType  # 127
+    """
+    Heltec Mesh Node T096 board features an nRF52840 CPU and a TFT screen.
+    """
+    MESH_TRACKER_X1: _HardwareModel.ValueType  # 128
+    """
+    Seeed studio Mesh Tracker X1card. NRF52840 w/ LR2021 radio,
+    GPS, button, buzzer, and sensors.
+    """
+    THINKNODE_M7: _HardwareModel.ValueType  # 129
+    """
+    Elecrow ThinkNode M7, M8 and M9
+    """
+    THINKNODE_M8: _HardwareModel.ValueType  # 130
+    THINKNODE_M9: _HardwareModel.ValueType  # 131
+    HELTEC_V4_R8: _HardwareModel.ValueType  # 132
+    """
+    The Heltec-V4-R8 uses an ESP32S3R8 chip, plus an SX1262.
+    """
+    HELTEC_MESH_NODE_T1: _HardwareModel.ValueType  # 133
+    """
+    The HELTEC_MESH_NODE_T1 uses an NRF52840 chip, plus an SX1262.
+    """
+    STATION_G3: _HardwareModel.ValueType  # 134
+    """
+    B&Q Consulting Station G3: TBD
+    """
+    T_IMPULSE_PLUS: _HardwareModel.ValueType  # 135
+    """
+    Lilygo T-Impulse-Plus
+    """
+    T_ECHO_CARD: _HardwareModel.ValueType  # 136
+    """
+    Lilygo T-Echo Card
+    """
+    SEEED_WIO_TRACKER_L2: _HardwareModel.ValueType  # 137
+    """
+    Seeed Tracker L2
+    """
+    CROWPANEL_P4: _HardwareModel.ValueType  # 138
+    """
+    Elecrow CrowPanel Advance P4 models, ESP32-P4 and TFT with SX1262 radio plugin
+    """
+    HELTEC_MESH_TOWER_V2: _HardwareModel.ValueType  # 139
+    """
+    Heltec Mesh Tower V2
+    """
+    MESHNOLOGY_W10: _HardwareModel.ValueType  # 140
+    """
+    Meshnology W10
+    """
+    HELTEC_RC32: _HardwareModel.ValueType  # 141
+    """
+    Heltec ESP32S3 + SX1262
+    """
+    HELTEC_RC52: _HardwareModel.ValueType  # 142
+    """
+    Heltec NRF52840 + SX1262
+    """
+    HELTEC_RCC6: _HardwareModel.ValueType  # 143
+    """
+    Heltec ESP32C6 + SX1262
+    """
+    SEEED_WIO_TRACKER_L1_PRO_1W: _HardwareModel.ValueType  # 144
+    """
+    Seeed Wio Tracker L1 Pro 1W, nRF52840 + SX1262 with 1 W external PA
+    """
+    MESHNOLOGY_W12: _HardwareModel.ValueType  # 145
+    """
+    Meshnology W12
+    """
+    MESHPAGER_X2: _HardwareModel.ValueType  # 146
+    """
+    Seeed Studio MeshPager X2
+    """
+    T_CONNECT_PRO: _HardwareModel.ValueType  # 147
+    """
+    Lilygo T-CONNECT PRO
+    """
+    AXIOMETA_GENESIS_MINI: _HardwareModel.ValueType  # 148
+    """
+    Axiometa Axiometa Genesis Mini
+    """
+    MAKERFABS_NOMAD_TERMINAL: _HardwareModel.ValueType  # 149
+    """
+    MakerFabs Nomad Terminal
+    """
+    THINKNODE_MX: _HardwareModel.ValueType  # 150
+    """
+    Elecrow ThinkNode MX
+    """
+    NODARA: _HardwareModel.ValueType  # 151
+    """
+    Radioddity Nodara
+    """
+    HELTEC_MESH_POCKET_V2: _HardwareModel.ValueType  # 152
+    """
+    Heltec Magnetic Power Bank V2
     """
     PRIVATE_HW: _HardwareModel.ValueType  # 255
     """
@@ -522,13 +783,13 @@ RAK11310: HardwareModel.ValueType  # 26
 """
 RAK11310 (RP2040 + SX1262)
 """
-SENSELORA_RP2040: HardwareModel.ValueType  # 27
+MAKERFABS_TRACKER: HardwareModel.ValueType  # 27
 """
-Makerfabs SenseLoRA Receiver (RP2040 + RFM96)
+Makerfabs Tracker Reserved
 """
-SENSELORA_S3: HardwareModel.ValueType  # 28
+MAKERFABS_RESERVED: HardwareModel.ValueType  # 28
 """
-Makerfabs SenseLoRA Industrial Monitor (ESP32-S3 + RFM96)
+Makerfabs Reserved
 """
 CANARYONE: HardwareModel.ValueType  # 29
 """
@@ -548,9 +809,9 @@ LORA_RELAY_V1: HardwareModel.ValueType  # 32
 Less common/prototype boards listed here (needs one more byte over the air)
 ---------------------------------------------------------------------------
 """
-NRF52840DK: HardwareModel.ValueType  # 33
+T_ECHO_PLUS: HardwareModel.ValueType  # 33
 """
-TODO: REPLACE
+T-Echo Plus device from LilyGo
 """
 PPR: HardwareModel.ValueType  # 34
 """
@@ -675,7 +936,7 @@ CDEBYTE EoRa-S3 board using their own MM modules, clone of LILYGO T3S3
 """
 TWC_MESH_V4: HardwareModel.ValueType  # 62
 """
-TWC_MESH_V4 
+TWC_MESH_V4
 Adafruit NRF52840 feather express with SX1262, SSD1306 OLED and NEO6M GPS
 """
 NRF52_PROMICRO_DIY: HardwareModel.ValueType  # 63
@@ -776,6 +1037,267 @@ MESH_TAB: HardwareModel.ValueType  # 86
 """
 Mesh-Tab, esp32 based
 https://github.com/valzzu/Mesh-Tab
+"""
+MESHLINK: HardwareModel.ValueType  # 87
+"""
+MeshLink board developed by LoraItalia. NRF52840, eByte E22900M22S (Will also come with other frequencies), 25w MPPT solar charger (5v,12v,18v selectable), support for gps, buzzer, oled or e-ink display, 10 gpios, hardware watchdog
+https://www.loraitalia.it
+"""
+XIAO_NRF52_KIT: HardwareModel.ValueType  # 88
+"""
+Seeed XIAO nRF52840 + Wio SX1262 kit
+"""
+THINKNODE_M1: HardwareModel.ValueType  # 89
+"""
+Elecrow ThinkNode M1 & M2
+https://www.elecrow.com/wiki/ThinkNode-M1_Transceiver_Device(Meshtastic)_Power_By_nRF52840.html
+https://www.elecrow.com/wiki/ThinkNode-M2_Transceiver_Device(Meshtastic)_Power_By_NRF52840.html (this actually uses ESP32-S3)
+"""
+THINKNODE_M2: HardwareModel.ValueType  # 90
+T_ETH_ELITE: HardwareModel.ValueType  # 91
+"""
+Lilygo T-ETH-Elite
+"""
+HELTEC_SENSOR_HUB: HardwareModel.ValueType  # 92
+"""
+Heltec HRI-3621 industrial probe
+"""
+MUZI_BASE: HardwareModel.ValueType  # 93
+"""
+Muzi Works Muzi-Base device
+"""
+HELTEC_MESH_POCKET: HardwareModel.ValueType  # 94
+"""
+Heltec Magnetic Power Bank with Meshtastic compatible
+"""
+SEEED_SOLAR_NODE: HardwareModel.ValueType  # 95
+"""
+Seeed Solar Node
+"""
+NOMADSTAR_METEOR_PRO: HardwareModel.ValueType  # 96
+"""
+NomadStar Meteor Pro https://nomadstar.ch/
+"""
+CROWPANEL: HardwareModel.ValueType  # 97
+"""
+Elecrow CrowPanel Advance models, ESP32-S3 and TFT with SX1262 radio plugin
+"""
+LINK_32: HardwareModel.ValueType  # 98
+"""
+Lilygo LINK32 board with sensors
+"""
+SEEED_WIO_TRACKER_L1: HardwareModel.ValueType  # 99
+"""
+Seeed Tracker L1
+"""
+SEEED_WIO_TRACKER_L1_EINK: HardwareModel.ValueType  # 100
+"""
+Seeed Tracker L1 EINK driver
+"""
+MUZI_R1_NEO: HardwareModel.ValueType  # 101
+"""
+Muzi Works R1 Neo
+"""
+T_DECK_PRO: HardwareModel.ValueType  # 102
+"""
+Lilygo T-Deck Pro
+"""
+T_LORA_PAGER: HardwareModel.ValueType  # 103
+"""
+Lilygo TLora Pager
+"""
+M5STACK_RESERVED: HardwareModel.ValueType  # 104
+"""
+M5Stack Reserved
+0x68
+"""
+WISMESH_TAG: HardwareModel.ValueType  # 105
+"""
+RAKwireless WisMesh Tag
+"""
+RAK3312: HardwareModel.ValueType  # 106
+"""
+RAKwireless WisBlock Core RAK3312 https://docs.rakwireless.com/product-categories/wisduo/rak3112-module/overview/
+"""
+THINKNODE_M5: HardwareModel.ValueType  # 107
+"""
+Elecrow ThinkNode M5 https://www.elecrow.com/wiki/ThinkNode_M5_Meshtastic_LoRa_Signal_Transceiver_ESP32-S3.html
+"""
+HELTEC_MESH_SOLAR: HardwareModel.ValueType  # 108
+"""
+MeshSolar is an integrated power management and communication solution designed for outdoor low-power devices.
+https://heltec.org/project/meshsolar/
+"""
+T_ECHO_LITE: HardwareModel.ValueType  # 109
+"""
+Lilygo T-Echo Lite
+"""
+HELTEC_V4: HardwareModel.ValueType  # 110
+"""
+New Heltec LoRA32 with ESP32-S3 CPU
+"""
+M5STACK_C6L: HardwareModel.ValueType  # 111
+"""
+M5Stack C6L
+"""
+M5STACK_CARDPUTER_ADV: HardwareModel.ValueType  # 112
+"""
+M5Stack Cardputer Adv
+"""
+HELTEC_WIRELESS_TRACKER_V2: HardwareModel.ValueType  # 113
+"""
+ESP32S3 main controller with GPS and TFT screen.
+"""
+T_WATCH_ULTRA: HardwareModel.ValueType  # 114
+"""
+LilyGo T-Watch Ultra
+"""
+THINKNODE_M3: HardwareModel.ValueType  # 115
+"""
+Elecrow ThinkNode M3
+"""
+WISMESH_TAP_V2: HardwareModel.ValueType  # 116
+"""
+RAK WISMESH_TAP_V2 with ESP32-S3 CPU
+"""
+RAK3401: HardwareModel.ValueType  # 117
+"""
+RAK3401
+"""
+RAK6421: HardwareModel.ValueType  # 118
+"""
+RAK6421 Hat+
+"""
+THINKNODE_M4: HardwareModel.ValueType  # 119
+"""
+Elecrow ThinkNode M4
+"""
+THINKNODE_M6: HardwareModel.ValueType  # 120
+"""
+Elecrow ThinkNode M6
+"""
+MESHSTICK_1262: HardwareModel.ValueType  # 121
+"""
+Elecrow Meshstick 1262
+"""
+TBEAM_1_WATT: HardwareModel.ValueType  # 122
+"""
+LilyGo T-Beam 1W
+"""
+T5_S3_EPAPER_PRO: HardwareModel.ValueType  # 123
+"""
+LilyGo T5 S3 ePaper Pro (V1 and V2)
+"""
+TBEAM_BPF: HardwareModel.ValueType  # 124
+"""
+LilyGo T-Beam BPF (144-148Mhz)
+"""
+MINI_EPAPER_S3: HardwareModel.ValueType  # 125
+"""
+LilyGo T-Mini E-paper S3 Kit
+"""
+TDISPLAY_S3_PRO: HardwareModel.ValueType  # 126
+"""
+LilyGo T-Display S3 Pro LR1121
+"""
+HELTEC_MESH_NODE_T096: HardwareModel.ValueType  # 127
+"""
+Heltec Mesh Node T096 board features an nRF52840 CPU and a TFT screen.
+"""
+MESH_TRACKER_X1: HardwareModel.ValueType  # 128
+"""
+Seeed studio Mesh Tracker X1card. NRF52840 w/ LR2021 radio,
+GPS, button, buzzer, and sensors.
+"""
+THINKNODE_M7: HardwareModel.ValueType  # 129
+"""
+Elecrow ThinkNode M7, M8 and M9
+"""
+THINKNODE_M8: HardwareModel.ValueType  # 130
+THINKNODE_M9: HardwareModel.ValueType  # 131
+HELTEC_V4_R8: HardwareModel.ValueType  # 132
+"""
+The Heltec-V4-R8 uses an ESP32S3R8 chip, plus an SX1262.
+"""
+HELTEC_MESH_NODE_T1: HardwareModel.ValueType  # 133
+"""
+The HELTEC_MESH_NODE_T1 uses an NRF52840 chip, plus an SX1262.
+"""
+STATION_G3: HardwareModel.ValueType  # 134
+"""
+B&Q Consulting Station G3: TBD
+"""
+T_IMPULSE_PLUS: HardwareModel.ValueType  # 135
+"""
+Lilygo T-Impulse-Plus
+"""
+T_ECHO_CARD: HardwareModel.ValueType  # 136
+"""
+Lilygo T-Echo Card
+"""
+SEEED_WIO_TRACKER_L2: HardwareModel.ValueType  # 137
+"""
+Seeed Tracker L2
+"""
+CROWPANEL_P4: HardwareModel.ValueType  # 138
+"""
+Elecrow CrowPanel Advance P4 models, ESP32-P4 and TFT with SX1262 radio plugin
+"""
+HELTEC_MESH_TOWER_V2: HardwareModel.ValueType  # 139
+"""
+Heltec Mesh Tower V2
+"""
+MESHNOLOGY_W10: HardwareModel.ValueType  # 140
+"""
+Meshnology W10
+"""
+HELTEC_RC32: HardwareModel.ValueType  # 141
+"""
+Heltec ESP32S3 + SX1262
+"""
+HELTEC_RC52: HardwareModel.ValueType  # 142
+"""
+Heltec NRF52840 + SX1262
+"""
+HELTEC_RCC6: HardwareModel.ValueType  # 143
+"""
+Heltec ESP32C6 + SX1262
+"""
+SEEED_WIO_TRACKER_L1_PRO_1W: HardwareModel.ValueType  # 144
+"""
+Seeed Wio Tracker L1 Pro 1W, nRF52840 + SX1262 with 1 W external PA
+"""
+MESHNOLOGY_W12: HardwareModel.ValueType  # 145
+"""
+Meshnology W12
+"""
+MESHPAGER_X2: HardwareModel.ValueType  # 146
+"""
+Seeed Studio MeshPager X2
+"""
+T_CONNECT_PRO: HardwareModel.ValueType  # 147
+"""
+Lilygo T-CONNECT PRO
+"""
+AXIOMETA_GENESIS_MINI: HardwareModel.ValueType  # 148
+"""
+Axiometa Axiometa Genesis Mini
+"""
+MAKERFABS_NOMAD_TERMINAL: HardwareModel.ValueType  # 149
+"""
+MakerFabs Nomad Terminal
+"""
+THINKNODE_MX: HardwareModel.ValueType  # 150
+"""
+Elecrow ThinkNode MX
+"""
+NODARA: HardwareModel.ValueType  # 151
+"""
+Radioddity Nodara
+"""
+HELTEC_MESH_POCKET_V2: HardwareModel.ValueType  # 152
+"""
+Heltec Magnetic Power Bank V2
 """
 PRIVATE_HW: HardwareModel.ValueType  # 255
 """
@@ -958,6 +1480,101 @@ If you see this failure in the field please post in the forum because we are int
 """
 global___CriticalErrorCode = CriticalErrorCode
 
+class _FirmwareEdition:
+    ValueType = typing.NewType("ValueType", builtins.int)
+    V: typing_extensions.TypeAlias = ValueType
+
+class _FirmwareEditionEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[_FirmwareEdition.ValueType], builtins.type):
+    DESCRIPTOR: google.protobuf.descriptor.EnumDescriptor
+    VANILLA: _FirmwareEdition.ValueType  # 0
+    """
+    Vanilla firmware
+    """
+    SMART_CITIZEN: _FirmwareEdition.ValueType  # 1
+    """
+    Firmware for use in the Smart Citizen environmental monitoring network
+    """
+    OPEN_SAUCE: _FirmwareEdition.ValueType  # 16
+    """
+    Open Sauce, the maker conference held yearly in CA
+    """
+    DEFCON: _FirmwareEdition.ValueType  # 17
+    """
+    DEFCON, the yearly hacker conference
+    """
+    BURNING_MAN: _FirmwareEdition.ValueType  # 18
+    """
+    Burning Man, the yearly hippie gathering in the desert
+    """
+    HAMVENTION: _FirmwareEdition.ValueType  # 19
+    """
+    Hamvention, the Dayton amateur radio convention
+    """
+    FAB: _FirmwareEdition.ValueType  # 20
+    """
+    FAB, the international Fab Lab digital fabrication conference
+    """
+    DRAGON_CON: _FirmwareEdition.ValueType  # 21
+    """
+    Dragon Con, the yearly pop culture convention in Atlanta, GA
+    """
+    CCC: _FirmwareEdition.ValueType  # 22
+    """
+    Chaos Communication Congress, the hacker conference held yearly in Germany
+    """
+    DIY_EDITION: _FirmwareEdition.ValueType  # 127
+    """
+    Placeholder for DIY and unofficial events
+    """
+
+class FirmwareEdition(_FirmwareEdition, metaclass=_FirmwareEditionEnumTypeWrapper):
+    """
+    Enum to indicate to clients whether this firmware is a special firmware build, like an event.
+    The first 16 values are reserved for non-event special firmwares, like the Smart Citizen use case.
+    """
+
+VANILLA: FirmwareEdition.ValueType  # 0
+"""
+Vanilla firmware
+"""
+SMART_CITIZEN: FirmwareEdition.ValueType  # 1
+"""
+Firmware for use in the Smart Citizen environmental monitoring network
+"""
+OPEN_SAUCE: FirmwareEdition.ValueType  # 16
+"""
+Open Sauce, the maker conference held yearly in CA
+"""
+DEFCON: FirmwareEdition.ValueType  # 17
+"""
+DEFCON, the yearly hacker conference
+"""
+BURNING_MAN: FirmwareEdition.ValueType  # 18
+"""
+Burning Man, the yearly hippie gathering in the desert
+"""
+HAMVENTION: FirmwareEdition.ValueType  # 19
+"""
+Hamvention, the Dayton amateur radio convention
+"""
+FAB: FirmwareEdition.ValueType  # 20
+"""
+FAB, the international Fab Lab digital fabrication conference
+"""
+DRAGON_CON: FirmwareEdition.ValueType  # 21
+"""
+Dragon Con, the yearly pop culture convention in Atlanta, GA
+"""
+CCC: FirmwareEdition.ValueType  # 22
+"""
+Chaos Communication Congress, the hacker conference held yearly in Germany
+"""
+DIY_EDITION: FirmwareEdition.ValueType  # 127
+"""
+Placeholder for DIY and unofficial events
+"""
+global___FirmwareEdition = FirmwareEdition
+
 class _ExcludedModules:
     ValueType = typing.NewType("ValueType", builtins.int)
     V: typing_extensions.TypeAlias = ValueType
@@ -1019,6 +1636,30 @@ class _ExcludedModulesEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper
     PAXCOUNTER_CONFIG: _ExcludedModules.ValueType  # 4096
     """
     Paxcounter module
+    """
+    BLUETOOTH_CONFIG: _ExcludedModules.ValueType  # 8192
+    """
+    Bluetooth config (not technically a module, but used to indicate bluetooth capabilities)
+    """
+    NETWORK_CONFIG: _ExcludedModules.ValueType  # 16384
+    """
+    Network config (not technically a module, but used to indicate network capabilities)
+    """
+    STATUSMESSAGE_CONFIG: _ExcludedModules.ValueType  # 32768
+    """
+    Status Message module
+    """
+    TRAFFICMANAGEMENT_CONFIG: _ExcludedModules.ValueType  # 65536
+    """
+    Traffic Management module
+    """
+    TAK_CONFIG: _ExcludedModules.ValueType  # 131072
+    """
+    TAK module
+    """
+    MESHBEACON_CONFIG: _ExcludedModules.ValueType  # 262144
+    """
+    Mesh Beacon module
     """
 
 class ExcludedModules(_ExcludedModules, metaclass=_ExcludedModulesEnumTypeWrapper):
@@ -1083,6 +1724,30 @@ Detection Sensor module
 PAXCOUNTER_CONFIG: ExcludedModules.ValueType  # 4096
 """
 Paxcounter module
+"""
+BLUETOOTH_CONFIG: ExcludedModules.ValueType  # 8192
+"""
+Bluetooth config (not technically a module, but used to indicate bluetooth capabilities)
+"""
+NETWORK_CONFIG: ExcludedModules.ValueType  # 16384
+"""
+Network config (not technically a module, but used to indicate network capabilities)
+"""
+STATUSMESSAGE_CONFIG: ExcludedModules.ValueType  # 32768
+"""
+Status Message module
+"""
+TRAFFICMANAGEMENT_CONFIG: ExcludedModules.ValueType  # 65536
+"""
+Traffic Management module
+"""
+TAK_CONFIG: ExcludedModules.ValueType  # 131072
+"""
+TAK module
+"""
+MESHBEACON_CONFIG: ExcludedModules.ValueType  # 262144
+"""
+Mesh Beacon module
 """
 global___ExcludedModules = ExcludedModules
 
@@ -1284,7 +1949,7 @@ class Position(google.protobuf.message.Message):
     """
     ground_speed: builtins.int
     """
-    Ground speed in m/s and True North TRACK in 1/100 degrees
+    Ground speed in km/h and True North TRACK in 1/100 degrees
     Clarification of terms:
     - "track" is the direction of motion (measured in horizontal plane)
     - "heading" is where the fuselage points (measured in horizontal plane)
@@ -1408,6 +2073,7 @@ class User(google.protobuf.message.Message):
     IS_LICENSED_FIELD_NUMBER: builtins.int
     ROLE_FIELD_NUMBER: builtins.int
     PUBLIC_KEY_FIELD_NUMBER: builtins.int
+    IS_UNMESSAGABLE_FIELD_NUMBER: builtins.int
     id: builtins.str
     """
     A globally unique ID string for this user.
@@ -1418,6 +2084,9 @@ class User(google.protobuf.message.Message):
     long_name: builtins.str
     """
     A full name for this user, i.e. "Kevin Hester"
+    Limited to 24 bytes of UTF-8: longer names are accepted from senders
+    built against the older 39-byte limit, but devices truncate them before
+    storing or rebroadcasting. Clients should enforce 24 bytes in their UI.
     """
     short_name: builtins.str
     """
@@ -1452,6 +2121,10 @@ class User(google.protobuf.message.Message):
     The public key of the user's device.
     This is sent out to other nodes on the mesh to allow them to compute a shared secret key.
     """
+    is_unmessagable: builtins.bool
+    """
+    Whether or not the node can be messaged
+    """
     def __init__(
         self,
         *,
@@ -1463,8 +2136,11 @@ class User(google.protobuf.message.Message):
         is_licensed: builtins.bool = ...,
         role: config_pb2.Config.DeviceConfig.Role.ValueType = ...,
         public_key: builtins.bytes = ...,
+        is_unmessagable: builtins.bool | None = ...,
     ) -> None: ...
-    def ClearField(self, field_name: typing.Literal["hw_model", b"hw_model", "id", b"id", "is_licensed", b"is_licensed", "long_name", b"long_name", "macaddr", b"macaddr", "public_key", b"public_key", "role", b"role", "short_name", b"short_name"]) -> None: ...
+    def HasField(self, field_name: typing.Literal["_is_unmessagable", b"_is_unmessagable", "is_unmessagable", b"is_unmessagable"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing.Literal["_is_unmessagable", b"_is_unmessagable", "hw_model", b"hw_model", "id", b"id", "is_licensed", b"is_licensed", "is_unmessagable", b"is_unmessagable", "long_name", b"long_name", "macaddr", b"macaddr", "public_key", b"public_key", "role", b"role", "short_name", b"short_name"]) -> None: ...
+    def WhichOneof(self, oneof_group: typing.Literal["_is_unmessagable", b"_is_unmessagable"]) -> typing.Literal["is_unmessagable"] | None: ...
 
 global___User = User
 
@@ -1596,6 +2272,16 @@ class Routing(google.protobuf.message.Message):
         """
         Admin packet sent using PKC, but not from a public key on the admin key list
         """
+        RATE_LIMIT_EXCEEDED: Routing._Error.ValueType  # 38
+        """
+        Airtime fairness rate limit exceeded for a packet
+        This typically enforced per portnum and is used to prevent a single node from monopolizing airtime
+        """
+        PKI_SEND_FAIL_PUBLIC_KEY: Routing._Error.ValueType  # 39
+        """
+        PKI encryption failed, due to no public key for the remote node
+        This is different from PKI_UNKNOWN_PUBKEY which indicates a failure upon receiving a packet
+        """
 
     class Error(_Error, metaclass=_ErrorEnumTypeWrapper):
         """
@@ -1669,14 +2355,52 @@ class Routing(google.protobuf.message.Message):
     """
     Admin packet sent using PKC, but not from a public key on the admin key list
     """
+    RATE_LIMIT_EXCEEDED: Routing.Error.ValueType  # 38
+    """
+    Airtime fairness rate limit exceeded for a packet
+    This typically enforced per portnum and is used to prevent a single node from monopolizing airtime
+    """
+    PKI_SEND_FAIL_PUBLIC_KEY: Routing.Error.ValueType  # 39
+    """
+    PKI encryption failed, due to no public key for the remote node
+    This is different from PKI_UNKNOWN_PUBKEY which indicates a failure upon receiving a packet
+    """
 
     ROUTE_REQUEST_FIELD_NUMBER: builtins.int
     ROUTE_REPLY_FIELD_NUMBER: builtins.int
     ERROR_REASON_FIELD_NUMBER: builtins.int
+    ACK_PROOF_FIELD_NUMBER: builtins.int
     error_reason: global___Routing.Error.ValueType
     """
     A failure in delivering a message (usually used for routing control messages, but might be provided
     in addition to ack.fail_id to provide details on the type of failure).
+    """
+    ack_proof: builtins.bytes
+    """
+    Optional proof that this ack/nak was produced by the node that actually received the packet
+    identified by Data.request_id, rather than by anyone holding the channel key.
+
+    Explicit acks are usually sent on the channel, and channel traffic is encrypted but not
+    authenticated, so such an ack can be forged by any listener holding the PSK. When the
+    acknowledged packet WAS PKI encrypted, the two endpoints already share a Curve25519 secret, so
+    the receiver can prove receipt cheaply rather than signing the ack:
+
+      ack_proof = HMAC-SHA256(shared_key,
+                              "ack" | LE32(from) | LE32(to) | LE32(request_id) | routing)[0..8)
+
+    where shared_key is the same SHA256(X25519(sender_private, receiver_public)) used for PKI
+    packet encryption, and `routing` is this encoded Routing message without the ack_proof field.
+
+    Each input is load-bearing. request_id stops a captured proof being replayed against a
+    different outstanding packet. The Routing bytes stop a bit-flip turning a proven success into a
+    failure: an ack and a nak for one packet otherwise share every other input, and channel
+    encryption is CTR with no integrity check. Integers are little-endian so the value is a
+    property of the protocol rather than of the host that computed it.
+
+    Unset when no pairwise key is available, including the PKI_UNKNOWN_PUBKEY and NO_CHANNEL naks,
+    which are emitted precisely because the packet could not be decrypted. Receivers that do not
+    understand this field ignore it. It does not replace xeddsa_signature, which remains the only
+    option for traffic with no pairwise key and the only proof a third party can check.
     """
     @property
     def route_request(self) -> global___RouteDiscovery:
@@ -1696,9 +2420,10 @@ class Routing(google.protobuf.message.Message):
         route_request: global___RouteDiscovery | None = ...,
         route_reply: global___RouteDiscovery | None = ...,
         error_reason: global___Routing.Error.ValueType = ...,
+        ack_proof: builtins.bytes = ...,
     ) -> None: ...
     def HasField(self, field_name: typing.Literal["error_reason", b"error_reason", "route_reply", b"route_reply", "route_request", b"route_request", "variant", b"variant"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["error_reason", b"error_reason", "route_reply", b"route_reply", "route_request", b"route_request", "variant", b"variant"]) -> None: ...
+    def ClearField(self, field_name: typing.Literal["ack_proof", b"ack_proof", "error_reason", b"error_reason", "route_reply", b"route_reply", "route_request", b"route_request", "variant", b"variant"]) -> None: ...
     def WhichOneof(self, oneof_group: typing.Literal["variant", b"variant"]) -> typing.Literal["route_request", "route_reply", "error_reason"] | None: ...
 
 global___Routing = Routing
@@ -1722,6 +2447,7 @@ class Data(google.protobuf.message.Message):
     REPLY_ID_FIELD_NUMBER: builtins.int
     EMOJI_FIELD_NUMBER: builtins.int
     BITFIELD_FIELD_NUMBER: builtins.int
+    XEDDSA_SIGNATURE_FIELD_NUMBER: builtins.int
     portnum: portnums_pb2.PortNum.ValueType
     """
     Formerly named typ and of type Type
@@ -1768,6 +2494,10 @@ class Data(google.protobuf.message.Message):
     """
     Bitfield for extra flags. First use is to indicate that user approves the packet being uploaded to MQTT.
     """
+    xeddsa_signature: builtins.bytes
+    """
+    XEdDSA signature for the payload
+    """
     def __init__(
         self,
         *,
@@ -1780,12 +2510,350 @@ class Data(google.protobuf.message.Message):
         reply_id: builtins.int = ...,
         emoji: builtins.int = ...,
         bitfield: builtins.int | None = ...,
+        xeddsa_signature: builtins.bytes = ...,
     ) -> None: ...
     def HasField(self, field_name: typing.Literal["_bitfield", b"_bitfield", "bitfield", b"bitfield"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["_bitfield", b"_bitfield", "bitfield", b"bitfield", "dest", b"dest", "emoji", b"emoji", "payload", b"payload", "portnum", b"portnum", "reply_id", b"reply_id", "request_id", b"request_id", "source", b"source", "want_response", b"want_response"]) -> None: ...
+    def ClearField(self, field_name: typing.Literal["_bitfield", b"_bitfield", "bitfield", b"bitfield", "dest", b"dest", "emoji", b"emoji", "payload", b"payload", "portnum", b"portnum", "reply_id", b"reply_id", "request_id", b"request_id", "source", b"source", "want_response", b"want_response", "xeddsa_signature", b"xeddsa_signature"]) -> None: ...
     def WhichOneof(self, oneof_group: typing.Literal["_bitfield", b"_bitfield"]) -> typing.Literal["bitfield"] | None: ...
 
 global___Data = Data
+
+@typing.final
+class KeyVerification(google.protobuf.message.Message):
+    """
+    The actual over-the-mesh message doing KeyVerification
+    """
+
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
+
+    NONCE_FIELD_NUMBER: builtins.int
+    HASH1_FIELD_NUMBER: builtins.int
+    HASH2_FIELD_NUMBER: builtins.int
+    nonce: builtins.int
+    """
+    random value Selected by the requesting node
+    """
+    hash1: builtins.bytes
+    """
+    The final authoritative hash, only to be sent by NodeA at the end of the handshake
+    """
+    hash2: builtins.bytes
+    """
+    The intermediary hash (actually derived from hash1),
+    sent from NodeB to NodeA in response to the initial message.
+    """
+    def __init__(
+        self,
+        *,
+        nonce: builtins.int = ...,
+        hash1: builtins.bytes = ...,
+        hash2: builtins.bytes = ...,
+    ) -> None: ...
+    def ClearField(self, field_name: typing.Literal["hash1", b"hash1", "hash2", b"hash2", "nonce", b"nonce"]) -> None: ...
+
+global___KeyVerification = KeyVerification
+
+@typing.final
+class StoreForwardPlusPlus(google.protobuf.message.Message):
+    """
+    The actual over-the-mesh message doing store and forward++
+    """
+
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
+
+    class _SFPP_message_type:
+        ValueType = typing.NewType("ValueType", builtins.int)
+        V: typing_extensions.TypeAlias = ValueType
+
+    class _SFPP_message_typeEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[StoreForwardPlusPlus._SFPP_message_type.ValueType], builtins.type):
+        DESCRIPTOR: google.protobuf.descriptor.EnumDescriptor
+        CANON_ANNOUNCE: StoreForwardPlusPlus._SFPP_message_type.ValueType  # 0
+        """
+        Send an announcement of the canonical tip of a chain
+        """
+        CHAIN_QUERY: StoreForwardPlusPlus._SFPP_message_type.ValueType  # 1
+        """
+        Query whether a specific link is on the chain
+        """
+        LINK_REQUEST: StoreForwardPlusPlus._SFPP_message_type.ValueType  # 3
+        """
+        Request the next link in the chain
+        """
+        LINK_PROVIDE: StoreForwardPlusPlus._SFPP_message_type.ValueType  # 4
+        """
+        Provide a link to add to the chain
+        """
+        LINK_PROVIDE_FIRSTHALF: StoreForwardPlusPlus._SFPP_message_type.ValueType  # 5
+        """
+        If we must fragment, send the first half
+        """
+        LINK_PROVIDE_SECONDHALF: StoreForwardPlusPlus._SFPP_message_type.ValueType  # 6
+        """
+        If we must fragment, send the second half
+        """
+
+    class SFPP_message_type(_SFPP_message_type, metaclass=_SFPP_message_typeEnumTypeWrapper):
+        """
+        Enum of message types
+        """
+
+    CANON_ANNOUNCE: StoreForwardPlusPlus.SFPP_message_type.ValueType  # 0
+    """
+    Send an announcement of the canonical tip of a chain
+    """
+    CHAIN_QUERY: StoreForwardPlusPlus.SFPP_message_type.ValueType  # 1
+    """
+    Query whether a specific link is on the chain
+    """
+    LINK_REQUEST: StoreForwardPlusPlus.SFPP_message_type.ValueType  # 3
+    """
+    Request the next link in the chain
+    """
+    LINK_PROVIDE: StoreForwardPlusPlus.SFPP_message_type.ValueType  # 4
+    """
+    Provide a link to add to the chain
+    """
+    LINK_PROVIDE_FIRSTHALF: StoreForwardPlusPlus.SFPP_message_type.ValueType  # 5
+    """
+    If we must fragment, send the first half
+    """
+    LINK_PROVIDE_SECONDHALF: StoreForwardPlusPlus.SFPP_message_type.ValueType  # 6
+    """
+    If we must fragment, send the second half
+    """
+
+    SFPP_MESSAGE_TYPE_FIELD_NUMBER: builtins.int
+    MESSAGE_HASH_FIELD_NUMBER: builtins.int
+    COMMIT_HASH_FIELD_NUMBER: builtins.int
+    ROOT_HASH_FIELD_NUMBER: builtins.int
+    MESSAGE_FIELD_NUMBER: builtins.int
+    ENCAPSULATED_ID_FIELD_NUMBER: builtins.int
+    ENCAPSULATED_TO_FIELD_NUMBER: builtins.int
+    ENCAPSULATED_FROM_FIELD_NUMBER: builtins.int
+    ENCAPSULATED_RXTIME_FIELD_NUMBER: builtins.int
+    CHAIN_COUNT_FIELD_NUMBER: builtins.int
+    sfpp_message_type: global___StoreForwardPlusPlus.SFPP_message_type.ValueType
+    """
+    Which message type is this
+    """
+    message_hash: builtins.bytes
+    """
+    The hash of the specific message
+    """
+    commit_hash: builtins.bytes
+    """
+    The hash of a link on a chain
+    """
+    root_hash: builtins.bytes
+    """
+    the root hash of a chain
+    """
+    message: builtins.bytes
+    """
+    The encrypted bytes from a message
+    """
+    encapsulated_id: builtins.int
+    """
+    Message ID of the contained message
+    """
+    encapsulated_to: builtins.int
+    """
+    Destination of the contained message
+    """
+    encapsulated_from: builtins.int
+    """
+    Sender of the contained message
+    """
+    encapsulated_rxtime: builtins.int
+    """
+    The receive time of the message in question
+    """
+    chain_count: builtins.int
+    """
+    Used in a LINK_REQUEST to specify the message X spots back from head
+    """
+    def __init__(
+        self,
+        *,
+        sfpp_message_type: global___StoreForwardPlusPlus.SFPP_message_type.ValueType = ...,
+        message_hash: builtins.bytes = ...,
+        commit_hash: builtins.bytes = ...,
+        root_hash: builtins.bytes = ...,
+        message: builtins.bytes = ...,
+        encapsulated_id: builtins.int = ...,
+        encapsulated_to: builtins.int = ...,
+        encapsulated_from: builtins.int = ...,
+        encapsulated_rxtime: builtins.int = ...,
+        chain_count: builtins.int = ...,
+    ) -> None: ...
+    def ClearField(self, field_name: typing.Literal["chain_count", b"chain_count", "commit_hash", b"commit_hash", "encapsulated_from", b"encapsulated_from", "encapsulated_id", b"encapsulated_id", "encapsulated_rxtime", b"encapsulated_rxtime", "encapsulated_to", b"encapsulated_to", "message", b"message", "message_hash", b"message_hash", "root_hash", b"root_hash", "sfpp_message_type", b"sfpp_message_type"]) -> None: ...
+
+global___StoreForwardPlusPlus = StoreForwardPlusPlus
+
+@typing.final
+class RemoteShell(google.protobuf.message.Message):
+    """
+    The actual over-the-mesh message doing RemoteShell
+    """
+
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
+
+    class _OpCode:
+        ValueType = typing.NewType("ValueType", builtins.int)
+        V: typing_extensions.TypeAlias = ValueType
+
+    class _OpCodeEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[RemoteShell._OpCode.ValueType], builtins.type):
+        DESCRIPTOR: google.protobuf.descriptor.EnumDescriptor
+        OP_UNSET: RemoteShell._OpCode.ValueType  # 0
+        OPEN: RemoteShell._OpCode.ValueType  # 1
+        """Client -> server"""
+        INPUT: RemoteShell._OpCode.ValueType  # 2
+        RESIZE: RemoteShell._OpCode.ValueType  # 3
+        CLOSE: RemoteShell._OpCode.ValueType  # 4
+        PING: RemoteShell._OpCode.ValueType  # 5
+        ACK: RemoteShell._OpCode.ValueType  # 6
+        OPEN_OK: RemoteShell._OpCode.ValueType  # 64
+        """Server -> client"""
+        OUTPUT: RemoteShell._OpCode.ValueType  # 65
+        CLOSED: RemoteShell._OpCode.ValueType  # 66
+        ERROR: RemoteShell._OpCode.ValueType  # 67
+        PONG: RemoteShell._OpCode.ValueType  # 68
+
+    class OpCode(_OpCode, metaclass=_OpCodeEnumTypeWrapper):
+        """
+        Frame op code for PTY session control and stream transport.
+
+        Values 1-63 are client->server requests.
+        Values 64-127 are server->client responses/events.
+        """
+
+    OP_UNSET: RemoteShell.OpCode.ValueType  # 0
+    OPEN: RemoteShell.OpCode.ValueType  # 1
+    """Client -> server"""
+    INPUT: RemoteShell.OpCode.ValueType  # 2
+    RESIZE: RemoteShell.OpCode.ValueType  # 3
+    CLOSE: RemoteShell.OpCode.ValueType  # 4
+    PING: RemoteShell.OpCode.ValueType  # 5
+    ACK: RemoteShell.OpCode.ValueType  # 6
+    OPEN_OK: RemoteShell.OpCode.ValueType  # 64
+    """Server -> client"""
+    OUTPUT: RemoteShell.OpCode.ValueType  # 65
+    CLOSED: RemoteShell.OpCode.ValueType  # 66
+    ERROR: RemoteShell.OpCode.ValueType  # 67
+    PONG: RemoteShell.OpCode.ValueType  # 68
+
+    OP_FIELD_NUMBER: builtins.int
+    SESSION_ID_FIELD_NUMBER: builtins.int
+    SEQ_FIELD_NUMBER: builtins.int
+    ACK_SEQ_FIELD_NUMBER: builtins.int
+    PAYLOAD_FIELD_NUMBER: builtins.int
+    COLS_FIELD_NUMBER: builtins.int
+    ROWS_FIELD_NUMBER: builtins.int
+    FLAGS_FIELD_NUMBER: builtins.int
+    LAST_TX_SEQ_FIELD_NUMBER: builtins.int
+    LAST_RX_SEQ_FIELD_NUMBER: builtins.int
+    op: global___RemoteShell.OpCode.ValueType
+    """
+    Structured frame operation.
+    """
+    session_id: builtins.int
+    """
+    Logical PTY session identifier.
+    """
+    seq: builtins.int
+    """
+    Monotonic sequence number for this frame.
+    """
+    ack_seq: builtins.int
+    """
+    Cumulative ack sequence number.
+    """
+    payload: builtins.bytes
+    """
+    Opaque bytes payload for INPUT/OUTPUT/ERROR and other frame bodies.
+    """
+    cols: builtins.int
+    """
+    Terminal size columns used for OPEN/RESIZE signaling.
+    """
+    rows: builtins.int
+    """
+    Terminal size rows used for OPEN/RESIZE signaling.
+    """
+    flags: builtins.int
+    """
+    Bit flags for protocol extensions.
+    """
+    last_tx_seq: builtins.int
+    """
+    The last sequence number TX'd.
+    """
+    last_rx_seq: builtins.int
+    """
+    The last sequence number RX'd.
+    """
+    def __init__(
+        self,
+        *,
+        op: global___RemoteShell.OpCode.ValueType = ...,
+        session_id: builtins.int = ...,
+        seq: builtins.int = ...,
+        ack_seq: builtins.int = ...,
+        payload: builtins.bytes = ...,
+        cols: builtins.int = ...,
+        rows: builtins.int = ...,
+        flags: builtins.int = ...,
+        last_tx_seq: builtins.int = ...,
+        last_rx_seq: builtins.int = ...,
+    ) -> None: ...
+    def ClearField(self, field_name: typing.Literal["ack_seq", b"ack_seq", "cols", b"cols", "flags", b"flags", "last_rx_seq", b"last_rx_seq", "last_tx_seq", b"last_tx_seq", "op", b"op", "payload", b"payload", "rows", b"rows", "seq", b"seq", "session_id", b"session_id"]) -> None: ...
+
+global___RemoteShell = RemoteShell
+
+@typing.final
+class BoundingBox(google.protobuf.message.Message):
+    """
+    A rectangular, axis-aligned geographic bounding box.
+    Used to define a rectangular geofence region for a Waypoint.
+    Fields are ordered west, south, east, north to match the standard bounding box
+    convention used by GeoJSON and PMTiles (min longitude, min latitude, max longitude, max latitude),
+    so the box can drive an offline map extract directly.
+    All coordinates are in degrees scaled by 1e-7 (same convention as Position and Waypoint).
+    """
+
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
+
+    LONGITUDE_WEST_I_FIELD_NUMBER: builtins.int
+    LATITUDE_SOUTH_I_FIELD_NUMBER: builtins.int
+    LONGITUDE_EAST_I_FIELD_NUMBER: builtins.int
+    LATITUDE_NORTH_I_FIELD_NUMBER: builtins.int
+    longitude_west_i: builtins.int
+    """
+    Western edge of the box - minimum longitude (south-west corner)
+    """
+    latitude_south_i: builtins.int
+    """
+    Southern edge of the box - minimum latitude (south-west corner)
+    """
+    longitude_east_i: builtins.int
+    """
+    Eastern edge of the box - maximum longitude (north-east corner)
+    """
+    latitude_north_i: builtins.int
+    """
+    Northern edge of the box - maximum latitude (north-east corner)
+    """
+    def __init__(
+        self,
+        *,
+        longitude_west_i: builtins.int = ...,
+        latitude_south_i: builtins.int = ...,
+        longitude_east_i: builtins.int = ...,
+        latitude_north_i: builtins.int = ...,
+    ) -> None: ...
+    def ClearField(self, field_name: typing.Literal["latitude_north_i", b"latitude_north_i", "latitude_south_i", b"latitude_south_i", "longitude_east_i", b"longitude_east_i", "longitude_west_i", b"longitude_west_i"]) -> None: ...
+
+global___BoundingBox = BoundingBox
 
 @typing.final
 class Waypoint(google.protobuf.message.Message):
@@ -1803,6 +2871,11 @@ class Waypoint(google.protobuf.message.Message):
     NAME_FIELD_NUMBER: builtins.int
     DESCRIPTION_FIELD_NUMBER: builtins.int
     ICON_FIELD_NUMBER: builtins.int
+    GEOFENCE_RADIUS_FIELD_NUMBER: builtins.int
+    BOUNDING_BOX_FIELD_NUMBER: builtins.int
+    NOTIFY_ON_ENTER_FIELD_NUMBER: builtins.int
+    NOTIFY_ON_EXIT_FIELD_NUMBER: builtins.int
+    NOTIFY_FAVORITES_ONLY_FIELD_NUMBER: builtins.int
     id: builtins.int
     """
     Id of the waypoint
@@ -1836,6 +2909,36 @@ class Waypoint(google.protobuf.message.Message):
     """
     Designator icon for the waypoint in the form of a unicode emoji
     """
+    geofence_radius: builtins.int
+    """
+    If greater than zero, defines a circular geofence centred on this waypoint's
+    location (latitude_i / longitude_i) with this radius in meters.
+    Zero means the waypoint has no circular geofence.
+    """
+    notify_on_enter: builtins.bool
+    """
+    If true, a notification should be raised when a tracked node enters this
+    waypoint's geofence (the circular radius and/or the bounding box).
+    """
+    notify_on_exit: builtins.bool
+    """
+    If true, a notification should be raised when a tracked node exits this
+    waypoint's geofence (the circular radius and/or the bounding box).
+    """
+    notify_favorites_only: builtins.bool
+    """
+    If true, only raise geofence enter/exit notifications for nodes that are
+    marked as favorites on the receiving device. Applies to both notify_on_enter
+    and notify_on_exit. Favorite status is resolved locally per receiver, so the
+    same waypoint alerts each node only for its own favorites.
+    """
+    @property
+    def bounding_box(self) -> global___BoundingBox:
+        """
+        Optional rectangular geofence region for this waypoint.
+        May be used instead of, or in addition to, geofence_radius.
+        """
+
     def __init__(
         self,
         *,
@@ -1847,15 +2950,41 @@ class Waypoint(google.protobuf.message.Message):
         name: builtins.str = ...,
         description: builtins.str = ...,
         icon: builtins.int = ...,
+        geofence_radius: builtins.int = ...,
+        bounding_box: global___BoundingBox | None = ...,
+        notify_on_enter: builtins.bool = ...,
+        notify_on_exit: builtins.bool = ...,
+        notify_favorites_only: builtins.bool = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing.Literal["_latitude_i", b"_latitude_i", "_longitude_i", b"_longitude_i", "latitude_i", b"latitude_i", "longitude_i", b"longitude_i"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["_latitude_i", b"_latitude_i", "_longitude_i", b"_longitude_i", "description", b"description", "expire", b"expire", "icon", b"icon", "id", b"id", "latitude_i", b"latitude_i", "locked_to", b"locked_to", "longitude_i", b"longitude_i", "name", b"name"]) -> None: ...
+    def HasField(self, field_name: typing.Literal["_bounding_box", b"_bounding_box", "_latitude_i", b"_latitude_i", "_longitude_i", b"_longitude_i", "bounding_box", b"bounding_box", "latitude_i", b"latitude_i", "longitude_i", b"longitude_i"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing.Literal["_bounding_box", b"_bounding_box", "_latitude_i", b"_latitude_i", "_longitude_i", b"_longitude_i", "bounding_box", b"bounding_box", "description", b"description", "expire", b"expire", "geofence_radius", b"geofence_radius", "icon", b"icon", "id", b"id", "latitude_i", b"latitude_i", "locked_to", b"locked_to", "longitude_i", b"longitude_i", "name", b"name", "notify_favorites_only", b"notify_favorites_only", "notify_on_enter", b"notify_on_enter", "notify_on_exit", b"notify_on_exit"]) -> None: ...
+    @typing.overload
+    def WhichOneof(self, oneof_group: typing.Literal["_bounding_box", b"_bounding_box"]) -> typing.Literal["bounding_box"] | None: ...
     @typing.overload
     def WhichOneof(self, oneof_group: typing.Literal["_latitude_i", b"_latitude_i"]) -> typing.Literal["latitude_i"] | None: ...
     @typing.overload
     def WhichOneof(self, oneof_group: typing.Literal["_longitude_i", b"_longitude_i"]) -> typing.Literal["longitude_i"] | None: ...
 
 global___Waypoint = Waypoint
+
+@typing.final
+class StatusMessage(google.protobuf.message.Message):
+    """
+    Message for node status
+    """
+
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
+
+    STATUS_FIELD_NUMBER: builtins.int
+    status: builtins.str
+    def __init__(
+        self,
+        *,
+        status: builtins.str = ...,
+    ) -> None: ...
+    def ClearField(self, field_name: typing.Literal["status", b"status"]) -> None: ...
+
+global___StatusMessage = StatusMessage
 
 @typing.final
 class MqttClientProxyMessage(google.protobuf.message.Message):
@@ -2064,6 +3193,218 @@ class MeshPacket(google.protobuf.message.Message):
     The message is delayed and was originally a direct message
     """
 
+    class _TransportMechanism:
+        ValueType = typing.NewType("ValueType", builtins.int)
+        V: typing_extensions.TypeAlias = ValueType
+
+    class _TransportMechanismEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[MeshPacket._TransportMechanism.ValueType], builtins.type):
+        DESCRIPTOR: google.protobuf.descriptor.EnumDescriptor
+        TRANSPORT_INTERNAL: MeshPacket._TransportMechanism.ValueType  # 0
+        """
+        The default case is that the node generated a packet itself
+        """
+        TRANSPORT_LORA: MeshPacket._TransportMechanism.ValueType  # 1
+        """
+        Arrived via the primary LoRa radio
+        """
+        TRANSPORT_LORA_ALT1: MeshPacket._TransportMechanism.ValueType  # 2
+        """
+        Arrived via a secondary LoRa radio
+        """
+        TRANSPORT_LORA_ALT2: MeshPacket._TransportMechanism.ValueType  # 3
+        """
+        Arrived via a tertiary LoRa radio
+        """
+        TRANSPORT_LORA_ALT3: MeshPacket._TransportMechanism.ValueType  # 4
+        """
+        Arrived via a quaternary LoRa radio
+        """
+        TRANSPORT_MQTT: MeshPacket._TransportMechanism.ValueType  # 5
+        """
+        Arrived via an MQTT connection
+        """
+        TRANSPORT_MULTICAST_UDP: MeshPacket._TransportMechanism.ValueType  # 6
+        """
+        Arrived via Multicast UDP
+        """
+        TRANSPORT_API: MeshPacket._TransportMechanism.ValueType  # 7
+        """
+        Arrived via API connection
+        """
+        TRANSPORT_UNICAST_UDP: MeshPacket._TransportMechanism.ValueType  # 8
+        """
+        Arrived via Unicast UDP
+        """
+
+    class TransportMechanism(_TransportMechanism, metaclass=_TransportMechanismEnumTypeWrapper):
+        """
+        Enum to identify which transport mechanism this packet arrived over
+        """
+
+    TRANSPORT_INTERNAL: MeshPacket.TransportMechanism.ValueType  # 0
+    """
+    The default case is that the node generated a packet itself
+    """
+    TRANSPORT_LORA: MeshPacket.TransportMechanism.ValueType  # 1
+    """
+    Arrived via the primary LoRa radio
+    """
+    TRANSPORT_LORA_ALT1: MeshPacket.TransportMechanism.ValueType  # 2
+    """
+    Arrived via a secondary LoRa radio
+    """
+    TRANSPORT_LORA_ALT2: MeshPacket.TransportMechanism.ValueType  # 3
+    """
+    Arrived via a tertiary LoRa radio
+    """
+    TRANSPORT_LORA_ALT3: MeshPacket.TransportMechanism.ValueType  # 4
+    """
+    Arrived via a quaternary LoRa radio
+    """
+    TRANSPORT_MQTT: MeshPacket.TransportMechanism.ValueType  # 5
+    """
+    Arrived via an MQTT connection
+    """
+    TRANSPORT_MULTICAST_UDP: MeshPacket.TransportMechanism.ValueType  # 6
+    """
+    Arrived via Multicast UDP
+    """
+    TRANSPORT_API: MeshPacket.TransportMechanism.ValueType  # 7
+    """
+    Arrived via API connection
+    """
+    TRANSPORT_UNICAST_UDP: MeshPacket.TransportMechanism.ValueType  # 8
+    """
+    Arrived via Unicast UDP
+    """
+
+    class _AckProofStatus:
+        ValueType = typing.NewType("ValueType", builtins.int)
+        V: typing_extensions.TypeAlias = ValueType
+
+    class _AckProofStatusEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[MeshPacket._AckProofStatus.ValueType], builtins.type):
+        DESCRIPTOR: google.protobuf.descriptor.EnumDescriptor
+        ACK_PROOF_ABSENT: MeshPacket._AckProofStatus.ValueType  # 0
+        """
+        No verdict. The default, and what every ack from firmware predating Routing.ack_proof looks
+        like, so an absent field and an absent proof read the same.
+
+        Also reported when a proof was carried but not checked: the ack came from a node other than
+        the one the packet was addressed to (a nak from an intermediate, for example), the packet was
+        no longer awaiting an ack, or the proof was malformed. A build without PKI never checks one.
+        A proof is only checked while the packet it acknowledges is still pending, so on a multi-hop
+        path an overheard relay can settle the packet first and leave a genuine receipt reading ABSENT.
+        """
+        ACK_PROOF_VALID: MeshPacket._AckProofStatus.ValueType  # 1
+        """
+        A proof was carried and verified against the public key of the node the acknowledged packet
+        was addressed to. The only value that means "the recipient received it".
+
+        Verifying against the key of whoever the ack claims to be from is NOT sufficient: the proof
+        only shows its author holds a pairwise secret with us, and every keyed peer holds one, so
+        any of them could otherwise mint a receipt for a packet addressed to someone else.
+        """
+        ACK_PROOF_INVALID: MeshPacket._AckProofStatus.ValueType  # 2
+        """
+        A proof was carried and did not verify. Someone produced an ack for an outstanding packet
+        without holding the pairwise secret, so this is an attempted forgery rather than a quiet
+        absence, and is worth surfacing differently from ACK_PROOF_ABSENT.
+        """
+        ACK_PROOF_NO_KEY: MeshPacket._AckProofStatus.ValueType  # 3
+        """
+        A proof was carried but no authoritative public key was available to check it against, so
+        the ack is neither proven nor disproven.
+        """
+
+    class AckProofStatus(_AckProofStatus, metaclass=_AckProofStatusEnumTypeWrapper):
+        """
+        Outcome of checking Routing.ack_proof on a received ack or nak.
+
+        Reported, never enforced: an ack without a usable proof is acted on exactly as it was before
+        proofs existed. The value exists so a client can tell a proven delivery receipt from an
+        unproven one, and can tell "nobody proved this" from "somebody tried and failed".
+        """
+
+    ACK_PROOF_ABSENT: MeshPacket.AckProofStatus.ValueType  # 0
+    """
+    No verdict. The default, and what every ack from firmware predating Routing.ack_proof looks
+    like, so an absent field and an absent proof read the same.
+
+    Also reported when a proof was carried but not checked: the ack came from a node other than
+    the one the packet was addressed to (a nak from an intermediate, for example), the packet was
+    no longer awaiting an ack, or the proof was malformed. A build without PKI never checks one.
+    A proof is only checked while the packet it acknowledges is still pending, so on a multi-hop
+    path an overheard relay can settle the packet first and leave a genuine receipt reading ABSENT.
+    """
+    ACK_PROOF_VALID: MeshPacket.AckProofStatus.ValueType  # 1
+    """
+    A proof was carried and verified against the public key of the node the acknowledged packet
+    was addressed to. The only value that means "the recipient received it".
+
+    Verifying against the key of whoever the ack claims to be from is NOT sufficient: the proof
+    only shows its author holds a pairwise secret with us, and every keyed peer holds one, so
+    any of them could otherwise mint a receipt for a packet addressed to someone else.
+    """
+    ACK_PROOF_INVALID: MeshPacket.AckProofStatus.ValueType  # 2
+    """
+    A proof was carried and did not verify. Someone produced an ack for an outstanding packet
+    without holding the pairwise secret, so this is an attempted forgery rather than a quiet
+    absence, and is worth surfacing differently from ACK_PROOF_ABSENT.
+    """
+    ACK_PROOF_NO_KEY: MeshPacket.AckProofStatus.ValueType  # 3
+    """
+    A proof was carried but no authoritative public key was available to check it against, so
+    the ack is neither proven nor disproven.
+    """
+
+    class _SlotParity:
+        ValueType = typing.NewType("ValueType", builtins.int)
+        V: typing_extensions.TypeAlias = ValueType
+
+    class _SlotParityEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[MeshPacket._SlotParity.ValueType], builtins.type):
+        DESCRIPTOR: google.protobuf.descriptor.EnumDescriptor
+        SLOT_PARITY_UNSET: MeshPacket._SlotParity.ValueType  # 0
+        """
+        No parity asked for: the ordinary backoff draw over the whole contention window.
+        """
+        SLOT_PARITY_EVEN: MeshPacket._SlotParity.ValueType  # 1
+        """
+        Only even-numbered slots, counted from the end of the last frame on air.
+        """
+        SLOT_PARITY_ODD: MeshPacket._SlotParity.ValueType  # 2
+        """
+        Only odd-numbered slots, counted from the end of the last frame on air.
+        """
+
+    class SlotParity(_SlotParity, metaclass=_SlotParityEnumTypeWrapper):
+        """
+        Which slots of the CSMA backoff grid a transmission may draw from.
+
+        Never sent over the radio links. Like priority, it steers how the local node schedules the
+        packet: a module sets it on a packet it is queueing, and the radio driver reads it when it
+        draws the backoff for that packet.
+
+        A node normally draws any slot of the contention window, counted from the moment it draws.
+        A packet that asks for a parity instead has its slots counted from the end of the last frame
+        this node sent or heard, and only slots of that parity are taken, so two senders on opposite
+        parities that redraw after the same frame never land on the same slot, and so are always at
+        least a slot apart. Useful for a pair of nodes exchanging a stream, where the two ends
+        otherwise collide with each other far more often than with the rest of the mesh.
+        """
+
+    SLOT_PARITY_UNSET: MeshPacket.SlotParity.ValueType  # 0
+    """
+    No parity asked for: the ordinary backoff draw over the whole contention window.
+    """
+    SLOT_PARITY_EVEN: MeshPacket.SlotParity.ValueType  # 1
+    """
+    Only even-numbered slots, counted from the end of the last frame on air.
+    """
+    SLOT_PARITY_ODD: MeshPacket.SlotParity.ValueType  # 2
+    """
+    Only odd-numbered slots, counted from the end of the last frame on air.
+    """
+
     FROM_FIELD_NUMBER: builtins.int
     TO_FIELD_NUMBER: builtins.int
     CHANNEL_FIELD_NUMBER: builtins.int
@@ -2084,9 +3425,17 @@ class MeshPacket(google.protobuf.message.Message):
     NEXT_HOP_FIELD_NUMBER: builtins.int
     RELAY_NODE_FIELD_NUMBER: builtins.int
     TX_AFTER_FIELD_NUMBER: builtins.int
+    TRANSPORT_MECHANISM_FIELD_NUMBER: builtins.int
+    XEDDSA_SIGNED_FIELD_NUMBER: builtins.int
+    ACK_PROOF_STATUS_FIELD_NUMBER: builtins.int
+    SLOT_PARITY_FIELD_NUMBER: builtins.int
     to: builtins.int
     """
     The (immediate) destination for this packet
+    If the value is 4,294,967,295 (maximum value of an unsigned 32bit integer), this indicates that the packet was
+    not destined for a specific node, but for a channel as indicated by the value of `channel` below.
+    If the value is another, this indicates that the packet was destined for a specific
+    node (i.e. a kind of "Direct Message" to this node) and not broadcast on a channel.
     """
     channel: builtins.int
     """
@@ -2119,6 +3468,12 @@ class MeshPacket(google.protobuf.message.Message):
     Note: this field is _never_ sent on the radio link itself (to save space) Times
     are typically not sent over the mesh, but they will be added to any Packet
     (chain of SubPacket) sent to the phone (so the phone can know exact time of reception)
+    Explicit presence: firmware cannot always attach a trustworthy wall-clock timestamp at the
+    moment of reception - a node with no GPS and no phone connected yet has no time source at
+    all. has_rx_time disambiguates that state from a genuine (if coincidental) 1970-01-01
+    reading. A packet delivered with this field absent may still be re-timestamped once a valid
+    clock becomes available, before the phone ever sees it - "absent" is not guaranteed
+    permanent, only "not yet known at last observation".
     """
     rx_snr: builtins.float
     """
@@ -2153,6 +3508,9 @@ class MeshPacket(google.protobuf.message.Message):
     rx_rssi: builtins.int
     """
     rssi of received packet. Only sent to phone for dispay purposes.
+    Explicit presence: rssi 0 is a legitimate reading on some radios (SX126x can report exactly
+    0 dBm; SX127x's formula can even go positive). has_rx_rssi disambiguates; a replayed packet
+    built from history should leave this field absent rather than emitting 0.
     """
     delayed: global___MeshPacket.Delayed.ValueType
     """
@@ -2166,6 +3524,10 @@ class MeshPacket(google.protobuf.message.Message):
     """
     Hop limit with which the original packet started. Sent via LoRa using three bits in the unencrypted header.
     When receiving a packet, the difference between hop_start and hop_limit gives how many hops it traveled.
+    hop_start == 0 does not necessarily mean a direct (0-hop) neighbor: firmware prior to 2.3.0
+    never populated this field, so a receiver can only trust hop_start == 0 as genuine once it has
+    decoded the packet and confirmed the sender's bitfield is present (added in 2.5.0). Until then,
+    or for a sender that never sets that bitfield, treat hop_start == 0 as unknown, not direct.
     """
     public_key: builtins.bytes
     """
@@ -2177,7 +3539,7 @@ class MeshPacket(google.protobuf.message.Message):
     """
     next_hop: builtins.int
     """
-    Last byte of the node number of the node that should be used as the next hop in routing. 
+    Last byte of the node number of the node that should be used as the next hop in routing.
     Set by the firmware internally, clients are not supposed to set this.
     """
     relay_node: builtins.int
@@ -2190,6 +3552,32 @@ class MeshPacket(google.protobuf.message.Message):
     *Never* sent over the radio links.
     Timestamp after which this packet may be sent.
     Set by the firmware internally, clients are not supposed to set this.
+    """
+    transport_mechanism: global___MeshPacket.TransportMechanism.ValueType
+    """
+    Indicates which transport mechanism this packet arrived over
+    """
+    xeddsa_signed: builtins.bool
+    """
+    Indicates whether the packet has a valid signature
+    """
+    ack_proof_status: global___MeshPacket.AckProofStatus.ValueType
+    """
+    *Never* sent over the radio links.
+    Set by the firmware on a received ack or nak, reporting whether its Routing.ack_proof proved
+    that the node we addressed is the one acknowledging. Clients are not supposed to set this, and
+    the firmware clears whatever arrives here before evaluating a packet - an inbound value is
+    attacker-controlled, since MQTT and the client API both carry whole MeshPacket protobufs.
+
+    Distinct from xeddsa_signed, which is an identity signature any holder of the sender's public
+    key can check. This is a pairwise MAC that only the original sender can check, and it attests
+    to delivery rather than to authorship.
+    """
+    slot_parity: global___MeshPacket.SlotParity.ValueType
+    """
+    Never sent over the radio links.
+    Which parity of the CSMA backoff slot grid this packet may be sent in; see SlotParity.
+    Set by whoever queues the packet, and read by the radio driver when it draws the backoff.
     """
     @property
     def decoded(self) -> global___Data:
@@ -2205,12 +3593,12 @@ class MeshPacket(google.protobuf.message.Message):
         decoded: global___Data | None = ...,
         encrypted: builtins.bytes = ...,
         id: builtins.int = ...,
-        rx_time: builtins.int = ...,
+        rx_time: builtins.int | None = ...,
         rx_snr: builtins.float = ...,
         hop_limit: builtins.int = ...,
         want_ack: builtins.bool = ...,
         priority: global___MeshPacket.Priority.ValueType = ...,
-        rx_rssi: builtins.int = ...,
+        rx_rssi: builtins.int | None = ...,
         delayed: global___MeshPacket.Delayed.ValueType = ...,
         via_mqtt: builtins.bool = ...,
         hop_start: builtins.int = ...,
@@ -2219,9 +3607,18 @@ class MeshPacket(google.protobuf.message.Message):
         next_hop: builtins.int = ...,
         relay_node: builtins.int = ...,
         tx_after: builtins.int = ...,
+        transport_mechanism: global___MeshPacket.TransportMechanism.ValueType = ...,
+        xeddsa_signed: builtins.bool = ...,
+        ack_proof_status: global___MeshPacket.AckProofStatus.ValueType = ...,
+        slot_parity: global___MeshPacket.SlotParity.ValueType = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing.Literal["decoded", b"decoded", "encrypted", b"encrypted", "payload_variant", b"payload_variant"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["channel", b"channel", "decoded", b"decoded", "delayed", b"delayed", "encrypted", b"encrypted", "from", b"from", "hop_limit", b"hop_limit", "hop_start", b"hop_start", "id", b"id", "next_hop", b"next_hop", "payload_variant", b"payload_variant", "pki_encrypted", b"pki_encrypted", "priority", b"priority", "public_key", b"public_key", "relay_node", b"relay_node", "rx_rssi", b"rx_rssi", "rx_snr", b"rx_snr", "rx_time", b"rx_time", "to", b"to", "tx_after", b"tx_after", "via_mqtt", b"via_mqtt", "want_ack", b"want_ack"]) -> None: ...
+    def HasField(self, field_name: typing.Literal["_rx_rssi", b"_rx_rssi", "_rx_time", b"_rx_time", "decoded", b"decoded", "encrypted", b"encrypted", "payload_variant", b"payload_variant", "rx_rssi", b"rx_rssi", "rx_time", b"rx_time"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing.Literal["_rx_rssi", b"_rx_rssi", "_rx_time", b"_rx_time", "ack_proof_status", b"ack_proof_status", "channel", b"channel", "decoded", b"decoded", "delayed", b"delayed", "encrypted", b"encrypted", "from", b"from", "hop_limit", b"hop_limit", "hop_start", b"hop_start", "id", b"id", "next_hop", b"next_hop", "payload_variant", b"payload_variant", "pki_encrypted", b"pki_encrypted", "priority", b"priority", "public_key", b"public_key", "relay_node", b"relay_node", "rx_rssi", b"rx_rssi", "rx_snr", b"rx_snr", "rx_time", b"rx_time", "slot_parity", b"slot_parity", "to", b"to", "transport_mechanism", b"transport_mechanism", "tx_after", b"tx_after", "via_mqtt", b"via_mqtt", "want_ack", b"want_ack", "xeddsa_signed", b"xeddsa_signed"]) -> None: ...
+    @typing.overload
+    def WhichOneof(self, oneof_group: typing.Literal["_rx_rssi", b"_rx_rssi"]) -> typing.Literal["rx_rssi"] | None: ...
+    @typing.overload
+    def WhichOneof(self, oneof_group: typing.Literal["_rx_time", b"_rx_time"]) -> typing.Literal["rx_time"] | None: ...
+    @typing.overload
     def WhichOneof(self, oneof_group: typing.Literal["payload_variant", b"payload_variant"]) -> typing.Literal["decoded", "encrypted"] | None: ...
 
 global___MeshPacket = MeshPacket
@@ -2260,6 +3657,10 @@ class NodeInfo(google.protobuf.message.Message):
     HOPS_AWAY_FIELD_NUMBER: builtins.int
     IS_FAVORITE_FIELD_NUMBER: builtins.int
     IS_IGNORED_FIELD_NUMBER: builtins.int
+    IS_KEY_MANUALLY_VERIFIED_FIELD_NUMBER: builtins.int
+    IS_MUTED_FIELD_NUMBER: builtins.int
+    HAS_XEDDSA_SIGNED_FIELD_NUMBER: builtins.int
+    HEARD_ON_CURRENT_LORA_FIELD_NUMBER: builtins.int
     num: builtins.int
     """
     The node number
@@ -2301,6 +3702,40 @@ class NodeInfo(google.protobuf.message.Message):
     True if node is in our ignored list
     Persists between NodeDB internal clean ups
     """
+    is_key_manually_verified: builtins.bool
+    """
+    True if node public key has been verified.
+    Persists between NodeDB internal clean ups
+    LSB 0 of the bitfield
+    """
+    is_muted: builtins.bool
+    """
+    True if node has been muted
+    Persistes between NodeDB internal clean ups
+    """
+    has_xeddsa_signed: builtins.bool
+    """
+    True if node is signing its packets via XEdDSA
+    Persists between NodeDB internal clean ups
+    LSB 1 of the bitfield
+    """
+    heard_on_current_lora: builtins.bool
+    """
+    True if we have heard this node over RF on the LoRa configuration the
+    radio is using right now. Derived on the device rather than stored: each
+    node records the frequency slot it was last heard on, and this reports
+    whether that slot matches the one the radio is currently committed to.
+    The slot covers the region, modem preset (or the custom bandwidth/spread
+    factor/coding rate when use_preset is false), override_frequency,
+    channel_num and the primary channel name.
+    Because it is derived, leaving a configuration and returning to it
+    restores the previous answers, so a client sweeping through presets to
+    listen for traffic does not disturb them.
+    Not set for nodes heard only over MQTT, which reach us over the internet
+    rather than over our own radio - see via_mqtt - nor for nodes added as a
+    shared contact, which have never been heard over RF at all.
+    Derived from LSB 11 and bits 12..23 of NodeInfoLite.bitfield.
+    """
     @property
     def user(self) -> global___User:
         """
@@ -2334,9 +3769,13 @@ class NodeInfo(google.protobuf.message.Message):
         hops_away: builtins.int | None = ...,
         is_favorite: builtins.bool = ...,
         is_ignored: builtins.bool = ...,
+        is_key_manually_verified: builtins.bool = ...,
+        is_muted: builtins.bool = ...,
+        has_xeddsa_signed: builtins.bool = ...,
+        heard_on_current_lora: builtins.bool = ...,
     ) -> None: ...
     def HasField(self, field_name: typing.Literal["_hops_away", b"_hops_away", "device_metrics", b"device_metrics", "hops_away", b"hops_away", "position", b"position", "user", b"user"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["_hops_away", b"_hops_away", "channel", b"channel", "device_metrics", b"device_metrics", "hops_away", b"hops_away", "is_favorite", b"is_favorite", "is_ignored", b"is_ignored", "last_heard", b"last_heard", "num", b"num", "position", b"position", "snr", b"snr", "user", b"user", "via_mqtt", b"via_mqtt"]) -> None: ...
+    def ClearField(self, field_name: typing.Literal["_hops_away", b"_hops_away", "channel", b"channel", "device_metrics", b"device_metrics", "has_xeddsa_signed", b"has_xeddsa_signed", "heard_on_current_lora", b"heard_on_current_lora", "hops_away", b"hops_away", "is_favorite", b"is_favorite", "is_ignored", b"is_ignored", "is_key_manually_verified", b"is_key_manually_verified", "is_muted", b"is_muted", "last_heard", b"last_heard", "num", b"num", "position", b"position", "snr", b"snr", "user", b"user", "via_mqtt", b"via_mqtt"]) -> None: ...
     def WhichOneof(self, oneof_group: typing.Literal["_hops_away", b"_hops_away"]) -> typing.Literal["hops_away"] | None: ...
 
 global___NodeInfo = NodeInfo
@@ -2356,6 +3795,8 @@ class MyNodeInfo(google.protobuf.message.Message):
     MIN_APP_VERSION_FIELD_NUMBER: builtins.int
     DEVICE_ID_FIELD_NUMBER: builtins.int
     PIO_ENV_FIELD_NUMBER: builtins.int
+    FIRMWARE_EDITION_FIELD_NUMBER: builtins.int
+    NODEDB_COUNT_FIELD_NUMBER: builtins.int
     my_node_num: builtins.int
     """
     Tells the phone what our node number is, default starting value is
@@ -2379,6 +3820,15 @@ class MyNodeInfo(google.protobuf.message.Message):
     """
     The PlatformIO environment used to build this firmware
     """
+    firmware_edition: global___FirmwareEdition.ValueType
+    """
+    The indicator for whether this device is running event firmware and which
+    """
+    nodedb_count: builtins.int
+    """
+    The number of nodes in the nodedb.
+    This is used by the phone to know how many NodeInfo packets to expect on want_config
+    """
     def __init__(
         self,
         *,
@@ -2387,8 +3837,10 @@ class MyNodeInfo(google.protobuf.message.Message):
         min_app_version: builtins.int = ...,
         device_id: builtins.bytes = ...,
         pio_env: builtins.str = ...,
+        firmware_edition: global___FirmwareEdition.ValueType = ...,
+        nodedb_count: builtins.int = ...,
     ) -> None: ...
-    def ClearField(self, field_name: typing.Literal["device_id", b"device_id", "min_app_version", b"min_app_version", "my_node_num", b"my_node_num", "pio_env", b"pio_env", "reboot_count", b"reboot_count"]) -> None: ...
+    def ClearField(self, field_name: typing.Literal["device_id", b"device_id", "firmware_edition", b"firmware_edition", "min_app_version", b"min_app_version", "my_node_num", b"my_node_num", "nodedb_count", b"nodedb_count", "pio_env", b"pio_env", "reboot_count", b"reboot_count"]) -> None: ...
 
 global___MyNodeInfo = MyNodeInfo
 
@@ -2561,6 +4013,10 @@ class FromRadio(google.protobuf.message.Message):
     FILEINFO_FIELD_NUMBER: builtins.int
     CLIENTNOTIFICATION_FIELD_NUMBER: builtins.int
     DEVICEUICONFIG_FIELD_NUMBER: builtins.int
+    LOCKDOWN_STATUS_FIELD_NUMBER: builtins.int
+    REGION_PRESETS_FIELD_NUMBER: builtins.int
+    DISPLAY_FRAME_FIELD_NUMBER: builtins.int
+    DISPLAY_PALETTE_FIELD_NUMBER: builtins.int
     id: builtins.int
     """
     The packet id, used to allow the phone to request missing read packets from the FIFO,
@@ -2666,6 +4122,41 @@ class FromRadio(google.protobuf.message.Message):
         Persistent data for device-ui
         """
 
+    @property
+    def lockdown_status(self) -> global___LockdownStatus:
+        """
+        Lockdown state notification for hardened firmware builds.
+        Sent post-config (so unauthorized clients learn they must
+        provision/unlock) and after each LockdownAuth admin command
+        to report success or failure. Replaces the earlier scheme of
+        encoding state as magic-string prefixes inside ClientNotification.
+        """
+
+    @property
+    def region_presets(self) -> global___LoRaRegionPresetMap:
+        """
+        Map of which modem presets are legal in each LoRa region. Sent once
+        during the want_config handshake (right after `metadata`, before the
+        first `channel`) so client UIs can prevent the user from selecting an
+        illegal region+preset combination. A region that does not appear in
+        any group carries no constraint info and should not be restricted.
+        """
+
+    @property
+    def display_frame(self) -> global___DisplayFrame:
+        """
+        One chunk of the device's display framebuffer, sent while display
+        mirroring is active (see AdminMessage.set_display_mirror and
+        AdminMessage.get_display_frame_request).
+        """
+
+    @property
+    def display_palette(self) -> global___DisplayPalette:
+        """
+        One chunk of the color palette referenced by display_frame's
+        palette_signature (see DisplayPalette).
+        """
+
     def __init__(
         self,
         *,
@@ -2686,12 +4177,432 @@ class FromRadio(google.protobuf.message.Message):
         fileInfo: global___FileInfo | None = ...,
         clientNotification: global___ClientNotification | None = ...,
         deviceuiConfig: device_ui_pb2.DeviceUIConfig | None = ...,
+        lockdown_status: global___LockdownStatus | None = ...,
+        region_presets: global___LoRaRegionPresetMap | None = ...,
+        display_frame: global___DisplayFrame | None = ...,
+        display_palette: global___DisplayPalette | None = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing.Literal["channel", b"channel", "clientNotification", b"clientNotification", "config", b"config", "config_complete_id", b"config_complete_id", "deviceuiConfig", b"deviceuiConfig", "fileInfo", b"fileInfo", "log_record", b"log_record", "metadata", b"metadata", "moduleConfig", b"moduleConfig", "mqttClientProxyMessage", b"mqttClientProxyMessage", "my_info", b"my_info", "node_info", b"node_info", "packet", b"packet", "payload_variant", b"payload_variant", "queueStatus", b"queueStatus", "rebooted", b"rebooted", "xmodemPacket", b"xmodemPacket"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["channel", b"channel", "clientNotification", b"clientNotification", "config", b"config", "config_complete_id", b"config_complete_id", "deviceuiConfig", b"deviceuiConfig", "fileInfo", b"fileInfo", "id", b"id", "log_record", b"log_record", "metadata", b"metadata", "moduleConfig", b"moduleConfig", "mqttClientProxyMessage", b"mqttClientProxyMessage", "my_info", b"my_info", "node_info", b"node_info", "packet", b"packet", "payload_variant", b"payload_variant", "queueStatus", b"queueStatus", "rebooted", b"rebooted", "xmodemPacket", b"xmodemPacket"]) -> None: ...
-    def WhichOneof(self, oneof_group: typing.Literal["payload_variant", b"payload_variant"]) -> typing.Literal["packet", "my_info", "node_info", "config", "log_record", "config_complete_id", "rebooted", "moduleConfig", "channel", "queueStatus", "xmodemPacket", "metadata", "mqttClientProxyMessage", "fileInfo", "clientNotification", "deviceuiConfig"] | None: ...
+    def HasField(self, field_name: typing.Literal["channel", b"channel", "clientNotification", b"clientNotification", "config", b"config", "config_complete_id", b"config_complete_id", "deviceuiConfig", b"deviceuiConfig", "display_frame", b"display_frame", "display_palette", b"display_palette", "fileInfo", b"fileInfo", "lockdown_status", b"lockdown_status", "log_record", b"log_record", "metadata", b"metadata", "moduleConfig", b"moduleConfig", "mqttClientProxyMessage", b"mqttClientProxyMessage", "my_info", b"my_info", "node_info", b"node_info", "packet", b"packet", "payload_variant", b"payload_variant", "queueStatus", b"queueStatus", "rebooted", b"rebooted", "region_presets", b"region_presets", "xmodemPacket", b"xmodemPacket"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing.Literal["channel", b"channel", "clientNotification", b"clientNotification", "config", b"config", "config_complete_id", b"config_complete_id", "deviceuiConfig", b"deviceuiConfig", "display_frame", b"display_frame", "display_palette", b"display_palette", "fileInfo", b"fileInfo", "id", b"id", "lockdown_status", b"lockdown_status", "log_record", b"log_record", "metadata", b"metadata", "moduleConfig", b"moduleConfig", "mqttClientProxyMessage", b"mqttClientProxyMessage", "my_info", b"my_info", "node_info", b"node_info", "packet", b"packet", "payload_variant", b"payload_variant", "queueStatus", b"queueStatus", "rebooted", b"rebooted", "region_presets", b"region_presets", "xmodemPacket", b"xmodemPacket"]) -> None: ...
+    def WhichOneof(self, oneof_group: typing.Literal["payload_variant", b"payload_variant"]) -> typing.Literal["packet", "my_info", "node_info", "config", "log_record", "config_complete_id", "rebooted", "moduleConfig", "channel", "queueStatus", "xmodemPacket", "metadata", "mqttClientProxyMessage", "fileInfo", "clientNotification", "deviceuiConfig", "lockdown_status", "region_presets", "display_frame", "display_palette"] | None: ...
 
 global___FromRadio = FromRadio
+
+@typing.final
+class DisplayFrame(google.protobuf.message.Message):
+    """
+    A chunk of the device's display framebuffer, streamed to the local client
+    over BLE/serial/TCP. Frames larger than one chunk are split by byte offset;
+    a chunk with offset + data length == total_size completes the frame.
+    This is application-level chunking of a framebuffer into several complete
+    FromRadio messages, and is unrelated to ClientApiChunkedPayload, which
+    splits ONE serialized FromRadio across a small BLE MTU. A frame cannot ride
+    that wrapper: FromRadio is statically capped at MAX_TO_FROM_RADIO_SIZE, far
+    below a full framebuffer. The two compose - a chunked-transport client
+    receives these frames through it.
+
+    Chunks of one frame arrive contiguously (no other display_frame between
+    them; display_palette messages may interleave) and in offset order, so a
+    client never has to reorder. It does have to check for loss: the queue to
+    the client drops its oldest entry when full, and a frame in flight can be
+    truncated when mirroring is disabled. A client MUST verify that offset
+    equals the number of bytes it has already accumulated for this frame_id,
+    and discard the partial frame on any gap or frame_id change. An incomplete
+    frame must never be rendered.
+    """
+
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
+
+    class _Format:
+        ValueType = typing.NewType("ValueType", builtins.int)
+        V: typing_extensions.TypeAlias = ValueType
+
+    class _FormatEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[DisplayFrame._Format.ValueType], builtins.type):
+        DESCRIPTOR: google.protobuf.descriptor.EnumDescriptor
+        FORMAT_UNSPECIFIED: DisplayFrame._Format.ValueType  # 0
+        """
+        Default; should not be sent.
+        """
+        MONO_VLSB: DisplayFrame._Format.ValueType  # 1
+        """
+        1 bit per pixel, vertical LSB-first pages (SSD1306/OLEDDisplay layout):
+        byte index = x + (y / 8) * width, bit index = y % 8.
+        """
+        RGB565: DisplayFrame._Format.ValueType  # 2
+        """
+        16 bits per pixel, RGB565 in little-endian byte order, rows tightly
+        packed. Used with the partial-update rect fields: data covers only
+        the rectangle. Streamed by LVGL-based color UIs.
+        """
+
+    class Format(_Format, metaclass=_FormatEnumTypeWrapper):
+        """
+        Pixel encodings of the framebuffer bytes.
+        """
+
+    FORMAT_UNSPECIFIED: DisplayFrame.Format.ValueType  # 0
+    """
+    Default; should not be sent.
+    """
+    MONO_VLSB: DisplayFrame.Format.ValueType  # 1
+    """
+    1 bit per pixel, vertical LSB-first pages (SSD1306/OLEDDisplay layout):
+    byte index = x + (y / 8) * width, bit index = y % 8.
+    """
+    RGB565: DisplayFrame.Format.ValueType  # 2
+    """
+    16 bits per pixel, RGB565 in little-endian byte order, rows tightly
+    packed. Used with the partial-update rect fields: data covers only
+    the rectangle. Streamed by LVGL-based color UIs.
+    """
+
+    WIDTH_FIELD_NUMBER: builtins.int
+    HEIGHT_FIELD_NUMBER: builtins.int
+    FORMAT_FIELD_NUMBER: builtins.int
+    FRAME_ID_FIELD_NUMBER: builtins.int
+    OFFSET_FIELD_NUMBER: builtins.int
+    TOTAL_SIZE_FIELD_NUMBER: builtins.int
+    DATA_FIELD_NUMBER: builtins.int
+    RECT_X_FIELD_NUMBER: builtins.int
+    RECT_Y_FIELD_NUMBER: builtins.int
+    RECT_WIDTH_FIELD_NUMBER: builtins.int
+    RECT_HEIGHT_FIELD_NUMBER: builtins.int
+    PALETTE_SIGNATURE_FIELD_NUMBER: builtins.int
+    width: builtins.int
+    """
+    Display width in pixels.
+    """
+    height: builtins.int
+    """
+    Display height in pixels.
+    """
+    format: global___DisplayFrame.Format.ValueType
+    """
+    Pixel encoding of data.
+    """
+    frame_id: builtins.int
+    """
+    Frame counter, constant across the chunks of one frame, so a change
+    marks the start of a new frame. It cannot reveal loss WITHIN a frame,
+    since every chunk of that frame carries the same value; only offset
+    contiguity can. Increments per captured frame, wraps at uint32 range,
+    and restarts from 1 on device reboot, so treat any change as "a new
+    frame" rather than as an ordering guarantee.
+    """
+    offset: builtins.int
+    """
+    Byte offset of this chunk within the full frame buffer.
+    """
+    total_size: builtins.int
+    """
+    Total size in bytes of the full frame buffer.
+    """
+    data: builtins.bytes
+    """
+    The framebuffer bytes for this chunk.
+    """
+    rect_x: builtins.int
+    """
+    Optional partial-update rectangle (dirty-rect streaming from LVGL-based
+    color UIs, format RGB565). A zero rect_width or rect_height means the
+    full panel in that axis, so data carries the pixels of the resulting
+    rectangle and offset/total_size describe that rectangle's own buffer;
+    width/height above always remain the full display dimensions, and each
+    rectangle is an independently completed unit under its own frame_id.
+    MONO_VLSB frames never set these fields.
+    """
+    rect_y: builtins.int
+    """
+    See rect_x.
+    """
+    rect_width: builtins.int
+    """
+    See rect_x.
+    """
+    rect_height: builtins.int
+    """
+    See rect_x.
+    """
+    palette_signature: builtins.int
+    """
+    Identity of the DisplayPalette that colorizes this frame, matching
+    DisplayPalette.signature. 0 when the device renders monochrome (no
+    color panel); clients without the referenced palette yet should render
+    monochrome until its chunks arrive.
+    """
+    def __init__(
+        self,
+        *,
+        width: builtins.int = ...,
+        height: builtins.int = ...,
+        format: global___DisplayFrame.Format.ValueType = ...,
+        frame_id: builtins.int = ...,
+        offset: builtins.int = ...,
+        total_size: builtins.int = ...,
+        data: builtins.bytes = ...,
+        rect_x: builtins.int = ...,
+        rect_y: builtins.int = ...,
+        rect_width: builtins.int = ...,
+        rect_height: builtins.int = ...,
+        palette_signature: builtins.int = ...,
+    ) -> None: ...
+    def ClearField(self, field_name: typing.Literal["data", b"data", "format", b"format", "frame_id", b"frame_id", "height", b"height", "offset", b"offset", "palette_signature", b"palette_signature", "rect_height", b"rect_height", "rect_width", b"rect_width", "rect_x", b"rect_x", "rect_y", b"rect_y", "total_size", b"total_size", "width", b"width"]) -> None: ...
+
+global___DisplayFrame = DisplayFrame
+
+@typing.final
+class DisplayPalette(google.protobuf.message.Message):
+    """
+    Colorization palette for DisplayFrame streams from devices that paint the
+    1bpp base UI onto a color panel. The panel applies per-region on/off
+    colors at flush time; streaming the same region table lets a client
+    render the mirror in the panel's true colors at 1bpp bandwidth.
+    Sent as FromRadio.display_palette, split by region index when the table
+    exceeds one message; re-sent only when the region layout or theme changes
+    (the signature changes with it). Regions are ordered by table index; a
+    region with a higher table index overrides lower-indexed ones where they
+    overlap, regardless of chunk boundaries. A client holding partial chunks
+    of a signature that no longer matches incoming chunks should discard
+    them. All colors are RGB565 in logical bit layout (RRRRRGGGGGGBBBBB).
+    """
+
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
+
+    @typing.final
+    class ColorRegion(google.protobuf.message.Message):
+        """
+        One colorized rectangle of the display.
+        """
+
+        DESCRIPTOR: google.protobuf.descriptor.Descriptor
+
+        X_FIELD_NUMBER: builtins.int
+        Y_FIELD_NUMBER: builtins.int
+        WIDTH_FIELD_NUMBER: builtins.int
+        HEIGHT_FIELD_NUMBER: builtins.int
+        ON_COLOR_FIELD_NUMBER: builtins.int
+        OFF_COLOR_FIELD_NUMBER: builtins.int
+        x: builtins.int
+        """
+        Region origin and size in pixels.
+        """
+        y: builtins.int
+        """
+        See x.
+        """
+        width: builtins.int
+        """
+        See x.
+        """
+        height: builtins.int
+        """
+        See x.
+        """
+        on_color: builtins.int
+        """
+        RGB565 drawn for set (1) pixels inside this region.
+        """
+        off_color: builtins.int
+        """
+        RGB565 drawn for clear (0) pixels inside this region.
+        """
+        def __init__(
+            self,
+            *,
+            x: builtins.int = ...,
+            y: builtins.int = ...,
+            width: builtins.int = ...,
+            height: builtins.int = ...,
+            on_color: builtins.int = ...,
+            off_color: builtins.int = ...,
+        ) -> None: ...
+        def ClearField(self, field_name: typing.Literal["height", b"height", "off_color", b"off_color", "on_color", b"on_color", "width", b"width", "x", b"x", "y", b"y"]) -> None: ...
+
+    SIGNATURE_FIELD_NUMBER: builtins.int
+    DEFAULT_ON_COLOR_FIELD_NUMBER: builtins.int
+    DEFAULT_OFF_COLOR_FIELD_NUMBER: builtins.int
+    REGION_OFFSET_FIELD_NUMBER: builtins.int
+    REGION_TOTAL_FIELD_NUMBER: builtins.int
+    REGIONS_FIELD_NUMBER: builtins.int
+    signature: builtins.int
+    """
+    Identity of this palette; DisplayFrame.palette_signature references it.
+    Changes whenever the region table or theme changes. Never 0, which
+    DisplayFrame.palette_signature reserves for monochrome.
+    """
+    default_on_color: builtins.int
+    """
+    RGB565 for set pixels outside all regions. The region_offset 0 chunk is authoritative.
+    """
+    default_off_color: builtins.int
+    """
+    RGB565 for clear pixels outside all regions. The region_offset 0 chunk is authoritative.
+    """
+    region_offset: builtins.int
+    """
+    Table index of the first region in this chunk.
+    """
+    region_total: builtins.int
+    """
+    Total regions in the complete palette; region_offset + regions length
+    == region_total completes it.
+    """
+    @property
+    def regions(self) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[global___DisplayPalette.ColorRegion]:
+        """
+        The regions of this chunk, in table order.
+        """
+
+    def __init__(
+        self,
+        *,
+        signature: builtins.int = ...,
+        default_on_color: builtins.int = ...,
+        default_off_color: builtins.int = ...,
+        region_offset: builtins.int = ...,
+        region_total: builtins.int = ...,
+        regions: collections.abc.Iterable[global___DisplayPalette.ColorRegion] | None = ...,
+    ) -> None: ...
+    def ClearField(self, field_name: typing.Literal["default_off_color", b"default_off_color", "default_on_color", b"default_on_color", "region_offset", b"region_offset", "region_total", b"region_total", "regions", b"regions", "signature", b"signature"]) -> None: ...
+
+global___DisplayPalette = DisplayPalette
+
+@typing.final
+class LockdownStatus(google.protobuf.message.Message):
+    """
+    Lockdown state report from firmware to client (for hardened builds
+    with MESHTASTIC_LOCKDOWN). Sent immediately after config_complete_id
+    to inform a freshly-connected unauthorized client what it must do,
+    and again in response to each LockdownAuth admin command.
+    """
+
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
+
+    class _State:
+        ValueType = typing.NewType("ValueType", builtins.int)
+        V: typing_extensions.TypeAlias = ValueType
+
+    class _StateEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[LockdownStatus._State.ValueType], builtins.type):
+        DESCRIPTOR: google.protobuf.descriptor.EnumDescriptor
+        STATE_UNSPECIFIED: LockdownStatus._State.ValueType  # 0
+        """Default; should not be sent."""
+        NEEDS_PROVISION: LockdownStatus._State.ValueType  # 1
+        """
+        No passphrase has ever been provisioned on this device.
+        Client should prompt the operator to set one.
+        """
+        LOCKED: LockdownStatus._State.ValueType  # 2
+        """
+        Storage is locked or this client has not authenticated yet.
+        lock_reason carries a machine-readable detail string.
+        Client should present (or auto-replay) a passphrase via
+        AdminMessage.lockdown_auth.
+        """
+        UNLOCKED: LockdownStatus._State.ValueType  # 3
+        """
+        Passphrase accepted; client is now authorized for this connection.
+        boots_remaining and valid_until_epoch describe the active session
+        token's TTL.
+        """
+        UNLOCK_FAILED: LockdownStatus._State.ValueType  # 4
+        """
+        Passphrase rejected. backoff_seconds is non-zero when rate-limited.
+        """
+        DISABLED: LockdownStatus._State.ValueType  # 5
+        """
+        Lockdown is supported by this firmware but not currently active
+        (no passphrase has been provisioned, or it was disabled via
+        AdminMessage.lockdown_auth.disable). The device is operating in
+        normal, non-encrypted mode. Clients render the lockdown-mode
+        toggle as OFF on receiving this. Distinct from NEEDS_PROVISION,
+        which is only used during an in-progress enable flow.
+        """
+
+    class State(_State, metaclass=_StateEnumTypeWrapper): ...
+    STATE_UNSPECIFIED: LockdownStatus.State.ValueType  # 0
+    """Default; should not be sent."""
+    NEEDS_PROVISION: LockdownStatus.State.ValueType  # 1
+    """
+    No passphrase has ever been provisioned on this device.
+    Client should prompt the operator to set one.
+    """
+    LOCKED: LockdownStatus.State.ValueType  # 2
+    """
+    Storage is locked or this client has not authenticated yet.
+    lock_reason carries a machine-readable detail string.
+    Client should present (or auto-replay) a passphrase via
+    AdminMessage.lockdown_auth.
+    """
+    UNLOCKED: LockdownStatus.State.ValueType  # 3
+    """
+    Passphrase accepted; client is now authorized for this connection.
+    boots_remaining and valid_until_epoch describe the active session
+    token's TTL.
+    """
+    UNLOCK_FAILED: LockdownStatus.State.ValueType  # 4
+    """
+    Passphrase rejected. backoff_seconds is non-zero when rate-limited.
+    """
+    DISABLED: LockdownStatus.State.ValueType  # 5
+    """
+    Lockdown is supported by this firmware but not currently active
+    (no passphrase has been provisioned, or it was disabled via
+    AdminMessage.lockdown_auth.disable). The device is operating in
+    normal, non-encrypted mode. Clients render the lockdown-mode
+    toggle as OFF on receiving this. Distinct from NEEDS_PROVISION,
+    which is only used during an in-progress enable flow.
+    """
+
+    STATE_FIELD_NUMBER: builtins.int
+    LOCK_REASON_FIELD_NUMBER: builtins.int
+    BOOTS_REMAINING_FIELD_NUMBER: builtins.int
+    VALID_UNTIL_EPOCH_FIELD_NUMBER: builtins.int
+    BACKOFF_SECONDS_FIELD_NUMBER: builtins.int
+    state: global___LockdownStatus.State.ValueType
+    """Current lockdown state being reported."""
+    lock_reason: builtins.str
+    """
+    For LOCKED: machine-readable reason. Known values:
+      "needs_auth"        - storage already unlocked, client must auth
+      "token_missing"     - no boot token on flash
+      "token_expired"     - boot token wall-clock TTL elapsed
+      "token_boots_zero"  - boot token boot-count TTL exhausted
+      "token_hmac_fail"   - token tampered or wrong device
+      "token_dek_fail"    - token DEK decrypt failed
+      "token_wrong_size"  - token file corrupted
+      "token_bad_magic"   - token file corrupted
+      "not_provisioned"   - should generally use NEEDS_PROVISION state instead
+    Other values may be added; clients should treat unknown values as
+    "locked, ask for passphrase".
+    """
+    boots_remaining: builtins.int
+    """
+    For UNLOCKED: remaining boots on the issued session token.
+    Decrements by 1 on each subsequent boot.
+    """
+    valid_until_epoch: builtins.int
+    """
+    For UNLOCKED: wall-clock expiry of the issued session token,
+    absolute Unix-epoch seconds. 0 = no time limit.
+    """
+    backoff_seconds: builtins.int
+    """
+    For UNLOCK_FAILED: seconds the client must wait before another
+    passphrase attempt will be accepted. 0 = wrong passphrase, no
+    backoff (immediate retry allowed but advisable to prompt user).
+    """
+    def __init__(
+        self,
+        *,
+        state: global___LockdownStatus.State.ValueType = ...,
+        lock_reason: builtins.str = ...,
+        boots_remaining: builtins.int = ...,
+        valid_until_epoch: builtins.int = ...,
+        backoff_seconds: builtins.int = ...,
+    ) -> None: ...
+    def ClearField(self, field_name: typing.Literal["backoff_seconds", b"backoff_seconds", "boots_remaining", b"boots_remaining", "lock_reason", b"lock_reason", "state", b"state", "valid_until_epoch", b"valid_until_epoch"]) -> None: ...
+
+global___LockdownStatus = LockdownStatus
 
 @typing.final
 class ClientNotification(google.protobuf.message.Message):
@@ -2704,10 +4615,432 @@ class ClientNotification(google.protobuf.message.Message):
 
     DESCRIPTOR: google.protobuf.descriptor.Descriptor
 
+    class _NotificationType:
+        ValueType = typing.NewType("ValueType", builtins.int)
+        V: typing_extensions.TypeAlias = ValueType
+
+    class _NotificationTypeEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[ClientNotification._NotificationType.ValueType], builtins.type):
+        DESCRIPTOR: google.protobuf.descriptor.EnumDescriptor
+        UNSET: ClientNotification._NotificationType.ValueType  # 0
+        """
+        Not set. Older firmware, or a message without its own type.
+        """
+        POSITION_SHARING_DISABLED: ClientNotification._NotificationType.ValueType  # 1
+        """
+        Position packet rejected: location sharing is disabled on this channel.
+        """
+        TRACEROUTE_RATE_LIMITED: ClientNotification._NotificationType.ValueType  # 2
+        """
+        Traceroute rejected: only one may be sent every 30 seconds.
+        """
+        TRACEROUTE_BROADCAST_REJECTED: ClientNotification._NotificationType.ValueType  # 3
+        """
+        Traceroute rejected: multi-hop traceroute to the broadcast address is not allowed.
+        """
+        DUTY_CYCLE_LIMIT_EXCEEDED: ClientNotification._NotificationType.ValueType  # 4
+        """
+        Send aborted: the duty cycle limit is exceeded. The message gives the minutes until sending resumes.
+        """
+        POSITION_SENT_SLEEPING: ClientNotification._NotificationType.ValueType  # 5
+        """
+        Power-saving tracker sent its position and is about to sleep for the broadcast interval.
+        """
+        TELEMETRY_SENT_SLEEPING: ClientNotification._NotificationType.ValueType  # 6
+        """
+        Power-saving sensor sent its telemetry and is about to sleep for the update interval.
+        """
+        KEY_VERIFICATION_NUMBER_INFORM: ClientNotification._NotificationType.ValueType  # 7
+        """
+        Incoming key verification: display the security number. Carries key_verification_number_inform.
+        """
+        KEY_VERIFICATION_NUMBER_REQUEST: ClientNotification._NotificationType.ValueType  # 8
+        """
+        Outgoing key verification: enter the security number shown on the remote node. Carries key_verification_number_request.
+        """
+        KEY_VERIFICATION_FINAL_INCOMING: ClientNotification._NotificationType.ValueType  # 9
+        """
+        Final confirmation of an incoming key verification. Carries key_verification_final.
+        """
+        KEY_VERIFICATION_FINAL_OUTGOING: ClientNotification._NotificationType.ValueType  # 10
+        """
+        Final confirmation of an outgoing key verification. Carries key_verification_final.
+        """
+        KEY_VERIFICATION_LICENSED_UNAVAILABLE: ClientNotification._NotificationType.ValueType  # 11
+        """
+        Key verification is unavailable in licensed (ham) mode.
+        """
+        DUPLICATED_PUBLIC_KEY: ClientNotification._NotificationType.ValueType  # 12
+        """
+        A remote node advertised this node's public key; the key may be compromised.
+        """
+        LOW_ENTROPY_KEY_REGENERATED: ClientNotification._NotificationType.ValueType  # 13
+        """
+        Compromised (low-entropy) keys were detected at boot and regenerated.
+        """
+        LOW_ENTROPY_KEY_RESTORE_REJECTED: ClientNotification._NotificationType.ValueType  # 14
+        """
+        A restored key is a known low-entropy key; a new key was generated and the node number changed.
+        """
+        LICENSED_MODE_ACTIVATED: ClientNotification._NotificationType.ValueType  # 15
+        """
+        Licensed mode activated: the admin channel and encryption were removed from all channels.
+        """
+        LICENSED_IDENTITY_WILL_CHANGE: ClientNotification._NotificationType.ValueType  # 16
+        """
+        Licensed signing needs an identity key; the node identity will change after key generation.
+        """
+        LICENSED_IDENTITY_CHANGED: ClientNotification._NotificationType.ValueType  # 17
+        """
+        Licensed signing generated a new identity key; the node identity changed.
+        """
+        PROTECTED_NODE_LIMIT_REACHED: ClientNotification._NotificationType.ValueType  # 18
+        """
+        Favorite or ignore refused: the protected-node limit is reached.
+        """
+        ROUTER_REBROADCAST_NONE_REJECTED: ClientNotification._NotificationType.ValueType  # 19
+        """
+        Rebroadcast mode NONE is not allowed for a router role; it was set to ALL.
+        """
+        PACKET_SIGNATURE_POLICY_UNAVAILABLE: ClientNotification._NotificationType.ValueType  # 20
+        """
+        The packet signature policy is unavailable on this firmware build; it was set to COMPATIBLE.
+        """
+        MANAGED_MODE_REQUIRES_ADMIN_KEY: ClientNotification._NotificationType.ValueType  # 21
+        """
+        Managed mode needs at least one admin public key; it was left disabled.
+        """
+        PUBLIC_CHANNEL_POSITION_PRECISION_REDUCED: ClientNotification._NotificationType.ValueType  # 22
+        """
+        Precise position is not allowed on a public channel; precision was reduced.
+        """
+        CHANNEL_BLANK_PSK: ClientNotification._NotificationType.ValueType  # 23
+        """
+        A channel has a blank PSK (no encryption) instead of the default key.
+        """
+        CHANNEL_NAME_PRESET_MISTYPE: ClientNotification._NotificationType.ValueType  # 24
+        """
+        A channel name looks like a mistyped modem preset name; the user should type it exactly.
+        """
+        CHANNEL_NAME_PRESET_MISTYPE_CLEAR_NAME: ClientNotification._NotificationType.ValueType  # 42
+        """
+        A channel name looks like a mistyped modem preset name; clearing it lets the preset name apply automatically.
+        """
+        CHANNEL_PRESET_NON_DEFAULT_KEY: ClientNotification._NotificationType.ValueType  # 25
+        """
+        A channel resolves to or matches a modem preset but uses a non-default key.
+        """
+        CHANNEL_NAME_MATCHES_OLD_PRESET: ClientNotification._NotificationType.ValueType  # 26
+        """
+        After a modem preset change, a channel name still matches the old preset.
+        """
+        CHANNEL_NAME_WONT_AUTO_RESOLVE: ClientNotification._NotificationType.ValueType  # 27
+        """
+        After a modem preset change, a channel name matches the new preset but won't auto-resolve.
+        """
+        CHANNEL_NAME_ISSUES: ClientNotification._NotificationType.ValueType  # 28
+        """
+        Name issues on one or more channels (several warnings combined).
+        """
+        CHANNEL_PSK_ISSUES: ClientNotification._NotificationType.ValueType  # 29
+        """
+        PSK issues on one or more channels (several warnings combined).
+        """
+        CHANNEL_NAME_AND_PSK_ISSUES: ClientNotification._NotificationType.ValueType  # 30
+        """
+        Name and PSK issues on one or more channels (several warnings combined).
+        """
+        LORA_REGION_UNRECOGNIZED: ClientNotification._NotificationType.ValueType  # 31
+        """
+        LoRa region code is not recognized.
+        """
+        LORA_REGION_REQUIRES_LICENSE: ClientNotification._NotificationType.ValueType  # 32
+        """
+        LoRa region requires licensed mode.
+        """
+        LORA_REGION_UNSUPPORTED_BY_RADIO: ClientNotification._NotificationType.ValueType  # 33
+        """
+        LoRa region needs a band (2.4 GHz or sub-GHz) this radio does not support.
+        """
+        LORA_PRESET_REGION_SWAP: ClientNotification._NotificationType.ValueType  # 34
+        """
+        The selected modem preset moved the node to a sibling region.
+        """
+        LORA_PRESET_INVALID_FOR_REGION: ClientNotification._NotificationType.ValueType  # 35
+        """
+        Modem preset is invalid for the region; the region default may have been applied.
+        """
+        LORA_BANDWIDTH_EXCEEDS_REGION: ClientNotification._NotificationType.ValueType  # 36
+        """
+        Requested bandwidth is wider than the region's span; the region default may have been applied.
+        """
+        LORA_CHANNEL_NUM_INVALID: ClientNotification._NotificationType.ValueType  # 37
+        """
+        Channel number is out of range for the region; a valid slot may have been applied.
+        """
+        SERIAL_CONSOLE_OVERRIDE_INVALID: ClientNotification._NotificationType.ValueType  # 38
+        """
+        Serial config rejected: overriding the console serial port needs an output-only mode (NMEA, CalTopo or MS Config).
+        """
+        MQTT_SERVER_UNREACHABLE: ClientNotification._NotificationType.ValueType  # 39
+        """
+        MQTT server could not be reached; the settings were saved anyway.
+        """
+        MQTT_PROXY_TO_CLIENT_REQUIRED: ClientNotification._NotificationType.ValueType  # 40
+        """
+        MQTT config rejected: proxy_to_client_enabled is required on a node without a network.
+        """
+        MQTT_DEFAULT_SERVER_PORT_INVALID: ClientNotification._NotificationType.ValueType  # 41
+        """
+        MQTT config rejected: the default server address must not have a port specified.
+        """
+        OTA_INVALID_HASH: ClientNotification._NotificationType.ValueType  # 43
+        """
+        OTA refused: the provided ota_hash is invalid.
+        """
+        OTA_LOADER_PARTITION_MISSING: ClientNotification._NotificationType.ValueType  # 44
+        """
+        OTA refused: no OTA loader partition was found.
+        """
+        OTA_LOADER_INVALID: ClientNotification._NotificationType.ValueType  # 45
+        """
+        OTA refused: the OTA loader partition does not hold a valid loader.
+        """
+        OTA_MODE_UNSUPPORTED: ClientNotification._NotificationType.ValueType  # 46
+        """
+        OTA refused: the OTA loader does not support the requested mode (BLE or WiFi).
+        """
+        OTA_REBOOTING: ClientNotification._NotificationType.ValueType  # 47
+        """
+        OTA accepted: rebooting into the OTA loader for the requested mode.
+        """
+        OTA_PARTITION_SWITCH_FAILED: ClientNotification._NotificationType.ValueType  # 48
+        """
+        OTA refused: switching to the OTA partition failed.
+        """
+        UNSIGNED_IDENTITY_UPDATE_IGNORED: ClientNotification._NotificationType.ValueType  # 49
+        """
+        A NodeInfo update without a valid signature tried to change a known node's name or role,
+        and packet_signature_policy (Balanced or Strict) refused it. The stored identity is kept.
+        """
+
+    class NotificationType(_NotificationType, metaclass=_NotificationTypeEnumTypeWrapper):
+        """
+        Identifies which firmware message a notification carries, so clients can
+        localize or act on it without parsing the message text.
+        """
+
+    UNSET: ClientNotification.NotificationType.ValueType  # 0
+    """
+    Not set. Older firmware, or a message without its own type.
+    """
+    POSITION_SHARING_DISABLED: ClientNotification.NotificationType.ValueType  # 1
+    """
+    Position packet rejected: location sharing is disabled on this channel.
+    """
+    TRACEROUTE_RATE_LIMITED: ClientNotification.NotificationType.ValueType  # 2
+    """
+    Traceroute rejected: only one may be sent every 30 seconds.
+    """
+    TRACEROUTE_BROADCAST_REJECTED: ClientNotification.NotificationType.ValueType  # 3
+    """
+    Traceroute rejected: multi-hop traceroute to the broadcast address is not allowed.
+    """
+    DUTY_CYCLE_LIMIT_EXCEEDED: ClientNotification.NotificationType.ValueType  # 4
+    """
+    Send aborted: the duty cycle limit is exceeded. The message gives the minutes until sending resumes.
+    """
+    POSITION_SENT_SLEEPING: ClientNotification.NotificationType.ValueType  # 5
+    """
+    Power-saving tracker sent its position and is about to sleep for the broadcast interval.
+    """
+    TELEMETRY_SENT_SLEEPING: ClientNotification.NotificationType.ValueType  # 6
+    """
+    Power-saving sensor sent its telemetry and is about to sleep for the update interval.
+    """
+    KEY_VERIFICATION_NUMBER_INFORM: ClientNotification.NotificationType.ValueType  # 7
+    """
+    Incoming key verification: display the security number. Carries key_verification_number_inform.
+    """
+    KEY_VERIFICATION_NUMBER_REQUEST: ClientNotification.NotificationType.ValueType  # 8
+    """
+    Outgoing key verification: enter the security number shown on the remote node. Carries key_verification_number_request.
+    """
+    KEY_VERIFICATION_FINAL_INCOMING: ClientNotification.NotificationType.ValueType  # 9
+    """
+    Final confirmation of an incoming key verification. Carries key_verification_final.
+    """
+    KEY_VERIFICATION_FINAL_OUTGOING: ClientNotification.NotificationType.ValueType  # 10
+    """
+    Final confirmation of an outgoing key verification. Carries key_verification_final.
+    """
+    KEY_VERIFICATION_LICENSED_UNAVAILABLE: ClientNotification.NotificationType.ValueType  # 11
+    """
+    Key verification is unavailable in licensed (ham) mode.
+    """
+    DUPLICATED_PUBLIC_KEY: ClientNotification.NotificationType.ValueType  # 12
+    """
+    A remote node advertised this node's public key; the key may be compromised.
+    """
+    LOW_ENTROPY_KEY_REGENERATED: ClientNotification.NotificationType.ValueType  # 13
+    """
+    Compromised (low-entropy) keys were detected at boot and regenerated.
+    """
+    LOW_ENTROPY_KEY_RESTORE_REJECTED: ClientNotification.NotificationType.ValueType  # 14
+    """
+    A restored key is a known low-entropy key; a new key was generated and the node number changed.
+    """
+    LICENSED_MODE_ACTIVATED: ClientNotification.NotificationType.ValueType  # 15
+    """
+    Licensed mode activated: the admin channel and encryption were removed from all channels.
+    """
+    LICENSED_IDENTITY_WILL_CHANGE: ClientNotification.NotificationType.ValueType  # 16
+    """
+    Licensed signing needs an identity key; the node identity will change after key generation.
+    """
+    LICENSED_IDENTITY_CHANGED: ClientNotification.NotificationType.ValueType  # 17
+    """
+    Licensed signing generated a new identity key; the node identity changed.
+    """
+    PROTECTED_NODE_LIMIT_REACHED: ClientNotification.NotificationType.ValueType  # 18
+    """
+    Favorite or ignore refused: the protected-node limit is reached.
+    """
+    ROUTER_REBROADCAST_NONE_REJECTED: ClientNotification.NotificationType.ValueType  # 19
+    """
+    Rebroadcast mode NONE is not allowed for a router role; it was set to ALL.
+    """
+    PACKET_SIGNATURE_POLICY_UNAVAILABLE: ClientNotification.NotificationType.ValueType  # 20
+    """
+    The packet signature policy is unavailable on this firmware build; it was set to COMPATIBLE.
+    """
+    MANAGED_MODE_REQUIRES_ADMIN_KEY: ClientNotification.NotificationType.ValueType  # 21
+    """
+    Managed mode needs at least one admin public key; it was left disabled.
+    """
+    PUBLIC_CHANNEL_POSITION_PRECISION_REDUCED: ClientNotification.NotificationType.ValueType  # 22
+    """
+    Precise position is not allowed on a public channel; precision was reduced.
+    """
+    CHANNEL_BLANK_PSK: ClientNotification.NotificationType.ValueType  # 23
+    """
+    A channel has a blank PSK (no encryption) instead of the default key.
+    """
+    CHANNEL_NAME_PRESET_MISTYPE: ClientNotification.NotificationType.ValueType  # 24
+    """
+    A channel name looks like a mistyped modem preset name; the user should type it exactly.
+    """
+    CHANNEL_NAME_PRESET_MISTYPE_CLEAR_NAME: ClientNotification.NotificationType.ValueType  # 42
+    """
+    A channel name looks like a mistyped modem preset name; clearing it lets the preset name apply automatically.
+    """
+    CHANNEL_PRESET_NON_DEFAULT_KEY: ClientNotification.NotificationType.ValueType  # 25
+    """
+    A channel resolves to or matches a modem preset but uses a non-default key.
+    """
+    CHANNEL_NAME_MATCHES_OLD_PRESET: ClientNotification.NotificationType.ValueType  # 26
+    """
+    After a modem preset change, a channel name still matches the old preset.
+    """
+    CHANNEL_NAME_WONT_AUTO_RESOLVE: ClientNotification.NotificationType.ValueType  # 27
+    """
+    After a modem preset change, a channel name matches the new preset but won't auto-resolve.
+    """
+    CHANNEL_NAME_ISSUES: ClientNotification.NotificationType.ValueType  # 28
+    """
+    Name issues on one or more channels (several warnings combined).
+    """
+    CHANNEL_PSK_ISSUES: ClientNotification.NotificationType.ValueType  # 29
+    """
+    PSK issues on one or more channels (several warnings combined).
+    """
+    CHANNEL_NAME_AND_PSK_ISSUES: ClientNotification.NotificationType.ValueType  # 30
+    """
+    Name and PSK issues on one or more channels (several warnings combined).
+    """
+    LORA_REGION_UNRECOGNIZED: ClientNotification.NotificationType.ValueType  # 31
+    """
+    LoRa region code is not recognized.
+    """
+    LORA_REGION_REQUIRES_LICENSE: ClientNotification.NotificationType.ValueType  # 32
+    """
+    LoRa region requires licensed mode.
+    """
+    LORA_REGION_UNSUPPORTED_BY_RADIO: ClientNotification.NotificationType.ValueType  # 33
+    """
+    LoRa region needs a band (2.4 GHz or sub-GHz) this radio does not support.
+    """
+    LORA_PRESET_REGION_SWAP: ClientNotification.NotificationType.ValueType  # 34
+    """
+    The selected modem preset moved the node to a sibling region.
+    """
+    LORA_PRESET_INVALID_FOR_REGION: ClientNotification.NotificationType.ValueType  # 35
+    """
+    Modem preset is invalid for the region; the region default may have been applied.
+    """
+    LORA_BANDWIDTH_EXCEEDS_REGION: ClientNotification.NotificationType.ValueType  # 36
+    """
+    Requested bandwidth is wider than the region's span; the region default may have been applied.
+    """
+    LORA_CHANNEL_NUM_INVALID: ClientNotification.NotificationType.ValueType  # 37
+    """
+    Channel number is out of range for the region; a valid slot may have been applied.
+    """
+    SERIAL_CONSOLE_OVERRIDE_INVALID: ClientNotification.NotificationType.ValueType  # 38
+    """
+    Serial config rejected: overriding the console serial port needs an output-only mode (NMEA, CalTopo or MS Config).
+    """
+    MQTT_SERVER_UNREACHABLE: ClientNotification.NotificationType.ValueType  # 39
+    """
+    MQTT server could not be reached; the settings were saved anyway.
+    """
+    MQTT_PROXY_TO_CLIENT_REQUIRED: ClientNotification.NotificationType.ValueType  # 40
+    """
+    MQTT config rejected: proxy_to_client_enabled is required on a node without a network.
+    """
+    MQTT_DEFAULT_SERVER_PORT_INVALID: ClientNotification.NotificationType.ValueType  # 41
+    """
+    MQTT config rejected: the default server address must not have a port specified.
+    """
+    OTA_INVALID_HASH: ClientNotification.NotificationType.ValueType  # 43
+    """
+    OTA refused: the provided ota_hash is invalid.
+    """
+    OTA_LOADER_PARTITION_MISSING: ClientNotification.NotificationType.ValueType  # 44
+    """
+    OTA refused: no OTA loader partition was found.
+    """
+    OTA_LOADER_INVALID: ClientNotification.NotificationType.ValueType  # 45
+    """
+    OTA refused: the OTA loader partition does not hold a valid loader.
+    """
+    OTA_MODE_UNSUPPORTED: ClientNotification.NotificationType.ValueType  # 46
+    """
+    OTA refused: the OTA loader does not support the requested mode (BLE or WiFi).
+    """
+    OTA_REBOOTING: ClientNotification.NotificationType.ValueType  # 47
+    """
+    OTA accepted: rebooting into the OTA loader for the requested mode.
+    """
+    OTA_PARTITION_SWITCH_FAILED: ClientNotification.NotificationType.ValueType  # 48
+    """
+    OTA refused: switching to the OTA partition failed.
+    """
+    UNSIGNED_IDENTITY_UPDATE_IGNORED: ClientNotification.NotificationType.ValueType  # 49
+    """
+    A NodeInfo update without a valid signature tried to change a known node's name or role,
+    and packet_signature_policy (Balanced or Strict) refused it. The stored identity is kept.
+    """
+
     REPLY_ID_FIELD_NUMBER: builtins.int
     TIME_FIELD_NUMBER: builtins.int
     LEVEL_FIELD_NUMBER: builtins.int
     MESSAGE_FIELD_NUMBER: builtins.int
+    TYPE_FIELD_NUMBER: builtins.int
+    KEY_VERIFICATION_NUMBER_INFORM_FIELD_NUMBER: builtins.int
+    KEY_VERIFICATION_NUMBER_REQUEST_FIELD_NUMBER: builtins.int
+    KEY_VERIFICATION_FINAL_FIELD_NUMBER: builtins.int
+    DUPLICATED_PUBLIC_KEY_FIELD_NUMBER: builtins.int
+    LOW_ENTROPY_KEY_FIELD_NUMBER: builtins.int
     reply_id: builtins.int
     """
     The id of the packet we're notifying in response to
@@ -2724,6 +5057,20 @@ class ClientNotification(google.protobuf.message.Message):
     """
     The message body of the notification
     """
+    type: global___ClientNotification.NotificationType.ValueType
+    """
+    Which firmware message this notification carries. UNSET when not known.
+    """
+    @property
+    def key_verification_number_inform(self) -> global___KeyVerificationNumberInform: ...
+    @property
+    def key_verification_number_request(self) -> global___KeyVerificationNumberRequest: ...
+    @property
+    def key_verification_final(self) -> global___KeyVerificationFinal: ...
+    @property
+    def duplicated_public_key(self) -> global___DuplicatedPublicKey: ...
+    @property
+    def low_entropy_key(self) -> global___LowEntropyKey: ...
     def __init__(
         self,
         *,
@@ -2731,12 +5078,104 @@ class ClientNotification(google.protobuf.message.Message):
         time: builtins.int = ...,
         level: global___LogRecord.Level.ValueType = ...,
         message: builtins.str = ...,
+        type: global___ClientNotification.NotificationType.ValueType = ...,
+        key_verification_number_inform: global___KeyVerificationNumberInform | None = ...,
+        key_verification_number_request: global___KeyVerificationNumberRequest | None = ...,
+        key_verification_final: global___KeyVerificationFinal | None = ...,
+        duplicated_public_key: global___DuplicatedPublicKey | None = ...,
+        low_entropy_key: global___LowEntropyKey | None = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing.Literal["_reply_id", b"_reply_id", "reply_id", b"reply_id"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["_reply_id", b"_reply_id", "level", b"level", "message", b"message", "reply_id", b"reply_id", "time", b"time"]) -> None: ...
+    def HasField(self, field_name: typing.Literal["_reply_id", b"_reply_id", "duplicated_public_key", b"duplicated_public_key", "key_verification_final", b"key_verification_final", "key_verification_number_inform", b"key_verification_number_inform", "key_verification_number_request", b"key_verification_number_request", "low_entropy_key", b"low_entropy_key", "payload_variant", b"payload_variant", "reply_id", b"reply_id"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing.Literal["_reply_id", b"_reply_id", "duplicated_public_key", b"duplicated_public_key", "key_verification_final", b"key_verification_final", "key_verification_number_inform", b"key_verification_number_inform", "key_verification_number_request", b"key_verification_number_request", "level", b"level", "low_entropy_key", b"low_entropy_key", "message", b"message", "payload_variant", b"payload_variant", "reply_id", b"reply_id", "time", b"time", "type", b"type"]) -> None: ...
+    @typing.overload
     def WhichOneof(self, oneof_group: typing.Literal["_reply_id", b"_reply_id"]) -> typing.Literal["reply_id"] | None: ...
+    @typing.overload
+    def WhichOneof(self, oneof_group: typing.Literal["payload_variant", b"payload_variant"]) -> typing.Literal["key_verification_number_inform", "key_verification_number_request", "key_verification_final", "duplicated_public_key", "low_entropy_key"] | None: ...
 
 global___ClientNotification = ClientNotification
+
+@typing.final
+class KeyVerificationNumberInform(google.protobuf.message.Message):
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
+
+    NONCE_FIELD_NUMBER: builtins.int
+    REMOTE_LONGNAME_FIELD_NUMBER: builtins.int
+    SECURITY_NUMBER_FIELD_NUMBER: builtins.int
+    nonce: builtins.int
+    remote_longname: builtins.str
+    security_number: builtins.int
+    def __init__(
+        self,
+        *,
+        nonce: builtins.int = ...,
+        remote_longname: builtins.str = ...,
+        security_number: builtins.int = ...,
+    ) -> None: ...
+    def ClearField(self, field_name: typing.Literal["nonce", b"nonce", "remote_longname", b"remote_longname", "security_number", b"security_number"]) -> None: ...
+
+global___KeyVerificationNumberInform = KeyVerificationNumberInform
+
+@typing.final
+class KeyVerificationNumberRequest(google.protobuf.message.Message):
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
+
+    NONCE_FIELD_NUMBER: builtins.int
+    REMOTE_LONGNAME_FIELD_NUMBER: builtins.int
+    nonce: builtins.int
+    remote_longname: builtins.str
+    def __init__(
+        self,
+        *,
+        nonce: builtins.int = ...,
+        remote_longname: builtins.str = ...,
+    ) -> None: ...
+    def ClearField(self, field_name: typing.Literal["nonce", b"nonce", "remote_longname", b"remote_longname"]) -> None: ...
+
+global___KeyVerificationNumberRequest = KeyVerificationNumberRequest
+
+@typing.final
+class KeyVerificationFinal(google.protobuf.message.Message):
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
+
+    NONCE_FIELD_NUMBER: builtins.int
+    REMOTE_LONGNAME_FIELD_NUMBER: builtins.int
+    ISSENDER_FIELD_NUMBER: builtins.int
+    VERIFICATION_CHARACTERS_FIELD_NUMBER: builtins.int
+    nonce: builtins.int
+    remote_longname: builtins.str
+    isSender: builtins.bool
+    verification_characters: builtins.str
+    def __init__(
+        self,
+        *,
+        nonce: builtins.int = ...,
+        remote_longname: builtins.str = ...,
+        isSender: builtins.bool = ...,
+        verification_characters: builtins.str = ...,
+    ) -> None: ...
+    def ClearField(self, field_name: typing.Literal["isSender", b"isSender", "nonce", b"nonce", "remote_longname", b"remote_longname", "verification_characters", b"verification_characters"]) -> None: ...
+
+global___KeyVerificationFinal = KeyVerificationFinal
+
+@typing.final
+class DuplicatedPublicKey(google.protobuf.message.Message):
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
+
+    def __init__(
+        self,
+    ) -> None: ...
+
+global___DuplicatedPublicKey = DuplicatedPublicKey
+
+@typing.final
+class LowEntropyKey(google.protobuf.message.Message):
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
+
+    def __init__(
+        self,
+    ) -> None: ...
+
+global___LowEntropyKey = LowEntropyKey
 
 @typing.final
 class FileInfo(google.protobuf.message.Message):
@@ -2970,6 +5409,10 @@ class DeviceMetadata(google.protobuf.message.Message):
     HASREMOTEHARDWARE_FIELD_NUMBER: builtins.int
     HASPKC_FIELD_NUMBER: builtins.int
     EXCLUDED_MODULES_FIELD_NUMBER: builtins.int
+    HAS_XEDDSA_FIELD_NUMBER: builtins.int
+    DISPLAY_FIELD_NUMBER: builtins.int
+    BLE_ADDRESS_FIELD_NUMBER: builtins.int
+    BOOTLOADER_VERSION_FIELD_NUMBER: builtins.int
     firmware_version: builtins.str
     """
     Device firmware version string
@@ -3019,6 +5462,37 @@ class DeviceMetadata(google.protobuf.message.Message):
     Bit field of boolean for excluded modules
     (bitwise OR of ExcludedModules)
     """
+    has_xeddsa: builtins.bool
+    """
+    Indicates whether this firmware build includes XEdDSA packet signature verification.
+    This is a read-only capability and must be false when XEdDSA is not compiled in.
+    """
+    ble_address: builtins.str
+    """
+    The address this node's BLE radio advertises and accepts connections on, as
+    colon-separated uppercase hex, most significant byte first ("AA:BB:CC:DD:EE:FF").
+    Read from the BLE stack, so it is the address phones and other centrals see.
+    It can differ from User.macaddr: on ESP32, Bluetooth uses its own MAC derived
+    from the base MAC. Reported while Bluetooth is disabled in config whenever the
+    hardware address is known. Empty when the device has no BLE radio or the
+    address cannot be determined.
+    """
+    bootloader_version: builtins.int
+    """
+    nRF52 bootloader version, packed as major << 16 | minor << 8 | patch, as the
+    bootloader hands it to the application at boot. Meshtastic nRF52 Bootloader
+    releases before 2.6.0 report 0.9.2, the same as stock Adafruit 0.9.2. 0 means
+    not reported: a non-nRF52 device, or firmware that predates this field.
+    """
+    @property
+    def display(self) -> global___DisplayInfo:
+        """
+        Describes the device's screen when one is present; absent on display-less
+        builds. Lets clients gate display-mirroring UI (see DisplayFrame) and
+        adapt to the panel, e.g. expect slow refresh from EINK, or offer
+        tap-to-touch when has_touch is set.
+        """
+
     def __init__(
         self,
         *,
@@ -3034,10 +5508,241 @@ class DeviceMetadata(google.protobuf.message.Message):
         hasRemoteHardware: builtins.bool = ...,
         hasPKC: builtins.bool = ...,
         excluded_modules: builtins.int = ...,
+        has_xeddsa: builtins.bool = ...,
+        display: global___DisplayInfo | None = ...,
+        ble_address: builtins.str = ...,
+        bootloader_version: builtins.int = ...,
     ) -> None: ...
-    def ClearField(self, field_name: typing.Literal["canShutdown", b"canShutdown", "device_state_version", b"device_state_version", "excluded_modules", b"excluded_modules", "firmware_version", b"firmware_version", "hasBluetooth", b"hasBluetooth", "hasEthernet", b"hasEthernet", "hasPKC", b"hasPKC", "hasRemoteHardware", b"hasRemoteHardware", "hasWifi", b"hasWifi", "hw_model", b"hw_model", "position_flags", b"position_flags", "role", b"role"]) -> None: ...
+    def HasField(self, field_name: typing.Literal["display", b"display"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing.Literal["ble_address", b"ble_address", "bootloader_version", b"bootloader_version", "canShutdown", b"canShutdown", "device_state_version", b"device_state_version", "display", b"display", "excluded_modules", b"excluded_modules", "firmware_version", b"firmware_version", "hasBluetooth", b"hasBluetooth", "hasEthernet", b"hasEthernet", "hasPKC", b"hasPKC", "hasRemoteHardware", b"hasRemoteHardware", "hasWifi", b"hasWifi", "has_xeddsa", b"has_xeddsa", "hw_model", b"hw_model", "position_flags", b"position_flags", "role", b"role"]) -> None: ...
 
 global___DeviceMetadata = DeviceMetadata
+
+@typing.final
+class DisplayInfo(google.protobuf.message.Message):
+    """
+    Static description of a device's display, sent inside DeviceMetadata
+    during the connection handshake.
+    """
+
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
+
+    class _PanelClass:
+        ValueType = typing.NewType("ValueType", builtins.int)
+        V: typing_extensions.TypeAlias = ValueType
+
+    class _PanelClassEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[DisplayInfo._PanelClass.ValueType], builtins.type):
+        DESCRIPTOR: google.protobuf.descriptor.EnumDescriptor
+        PANEL_CLASS_UNSPECIFIED: DisplayInfo._PanelClass.ValueType  # 0
+        """
+        Unknown, or selected at runtime (e.g. a native build's configured panel).
+        """
+        OLED: DisplayInfo._PanelClass.ValueType  # 1
+        """
+        Monochrome OLED (SSD1306/SH1106 family).
+        """
+        LCD: DisplayInfo._PanelClass.ValueType  # 2
+        """
+        Monochrome LCD (ST7567 family).
+        """
+        TFT: DisplayInfo._PanelClass.ValueType  # 3
+        """
+        Color TFT.
+        """
+        EINK: DisplayInfo._PanelClass.ValueType  # 4
+        """
+        E-ink panel: refresh is slow and full-screen; clients should prefer
+        one-shot frame requests over continuous mirroring.
+        """
+        HUB75: DisplayInfo._PanelClass.ValueType  # 5
+        """
+        LED matrix (HUB75).
+        """
+
+    class PanelClass(_PanelClass, metaclass=_PanelClassEnumTypeWrapper):
+        """
+        Physical panel technology, as a hint for client rendering and refresh
+        expectations.
+        """
+
+    PANEL_CLASS_UNSPECIFIED: DisplayInfo.PanelClass.ValueType  # 0
+    """
+    Unknown, or selected at runtime (e.g. a native build's configured panel).
+    """
+    OLED: DisplayInfo.PanelClass.ValueType  # 1
+    """
+    Monochrome OLED (SSD1306/SH1106 family).
+    """
+    LCD: DisplayInfo.PanelClass.ValueType  # 2
+    """
+    Monochrome LCD (ST7567 family).
+    """
+    TFT: DisplayInfo.PanelClass.ValueType  # 3
+    """
+    Color TFT.
+    """
+    EINK: DisplayInfo.PanelClass.ValueType  # 4
+    """
+    E-ink panel: refresh is slow and full-screen; clients should prefer
+    one-shot frame requests over continuous mirroring.
+    """
+    HUB75: DisplayInfo.PanelClass.ValueType  # 5
+    """
+    LED matrix (HUB75).
+    """
+
+    WIDTH_FIELD_NUMBER: builtins.int
+    HEIGHT_FIELD_NUMBER: builtins.int
+    FORMAT_FIELD_NUMBER: builtins.int
+    PANEL_CLASS_FIELD_NUMBER: builtins.int
+    HAS_TOUCH_FIELD_NUMBER: builtins.int
+    width: builtins.int
+    """
+    Display width in pixels.
+    """
+    height: builtins.int
+    """
+    Display height in pixels.
+    """
+    format: global___DisplayFrame.Format.ValueType
+    """
+    Pixel encoding that DisplayFrame streams from this device will use.
+    """
+    panel_class: global___DisplayInfo.PanelClass.ValueType
+    """
+    Physical panel technology.
+    """
+    has_touch: builtins.bool
+    """
+    True when the panel accepts touch input; clients may map taps on a
+    mirrored frame to AdminMessage.send_input_event touch coordinates.
+    """
+    def __init__(
+        self,
+        *,
+        width: builtins.int = ...,
+        height: builtins.int = ...,
+        format: global___DisplayFrame.Format.ValueType = ...,
+        panel_class: global___DisplayInfo.PanelClass.ValueType = ...,
+        has_touch: builtins.bool = ...,
+    ) -> None: ...
+    def ClearField(self, field_name: typing.Literal["format", b"format", "has_touch", b"has_touch", "height", b"height", "panel_class", b"panel_class", "width", b"width"]) -> None: ...
+
+global___DisplayInfo = DisplayInfo
+
+@typing.final
+class LoRaPresetGroup(google.protobuf.message.Message):
+    """
+    A distinct set of legal modem presets shared by one or more LoRa regions.
+    Regions that have an identical preset list / default / licensing reference
+    the same group (by index) via LoRaRegionPresetMap.region_groups. This keeps
+    the whole map small enough to fit in a single FromRadio packet, since most
+    regions share the one standard preset list.
+    """
+
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
+
+    PRESETS_FIELD_NUMBER: builtins.int
+    DEFAULT_PRESET_FIELD_NUMBER: builtins.int
+    LICENSED_ONLY_FIELD_NUMBER: builtins.int
+    default_preset: config_pb2.Config.LoRaConfig.ModemPreset.ValueType
+    """
+    The firmware's default modem preset for regions in this group.
+    Always one of `presets`. Clients should select this when switching to one
+    of these regions, or when the current preset is not legal in the new region.
+    """
+    licensed_only: builtins.bool
+    """
+    True if regions referencing this group are for licensed operators only
+    (e.g. amateur / ham radio bands). Clients should warn or gate accordingly.
+    """
+    @property
+    def presets(self) -> google.protobuf.internal.containers.RepeatedScalarFieldContainer[config_pb2.Config.LoRaConfig.ModemPreset.ValueType]:
+        """
+        The modem presets that are legal for every region referencing this group.
+        """
+
+    def __init__(
+        self,
+        *,
+        presets: collections.abc.Iterable[config_pb2.Config.LoRaConfig.ModemPreset.ValueType] | None = ...,
+        default_preset: config_pb2.Config.LoRaConfig.ModemPreset.ValueType = ...,
+        licensed_only: builtins.bool = ...,
+    ) -> None: ...
+    def ClearField(self, field_name: typing.Literal["default_preset", b"default_preset", "licensed_only", b"licensed_only", "presets", b"presets"]) -> None: ...
+
+global___LoRaPresetGroup = LoRaPresetGroup
+
+@typing.final
+class LoRaRegionPresets(google.protobuf.message.Message):
+    """
+    Associates a single LoRa region with its preset group.
+    """
+
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
+
+    REGION_FIELD_NUMBER: builtins.int
+    GROUP_INDEX_FIELD_NUMBER: builtins.int
+    region: config_pb2.Config.LoRaConfig.RegionCode.ValueType
+    """
+    The LoRa region this entry describes.
+    """
+    group_index: builtins.int
+    """
+    Index into LoRaRegionPresetMap.groups for the preset list that is legal
+    in `region`.
+    """
+    def __init__(
+        self,
+        *,
+        region: config_pb2.Config.LoRaConfig.RegionCode.ValueType = ...,
+        group_index: builtins.int = ...,
+    ) -> None: ...
+    def ClearField(self, field_name: typing.Literal["group_index", b"group_index", "region", b"region"]) -> None: ...
+
+global___LoRaRegionPresets = LoRaRegionPresets
+
+@typing.final
+class LoRaRegionPresetMap(google.protobuf.message.Message):
+    """
+    Map describing which modem presets are valid for each LoRa region. Sent by
+    the firmware during the want_config handshake (as FromRadio.region_presets)
+    so that client UIs can prevent illegal region+preset selections.
+
+    Delivery is grouped to save space: `groups` holds each distinct preset list,
+    and `region_groups` maps every known region to one of those groups by index.
+    A region that does NOT appear in `region_groups` carries no constraint
+    information and should not be restricted by the client (e.g. firmware that
+    predates this message, or a region with no firmware table entry). Clients
+    must also tolerate this whole message being absent.
+    """
+
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
+
+    GROUPS_FIELD_NUMBER: builtins.int
+    REGION_GROUPS_FIELD_NUMBER: builtins.int
+    @property
+    def groups(self) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[global___LoRaPresetGroup]:
+        """
+        One entry per distinct (preset-list, default, licensing) combination.
+        Referenced by index from `region_groups`.
+        """
+
+    @property
+    def region_groups(self) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[global___LoRaRegionPresets]:
+        """
+        One entry per known LoRa region, pointing at its preset group.
+        """
+
+    def __init__(
+        self,
+        *,
+        groups: collections.abc.Iterable[global___LoRaPresetGroup] | None = ...,
+        region_groups: collections.abc.Iterable[global___LoRaRegionPresets] | None = ...,
+    ) -> None: ...
+    def ClearField(self, field_name: typing.Literal["groups", b"groups", "region_groups", b"region_groups"]) -> None: ...
+
+global___LoRaRegionPresetMap = LoRaRegionPresetMap
 
 @typing.final
 class Heartbeat(google.protobuf.message.Message):
@@ -3048,9 +5753,17 @@ class Heartbeat(google.protobuf.message.Message):
 
     DESCRIPTOR: google.protobuf.descriptor.Descriptor
 
+    NONCE_FIELD_NUMBER: builtins.int
+    nonce: builtins.int
+    """
+    The nonce of the heartbeat message
+    """
     def __init__(
         self,
+        *,
+        nonce: builtins.int = ...,
     ) -> None: ...
+    def ClearField(self, field_name: typing.Literal["nonce", b"nonce"]) -> None: ...
 
 global___Heartbeat = Heartbeat
 

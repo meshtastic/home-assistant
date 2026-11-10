@@ -39,7 +39,7 @@ ROUTING_ERROR_HINTS = {
 
 
 class MeshRoutingError(MeshtasticError):
-    def __init__(self, error: mesh_pb2.Routing.Error) -> None:
+    def __init__(self, error: mesh_pb2.Routing.Error.ValueType) -> None:
         self._error = error
         try:
             name = mesh_pb2.Routing.Error.Name(error)

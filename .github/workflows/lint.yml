@@ -4,10 +4,10 @@ on:
   push:
     branches:
       - "main"
-      - "dev"
   pull_request:
     branches:
       - "main"
+  merge_group:
 
 jobs:
   ruff:
@@ -15,19 +15,16 @@ jobs:
     runs-on: "ubuntu-latest"
     steps:
         - name: "Checkout the repository"
-          uses: "actions/checkout@v6.0.2"
+          uses: "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1" # v7.0.1
 
-        - name: "Set up Python"
-          uses: actions/setup-python@v6.2.0
+        - name: "Set up uv"
+          uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
           with:
-            python-version: "3.12"
-            cache: "pip"
-
-        - name: "Install requirements"
-          run: python3 -m pip install -r requirements.txt
+            python-version: "3.14"
+            enable-cache: true
 
         - name: "Lint"
-          run: python3 -m ruff check .
+          run: uv run --only-group dev ruff check .
 
         - name: "Format"
-          run: python3 -m ruff format . --check
+          run: uv run --only-group dev ruff format . --check

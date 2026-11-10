@@ -11,15 +11,13 @@ https://github.com/meshtastic/home-assistant
 
 from __future__ import annotations
 
-import asyncio
 import base64
-import datetime
+import contextlib
+import datetime as dt
 from collections import defaultdict
 from collections.abc import Callable
 from typing import TYPE_CHECKING, Any, cast
 
-from homeassistant import config_entries
-from homeassistant.components.logbook import DOMAIN as LOGBOOK_DOMAIN
 from homeassistant.config_entries import ConfigEntryState
 from homeassistant.const import (
     CONF_HOST,
@@ -36,8 +34,10 @@ from homeassistant.helpers.typing import UNDEFINED, ConfigType
 from homeassistant.loader import async_get_loaded_integration
 
 from . import frontend, meshtastic_web, services
+from .aiomeshtastic.interface import ConnectionState
 from .api import (
     MeshtasticApiClient,
+    MeshtasticApiClientError,
 )
 from .chat import (
     MeshtasticChat,
@@ -66,29 +66,24 @@ from .const import (
 )
 from .coordinator import MeshtasticDataUpdateCoordinator
 from .data import DATA_COMPONENT, MeshtasticConfigEntry, MeshtasticData
-from .entity import (
-    GatewayChannelEntity,
-    GatewayDirectMessageEntity,
-    GatewayEntity,
-    MeshtasticEntity,
-)
+from .entity import MeshtasticDeviceClass, MeshtasticEntity
 from .helpers import fetch_meshtastic_hardware_names
 from .logbook import async_setup_message_logger
 from .meshtastic_tcp import async_setup_tcp_proxy, async_unload_tcp_proxy
+from .renumber import canonical_node_num, find_renumbered_nodes, node_public_key, rewrite_unique_id
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Mapping, MutableMapping
 
     from homeassistant.core import HomeAssistant
     from homeassistant.helpers.device_registry import DeviceRegistry
-    from homeassistant.helpers.entity import Entity
 
 PLATFORMS: list[Platform] = [Platform.SENSOR, Platform.BINARY_SENSOR, Platform.DEVICE_TRACKER, Platform.NOTIFY]
 
 ENTITY_ID_FORMAT = DOMAIN + ".{}"
 PLATFORM_SCHEMA = cv.PLATFORM_SCHEMA
 PLATFORM_SCHEMA_BASE = cv.PLATFORM_SCHEMA_BASE
-SCAN_INTERVAL = datetime.timedelta(hours=1)
+SCAN_INTERVAL = dt.timedelta(hours=1)
 
 
 _remove_listeners: MutableMapping[str, list[Callable[[], None]]] = defaultdict(list)
@@ -147,13 +142,43 @@ async def async_setup_entry(
     except Exception as e:
         raise ConfigEntryNotReady from e
 
+    try:
+        await _async_setup_connected_entry(hass, entry, client, coordinator)
+    except BaseException as e:
+        # unload never runs for a failed setup, and many radios accept only one API connection;
+        # the options flow must not pick up the stopped client either
+        entry.runtime_data = None  # type: ignore[assignment]  # cleared so the options flow skips the stopped client
+        with contextlib.suppress(Exception):
+            await client.disconnect()
+        # a retry must not find the entity platform of the failed attempt still registered
+        with contextlib.suppress(ValueError):
+            await hass.data[DATA_COMPONENT].async_unload_entry(entry)
+        # the radio stopped answering mid-setup (a reboot, a slow node DB): retry, as a failed connect does
+        if isinstance(e, MeshtasticApiClientError):
+            raise ConfigEntryNotReady from e
+        raise
+
+    return True
+
+
+async def _async_setup_connected_entry(
+    hass: HomeAssistant,
+    entry: MeshtasticConfigEntry,
+    client: MeshtasticApiClient,
+    coordinator: MeshtasticDataUpdateCoordinator,
+) -> None:
     gateway_node = await client.async_get_own_node()
+    await _async_follow_renumbered_nodes(hass, entry, client, gateway_node)
     entry.runtime_data = MeshtasticData(
         client=client,
         integration=async_get_loaded_integration(hass, entry.domain),
         coordinator=coordinator,
         gateway_node=gateway_node,
     )
+
+    entry.async_on_unload(client.add_connection_state_listener(coordinator.async_connection_state_changed))
+    if client.connection_state != ConnectionState.CONNECTED:
+        coordinator.async_connection_state_changed(client.connection_state)
 
     if entry.state == ConfigEntryState.SETUP_IN_PROGRESS:
         await coordinator.async_config_entry_first_refresh()
@@ -166,7 +191,8 @@ async def async_setup_entry(
     entry.async_on_unload(entry.add_update_listener(async_reload_entry))
 
     await _setup_meshtastic_devices(hass, entry, client)
-    await _setup_meshtastic_entities(hass, entry, client)
+    # the devices exist first, so the platform's entities attach to them
+    await hass.data[DATA_COMPONENT].async_setup_entry(entry)
 
     await services.async_register_gateway(hass, entry)
 
@@ -187,7 +213,96 @@ async def async_setup_entry(
     if chat_enabled(entry):
         await async_setup_meshtastic_chat(hass, entry)
 
-    return True
+
+async def _async_follow_renumbered_nodes(
+    hass: HomeAssistant,
+    entry: MeshtasticConfigEntry,
+    client: MeshtasticApiClient,
+    gateway_node: Mapping[str, Any],
+) -> None:
+    nodes = await client.async_get_all_nodes()
+    entity_registry = er.async_get(hass)
+    device_registry = dr.async_get(hass)
+    entries = er.async_entries_for_config_entry(entity_registry, entry.entry_id)
+    filter_nodes = entry.options.get(CONF_OPTION_FILTER_NODES, [])
+
+    renumbered = find_renumbered_nodes({el["id"]: el.get("public_key") for el in filter_nodes}, nodes)
+
+    # the gateway is this entry's own connection, so continuity holds whatever its key does
+    gateway_num = gateway_node.get("num")
+    gateway_prefix = f"{entry.entry_id}_{MeshtasticDeviceClass.GATEWAY}_"
+    old_gateway_num = next(
+        (
+            int(e.unique_id[len(gateway_prefix) :].split("_")[0])
+            for e in entries
+            if e.unique_id.startswith(gateway_prefix)
+        ),
+        None,
+    )
+    if old_gateway_num is not None and _is_gateway_renumber(old_gateway_num, gateway_node, filter_nodes, nodes):
+        renumbered[old_gateway_num] = gateway_node["num"]
+
+    for old_num, new_num in renumbered.items():
+        if device_registry.async_get_device_by_identifier((DOMAIN, str(new_num)), entry.entry_id) is not None:
+            LOGGER.warning("Node %s renumbered to %s, which already has a device; not merging", old_num, new_num)
+            continue
+        device = device_registry.async_get_device_by_identifier((DOMAIN, str(old_num)), entry.entry_id)
+        if device is not None:
+            device_registry.async_update_device(device.id, new_identifiers={(DOMAIN, str(new_num))})
+        LOGGER.info("Node %s renumbered to %s, moved its device and entities", old_num, new_num)
+
+    if renumbered:
+        node_unique_ids = {f"meshtastic_node_{old}": f"meshtastic_node_{new}" for old, new in renumbered.items()}
+        candidates = list(entries) + [
+            e for e in entity_registry.entities.values() if e.platform == DOMAIN and e.unique_id in node_unique_ids
+        ]
+        for registry_entry in candidates:
+            new_unique_id = node_unique_ids.get(registry_entry.unique_id) or rewrite_unique_id(
+                registry_entry.unique_id, renumbered
+            )
+            if new_unique_id == registry_entry.unique_id or entity_registry.async_get_entity_id(
+                registry_entry.domain, registry_entry.platform, new_unique_id
+            ):
+                continue
+            entity_registry.async_update_entity(registry_entry.entity_id, new_unique_id=new_unique_id)
+
+    # keep each selected node's key so a later renumber is followed even after the radio forgets the old entry
+    new_filter_nodes = []
+    for el in filter_nodes:
+        num = renumbered.get(el["id"], el["id"])
+        key = node_public_key(nodes.get(num)) or el.get("public_key")
+        new_filter_nodes.append({**el, "id": num} | ({"public_key": key} if key else {}))
+
+    updates: dict[str, Any] = {}
+    if new_filter_nodes != filter_nodes:
+        updates["options"] = {**entry.options, CONF_OPTION_FILTER_NODES: new_filter_nodes}
+    if old_gateway_num in renumbered and entry.unique_id == str(old_gateway_num):
+        updates["unique_id"] = str(gateway_num)
+    if updates:
+        hass.config_entries.async_update_entry(entry, **updates)
+
+
+def _is_gateway_renumber(
+    old_num: int,
+    gateway_node: Mapping[str, Any],
+    filter_nodes: list[dict[str, Any]],
+    nodes: Mapping[int, Mapping[str, Any]],
+) -> bool:
+    # a swapped port or reused address puts another radio behind the same connection, so its number changing
+    # is only a renumber when the key is the old gateway's, or, with no old key known, the firmware 2.8 one
+    new_num = gateway_node.get("num")
+    if new_num is None or new_num == old_num:
+        return False
+    new_key = node_public_key(gateway_node)
+    old_key = next((el.get("public_key") for el in filter_nodes if el["id"] == old_num), None) or node_public_key(
+        nodes.get(old_num)
+    )
+    same = old_key == new_key if old_key else new_key is not None and canonical_node_num(new_key) == new_num
+    if not same:
+        LOGGER.warning(
+            "Gateway changed from node %s to %s with another key; treating it as a new radio", old_num, new_num
+        )
+    return same
 
 
 async def async_setup_meshtastic_chat(hass: HomeAssistant, entry: MeshtasticConfigEntry) -> bool:
@@ -217,7 +332,7 @@ async def async_unload_meshtastic_chat(hass: HomeAssistant, entry: MeshtasticCon
 
 async def _setup_meshtastic_devices(
     hass: HomeAssistant, entry: MeshtasticConfigEntry, client: MeshtasticApiClient
-) -> None:
+) -> Mapping[str, Any]:
     gateway_node = await client.async_get_own_node()
     nodes = await client.async_get_all_nodes()
     device_registry = dr.async_get(hass)
@@ -238,13 +353,9 @@ async def _setup_meshtastic_devices(
 async def _remove_meshtastic_device(
     device_registry: DeviceRegistry, entry: MeshtasticConfigEntry, node_id: int
 ) -> None:
-    device = device_registry.async_get_device(identifiers={(DOMAIN, str(node_id))})
-    # only clean up devices if they are exclusively from us
+    device = device_registry.async_get_device_by_identifier((DOMAIN, str(node_id)), entry.entry_id)
     if device:
-        if device.config_entries == {entry.entry_id}:
-            device_registry.async_remove_device(device.id)
-        else:
-            device_registry.async_update_device(device.id, remove_config_entry_id=entry.entry_id)
+        device_registry.async_remove_device(device.id)
 
 
 async def _setup_meshtastic_device(  # noqa: PLR0913
@@ -263,36 +374,12 @@ async def _setup_meshtastic_device(  # noqa: PLR0913
         connections.add((dr.CONNECTION_NETWORK_MAC, mac_address))
     hops_away = node.get("hopsAway", 99)
     snr = node.get("snr", 0)
-    existing_device = device_registry.async_get_device(identifiers={(DOMAIN, str(node_id))})
-    via_device = None
-    if existing_device is not None and existing_device.config_entries != {entry.entry_id}:
-        # get other meshtastic connections
-
-        connection_parts = [
-            tuple(v.split("/"))
-            for k, v in existing_device.connections
-            if k == DOMAIN and not v.startswith(f"{gateway_node_id}/")
-        ]
-        meshtastic_connections = [
-            (int(source), int(target), int(hops), float(snr)) for source, target, hops, snr in connection_parts
-        ]
-        if node_id == gateway_node_id:
-            # add ourselves with highest prio so we don't get another via device
-            meshtastic_connections.append((gateway_node_id, node_id, -1, 999))
-        else:
-            meshtastic_connections.append((gateway_node_id, node_id, hops_away, snr))
-        try:
-            sorted_connections = sorted(meshtastic_connections, key=lambda x: (x[2], -x[3]))
-            closest_gateway = sorted_connections[0][0]
-            via_device = (DOMAIN, str(closest_gateway))
-        except Exception:  # noqa: BLE001
-            LOGGER.warning("Failed to find closest gateway", exc_info=True)
-    else:
-        via_device = (DOMAIN, str(gateway_node_id)) if gateway_node_id != node_id else None
-
-    # remove via_device when it is set to ourself
-    if (via_device is not None and int(via_device[1]) == node_id) or (gateway_node_id == node_id):
-        via_device = None
+    existing_device = device_registry.async_get_device_by_identifier((DOMAIN, str(node_id)), entry.entry_id)
+    # None clears the via device (the gateway has none); UNDEFINED keeps it while the gateway device is unregistered
+    via_device_id = None
+    if gateway_node_id != node_id:
+        gateway_device = device_registry.async_get_device_by_identifier((DOMAIN, str(gateway_node_id)), entry.entry_id)
+        via_device_id = gateway_device.id if gateway_device is not None else UNDEFINED
 
     if existing_device:
         connections.update(existing_device.connections)
@@ -306,14 +393,17 @@ async def _setup_meshtastic_device(  # noqa: PLR0913
     if gateway_node_id != node_id:
         connections.add((DOMAIN, f"{gateway_node_id}/{node_id}/{hops_away}/{snr}"))
 
+    # MessageToDict omits hwModel for UNSET and placeholder nodes spell it out; keep any known model
+    hw_model = node["user"].get("hwModel")
+    known = hw_model not in (None, "UNSET")
     d = device_registry.async_get_or_create(
         config_entry_id=entry.entry_id,
         identifiers={(DOMAIN, str(node_id))},
         name=node["user"]["longName"],
-        model=device_hardware_names.get(node["user"]["hwModel"], None),
-        model_id=node["user"]["hwModel"],
+        model=device_hardware_names.get(hw_model) if known else UNDEFINED,
+        model_id=str(hw_model) if known else UNDEFINED,
         serial_number=node["user"]["id"],
-        via_device=via_device,
+        via_device_id=via_device_id,
         sw_version=client.metadata.get("firmwareVersion")
         if gateway_node["num"] == node_id and client.metadata
         else None,
@@ -322,7 +412,7 @@ async def _setup_meshtastic_device(  # noqa: PLR0913
         device_registry.async_update_device(
             d.id,
             new_connections=connections,
-            via_device_id=None if via_device is None else UNDEFINED,
+            via_device_id=via_device_id,
         )
     except DeviceConnectionCollisionError as e:
         LOGGER.debug("Conflict with other device connections, only using meshtastic connections. %s", e)
@@ -330,51 +420,8 @@ async def _setup_meshtastic_device(  # noqa: PLR0913
         device_registry.async_update_device(
             d.id,
             new_connections=own_connections,
-            via_device_id=None if via_device is None else UNDEFINED,
+            via_device_id=via_device_id,
         )
-
-
-async def _setup_meshtastic_entities(
-    hass: HomeAssistant, entry: MeshtasticConfigEntry, client: MeshtasticApiClient
-) -> None:
-    gateway_node = await client.async_get_own_node()
-    local_config = await client.async_get_node_local_config()
-    module_config = await client.async_get_node_module_config()
-
-    gateway_node_entity = GatewayEntity(
-        config_entry_id=entry.entry_id,
-        node=gateway_node["num"],
-        long_name=gateway_node["user"]["longName"],
-        short_name=gateway_node["user"]["shortName"],
-        local_config=local_config,
-        module_config=module_config,
-    )
-    has_logbook = LOGBOOK_DOMAIN in hass.config.all_components
-    gateway_direct_message = GatewayDirectMessageEntity(
-        config_entry_id=entry.entry_id,
-        gateway_node=gateway_node["num"],
-        gateway_entity=gateway_node_entity,
-        has_logbook=has_logbook,
-    )
-
-    await _add_entities_for_entry(hass, [gateway_node_entity, gateway_direct_message], entry)
-    channels = await client.async_get_channels()
-    channel_entities = [
-        GatewayChannelEntity(
-            config_entry_id=entry.entry_id,
-            gateway_node=gateway_node["num"],
-            gateway_entity=gateway_node_entity,
-            index=channel["index"],
-            name=channel["settings"]["name"],
-            primary=channel["role"] == "PRIMARY",
-            secondary=channel["role"] == "SECONDARY",
-            settings=channel["settings"],
-            has_logbook=has_logbook,
-        )
-        for channel in channels
-        if channel["role"] != "DISABLED"
-    ]
-    await _add_entities_for_entry(hass, channel_entities, entry)
 
 
 async def async_unload_entry(
@@ -390,10 +437,7 @@ async def async_unload_entry(
 
     unload_ok = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
     if unload_ok:
-        for entity in [
-            e for e in hass.data[DATA_COMPONENT].entities if e.registry_entry.config_entry_id == entry.entry_id
-        ]:
-            await hass.data[DATA_COMPONENT].async_remove_entity(entity.entity_id)
+        await hass.data[DATA_COMPONENT].async_unload_entry(entry)
 
         await services.async_unregister_gateway(hass, entry)
 
@@ -422,23 +466,26 @@ async def async_remove_entry(hass: HomeAssistant, entry: MeshtasticConfigEntry) 
     await MeshtasticChat.async_remove_store(hass, entry.entry_id)
 
 
-_reload_lock = asyncio.Lock()
-
-
 async def async_reload_entry(
     hass: HomeAssistant,
     entry: MeshtasticConfigEntry,
 ) -> None:
-    async with _reload_lock:
-        token = None
-        if config_entries.current_entry.get() is None:
-            token = config_entries.current_entry.set(entry)
-        try:
-            await async_unload_entry(hass, entry)
-            await async_setup_entry(hass, entry)
-        finally:
-            if token:
-                config_entries.current_entry.reset(token)
+    await hass.config_entries.async_reload(entry.entry_id)
+
+
+async def async_remove_config_entry_device(
+    hass: HomeAssistant,  # noqa: ARG001
+    entry: MeshtasticConfigEntry,
+    device_entry: dr.DeviceEntry,
+) -> bool:
+    """Allow deleting a node device unless it is the gateway or a node the entry still selects."""
+    kept_nodes = {str(el["id"]) for el in entry.options.get(CONF_OPTION_FILTER_NODES, [])}
+    if entry.runtime_data is not None:
+        kept_nodes.add(str(entry.runtime_data.gateway_node["num"]))
+    elif entry.unique_id is not None:
+        kept_nodes.add(entry.unique_id)
+
+    return not any(domain == DOMAIN and node in kept_nodes for domain, node in device_entry.identifiers)
 
 
 async def async_migrate_entry(hass: HomeAssistant, config_entry: MeshtasticConfigEntry) -> bool:
@@ -471,21 +518,3 @@ async def async_migrate_entry(hass: HomeAssistant, config_entry: MeshtasticConfi
     )
 
     return True
-
-
-async def _add_entities_for_entry(hass: HomeAssistant, entities: list[Entity], entry: MeshtasticConfigEntry) -> None:
-    entity_registry = er.async_get(hass)
-    device_registry = dr.async_get(hass)
-
-    await hass.data[DATA_COMPONENT].async_add_entities(entities)
-    # attach entities to config entry (as async_add_entities does not support apply config_entry_id from entities)
-    for e in entities:
-        device_id = UNDEFINED
-        if e.device_info:
-            device = device_registry.async_get_device(identifiers=e.device_info["identifiers"])
-            if device:
-                device_id = device.id
-        try:
-            entity_registry.async_update_entity(e.entity_id, config_entry_id=entry.entry_id, device_id=device_id)
-        except:  # noqa: E722
-            LOGGER.warning("Failed to update entity %s", e, exc_info=True)

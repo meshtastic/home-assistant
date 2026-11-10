@@ -1,7 +1,7 @@
 {
     "name": "meshtastic/home-assistant",
-    "image": "mcr.microsoft.com/devcontainers/python:3.12",
-    "postCreateCommand": "scripts/setup",
+    "image": "mcr.microsoft.com/devcontainers/python:3.14",
+    "postCreateCommand": "python3 -m pip install --user uv && PATH=\"$HOME/.local/bin:$PATH\" scripts/setup",
     "forwardPorts": [
         8123
     ],
@@ -29,7 +29,7 @@
                 "files.trimTrailingWhitespace": true,
                 "python.analysis.typeCheckingMode": "basic",
                 "python.analysis.autoImportCompletions": true,
-                "python.defaultInterpreterPath": "/usr/local/bin/python",
+                "python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python",
                 "[python]": {
                     "editor.defaultFormatter": "charliermarsh.ruff"
                 }

@@ -7,6 +7,7 @@
     "zeroconf",
     "usb",
     "logbook",
+    "frontend",
     "http"
   ],
   "bluetooth": [
@@ -15,17 +16,28 @@
       "connectable": true
     }
   ],
+  "categories": [
+    "diy_makers.boards_hardware",
+    "messaging_notifications",
+    "presence_location.trackers"
+  ],
   "codeowners": [
+    "@jamesarich",
     "@broglep"
   ],
   "config_flow": true,
   "documentation": "https://github.com/meshtastic/home-assistant",
   "integration_type": "hub",
-  "iot_class": "local_polling",
+  "iot_class": "local_push",
   "issue_tracker": "https://github.com/meshtastic/home-assistant/issues",
+  "loggers": [
+    "serialx",
+    "aiomqtt",
+    "bleak"
+  ],
   "requirements": [
-    "pyserial-asyncio==0.6",
-    "aiomqtt"
+    "serialx>=1.8.2",
+    "aiomqtt>=2.1.0"
   ],
   "usb": [
     {
@@ -46,22 +58,6 @@
     },
     {
       "vid": "239A",
-      "pid": "4405"
-    },
-    {
-      "vid": "239A",
-      "pid": "0029"
-    },
-    {
-      "vid": "239A",
-      "pid": "002A"
-    },
-    {
-      "vid": "239A",
-      "pid": "4405"
-    },
-    {
-      "vid": "239A",
       "pid": "009F"
     },
     {
@@ -74,159 +70,23 @@
     },
     {
       "vid": "239A",
-      "pid": "0029"
-    },
-    {
-      "vid": "239A",
-      "pid": "002A"
-    },
-    {
-      "vid": "239A",
       "pid": "802A"
     },
     {
       "vid": "303A",
-      "pid": "1001"
-    },
-    {
-      "vid": "303A",
       "pid": "0002"
-    },
-    {
-      "vid": "239A",
-      "pid": "4405"
     },
     {
       "vid": "239A",
       "pid": "00B3"
     },
     {
-      "vid": "239A",
-      "pid": "8029"
-    },
-    {
-      "vid": "239A",
-      "pid": "0029"
-    },
-    {
-      "vid": "239A",
-      "pid": "002A"
-    },
-    {
-      "vid": "239A",
-      "pid": "802A"
-    },
-    {
-      "vid": "303A",
-      "pid": "1001"
-    },
-    {
-      "vid": "303A",
-      "pid": "0002"
-    },
-    {
-      "vid": "303A",
-      "pid": "1001"
-    },
-    {
-      "vid": "303A",
-      "pid": "1001"
-    },
-    {
-      "vid": "303A",
-      "pid": "1001"
-    },
-    {
-      "vid": "303A",
-      "pid": "0002"
-    },
-    {
-      "vid": "303A",
-      "pid": "1001"
-    },
-    {
-      "vid": "239A",
-      "pid": "8029"
-    },
-    {
-      "vid": "239A",
-      "pid": "0029"
-    },
-    {
-      "vid": "239A",
-      "pid": "002A"
-    },
-    {
-      "vid": "239A",
-      "pid": "802A"
-    },
-    {
-      "vid": "303A",
-      "pid": "1001"
-    },
-    {
-      "vid": "303A",
-      "pid": "1001"
-    },
-    {
-      "vid": "303A",
-      "pid": "1001"
-    },
-    {
-      "vid": "303A",
-      "pid": "0002"
-    },
-    {
       "vid": "16D0",
       "pid": "1178"
     },
     {
-      "vid": "303A",
-      "pid": "1001"
-    },
-    {
-      "vid": "239A",
-      "pid": "8029"
-    },
-    {
-      "vid": "239A",
-      "pid": "0029"
-    },
-    {
-      "vid": "239A",
-      "pid": "002A"
-    },
-    {
-      "vid": "239A",
-      "pid": "802A"
-    },
-    {
-      "vid": "303A",
-      "pid": "1001"
-    },
-    {
-      "vid": "303A",
-      "pid": "1001"
-    },
-    {
       "vid": "2886",
       "pid": "0059"
-    },
-    {
-      "vid": "239A",
-      "pid": "8029"
-    },
-    {
-      "vid": "239A",
-      "pid": "0029"
-    },
-    {
-      "vid": "239A",
-      "pid": "002A"
-    },
-    {
-      "vid": "239A",
-      "pid": "802A"
     },
     {
       "vid": "239A",
@@ -241,82 +101,6 @@
       "pid": "810C"
     },
     {
-      "vid": "2886",
-      "pid": "0059"
-    },
-    {
-      "vid": "239A",
-      "pid": "8029"
-    },
-    {
-      "vid": "239A",
-      "pid": "0029"
-    },
-    {
-      "vid": "239A",
-      "pid": "002A"
-    },
-    {
-      "vid": "239A",
-      "pid": "802A"
-    },
-    {
-      "vid": "239A",
-      "pid": "8029"
-    },
-    {
-      "vid": "239A",
-      "pid": "0029"
-    },
-    {
-      "vid": "239A",
-      "pid": "002A"
-    },
-    {
-      "vid": "239A",
-      "pid": "802A"
-    },
-    {
-      "vid": "303A",
-      "pid": "1001"
-    },
-    {
-      "vid": "239A",
-      "pid": "8029"
-    },
-    {
-      "vid": "239A",
-      "pid": "0029"
-    },
-    {
-      "vid": "239A",
-      "pid": "002A"
-    },
-    {
-      "vid": "239A",
-      "pid": "802A"
-    },
-    {
-      "vid": "303A",
-      "pid": "1001"
-    },
-    {
-      "vid": "239A",
-      "pid": "8029"
-    },
-    {
-      "vid": "239A",
-      "pid": "0029"
-    },
-    {
-      "vid": "239A",
-      "pid": "002A"
-    },
-    {
-      "vid": "239A",
-      "pid": "802A"
-    },
-    {
       "vid": "2E8A",
       "pid": "00C0"
     },
@@ -327,29 +111,9 @@
     {
       "vid": "1A86",
       "pid": "7523"
-    },
-    {
-      "vid": "303A",
-      "pid": "1001"
-    },
-    {
-      "vid": "239A",
-      "pid": "8029"
-    },
-    {
-      "vid": "239A",
-      "pid": "0029"
-    },
-    {
-      "vid": "239A",
-      "pid": "002A"
-    },
-    {
-      "vid": "239A",
-      "pid": "802A"
     }
   ],
-  "version": "0.6.1",
+  "version": "0.6.2",
   "zeroconf": [
     "_meshtastic._tcp.local.",
     "_http._tcp.local."

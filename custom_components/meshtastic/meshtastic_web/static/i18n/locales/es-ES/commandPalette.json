@@ -1,0 +1,51 @@
+{
+  "emptyState": "No se encontraron resultados.",
+  "page": {
+    "title": "Menú de comandos"
+  },
+  "pinGroup": {
+    "label": "Anclar grupo de comandos"
+  },
+  "unpinGroup": {
+    "label": "Desanclar grupo de comandos"
+  },
+  "goto": {
+    "label": "Ir a",
+    "command": {
+      "messages": "Mensajes",
+      "map": "Mapa",
+      "config": "Configuración",
+      "nodes": "Nodos"
+    }
+  },
+  "manage": {
+    "label": "Gestiona",
+    "command": {
+      "switchNode": "Cambiar nodo",
+      "connectNewNode": "Conectar nodo nuevo"
+    }
+  },
+  "contextual": {
+    "label": "Contextual",
+    "command": {
+      "qrCode": "Código QR",
+      "qrGenerator": "Generador",
+      "qrImport": "Importar",
+      "scheduleShutdown": "Programar apagado",
+      "scheduleReboot": "Reiniciar dispositivo",
+      "resetNodeDb": "Restablece DB",
+      "dfuMode": "Entrar en modo DFU",
+      "factoryResetDevice": "Reiniciar dispositivo de fábrica",
+      "factoryResetConfig": "Configuración de reinicio de fábrica",
+      "disconnect": "Desconectar"
+    }
+  },
+  "debug": {
+    "label": "Depuración",
+    "command": {
+      "reconfigure": "Volver a configurar",
+      "clearAllStoredMessages": "Borrar mensajes guardados",
+      "clearAllStores": "Clear All Local Storage"
+    }
+  }
+}

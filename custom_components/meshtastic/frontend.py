@@ -6,7 +6,9 @@
 
 from __future__ import annotations
 
+import hashlib
 import time
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 from homeassistant.components.frontend import (
@@ -43,6 +45,11 @@ def _module_url(file_name: str) -> str:
     return f"{URL_BASE}/frontend/{file_name}?v=" + (str(time.time()) if _DEBUG else VERSION)
 
 
+def _panel_digest() -> str:
+    # panel.js is served with long cache headers, so its URL changes with its content
+    return hashlib.sha256((Path(locate_dir()) / "panel.js").read_bytes()).hexdigest()[:12]
+
+
 async def async_register_frontend(hass: HomeAssistant) -> None:
     # Add to sidepanel if needed
     if DOMAIN not in hass.data.get("frontend_panels", {}):
@@ -59,7 +66,8 @@ async def async_register_frontend(hass: HomeAssistant) -> None:
                     "name": "meshtastic-frontend",
                     "embed_iframe": False,
                     "trust_external": False,
-                    "module_url": _module_url("panel.js"),
+                    "module_url": f"{URL_BASE}/frontend/panel.js?"
+                    + (str(time.time()) if _DEBUG else await hass.async_add_executor_job(_panel_digest)),
                 }
             },
             require_admin=True,

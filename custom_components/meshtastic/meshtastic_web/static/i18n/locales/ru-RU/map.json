@@ -1,0 +1,40 @@
+{
+  "maplibre": {
+    "GeolocateControl.FindMyLocation": "Найти моё местоположение",
+    "NavigationControl.ZoomIn": "Увеличить",
+    "NavigationControl.ZoomOut": "Уменьшить",
+    "CooperativeGesturesHandler.WindowsHelpText": "Используйте Ctrl + прокрутку, чтобы приблизить карту",
+    "CooperativeGesturesHandler.MacHelpText": "Используйте ⌘ + прокрутку, чтобы приблизить карту",
+    "CooperativeGesturesHandler.MobileHelpText": "Используйте два пальца, чтобы перемещать карту"
+  },
+  "layerTool": {
+    "nodeMarkers": "Показать ноды",
+    "directNeighbors": "Показать прямые соединения",
+    "remoteNeighbors": "Показать удалённые соединения",
+    "positionPrecision": "Показать точность позиции",
+    "traceroutes": "Показать трассировки",
+    "waypoints": "Показать путевые точки",
+    "heatmap": "Показать тепловую карту",
+    "density": "Плотность"
+  },
+  "mapMenu": {
+    "locateAria": "Найти мою ноду",
+    "layersAria": "Изменить стиль карты"
+  },
+  "waypointDetail": {
+    "edit": "Редактировать",
+    "description": "Описание:",
+    "createdBy": "Кем изменено:",
+    "createdDate": "Создано:",
+    "updated": "Обновлено:",
+    "expires": "Истекает:",
+    "distance": "Расстояние:",
+    "bearing": "Абсолютный азимут:",
+    "lockedTo": "Закреплено за:",
+    "latitude": "Широта:",
+    "longitude": "Долгота:"
+  },
+  "myNode": {
+    "tooltip": "Это устройство"
+  }
+}

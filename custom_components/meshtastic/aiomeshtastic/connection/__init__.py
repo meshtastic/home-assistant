@@ -1,4 +1,5 @@
 # SPDX-FileCopyrightText: 2024-2025 Pascal Brogle @broglep
+# SPDX-FileCopyrightText: 2025 Ovidiu D. Nițan @ov1d1u
 #
 # SPDX-License-Identifier: MIT
 
@@ -7,15 +8,17 @@ import contextlib
 import logging
 import random
 from abc import abstractmethod
-from collections.abc import AsyncIterable, Awaitable, Callable, Coroutine
+from collections.abc import AsyncIterable, AsyncIterator, Awaitable, Callable, Coroutine
 from contextlib import asynccontextmanager
 from types import TracebackType
+from typing import Any, Self
 
 import google
 from google.protobuf.message import Message
 
 from ..packet import Packet  # noqa: TID252
 from ..protobuf import mesh_pb2, portnums_pb2  # noqa: TID252
+from ..redact import without_secrets  # noqa: TID252
 from .errors import (
     ClientApiConnectFailedError,
     ClientApiConnectionError,
@@ -27,6 +30,28 @@ from .errors import (
 from .listener import ClientApiConnectionPacketStreamListener
 
 LOGGER = logging.getLogger(__package__)
+
+
+class _LazyProtobufLog:
+    """
+    Defer protobuf formatting until a log record is actually emitted.
+
+    repr() of a protobuf is expensive and these are logged per packet. Passed
+    as a logging argument it would otherwise be evaluated on every call, even
+    with debug logging disabled, which is enough to stall the event loop while
+    a node database is streaming.
+    """
+
+    __slots__ = ("_message",)
+
+    def __init__(self, message: Message) -> None:
+        self._message = message
+
+    def __str__(self) -> str:
+        # users attach debug logs to bug reports, and the config exchange carries keys and passwords
+        return repr(without_secrets(self._message)).replace("\n", "")
+
+    __repr__ = __str__
 
 
 class ClientApiConnection:
@@ -97,7 +122,7 @@ class ClientApiConnection:
     def is_connected(self) -> bool:
         pass
 
-    async def __aenter__(self) -> "ClientApiConnection":
+    async def __aenter__(self) -> Self:
         if not self.is_connected:
             await self.connect()
         return self
@@ -207,7 +232,11 @@ class ClientApiConnection:
             msg = "Heartbeat failed"
             raise ClientApiConnectionInterruptedError(msg)
 
-    async def request_config(self, minimal: bool = False) -> bool:  # noqa: FBT001, FBT002
+    async def request_config(
+        self,
+        minimal: bool = False,  # noqa: FBT001, FBT002
+        on_packet: Callable[[mesh_pb2.FromRadio], Awaitable[None]] | None = None,
+    ) -> bool:
         start_config_packet = mesh_pb2.ToRadio()
 
         if minimal:
@@ -219,6 +248,11 @@ class ClientApiConnection:
                 start_config_packet.want_config_id += 1
 
         async for packet in self.listen(on_start=self.send_packet(start_config_packet)):
+            if on_packet is not None:
+                try:
+                    await on_packet(packet)
+                except:  # noqa: E722
+                    self._logger.warning("Request config packet callback failed", exc_info=True)
             try:
                 if (
                     packet.HasField("config_complete_id")
@@ -245,17 +279,19 @@ class ClientApiConnection:
         to_node: int,
         message: google.protobuf.message.Message | bytes,
         port_num: portnums_pb2.PortNum.ValueType = portnums_pb2.PortNum.PRIVATE_APP,
-        priority: mesh_pb2.MeshPacket.Priority = mesh_pb2.MeshPacket.Priority.DEFAULT,
+        priority: mesh_pb2.MeshPacket.Priority.ValueType = mesh_pb2.MeshPacket.Priority.DEFAULT,
         channel_index: int | None = None,
         *,
         from_node: int | None = None,
         ack: bool = False,
+        reply_id: int | None = None,
+        emoji: bool = False,
         want_response: bool = False,
         packet_id: int | None = None,
-        reply_id: int | None = None,
+        out_callback: Callable[[Packet], Awaitable[None]] | None = None,
         ack_callback: Callable[[Packet[mesh_pb2.Routing]], Awaitable[None]] | None = None,
         response_callback: Callable[[Packet], Awaitable[None]] | None = None,
-    ) -> None | Packet:
+    ) -> Packet | None:
         mesh_packet = mesh_pb2.MeshPacket()
         if channel_index is not None:
             mesh_packet.channel = channel_index
@@ -264,9 +300,11 @@ class ClientApiConnection:
         )
         mesh_packet.decoded.portnum = port_num
         mesh_packet.decoded.want_response = want_response
-        mesh_packet.id = packet_id or self.generate_packet_id()
-        if reply_id:
+        if reply_id is not None:
             mesh_packet.decoded.reply_id = reply_id
+        if emoji:
+            mesh_packet.decoded.emoji = 1
+        mesh_packet.id = packet_id or self.generate_packet_id()
         if from_node is not None:
             mesh_packet.__setattr__("from", from_node)
         mesh_packet.to = to_node
@@ -278,10 +316,19 @@ class ClientApiConnection:
 
         if not ack and not want_response:
             await self.send_packet(to_radio)
+            if out_callback is not None:
+                try:
+                    await out_callback(Packet(to_radio))
+                except:  # noqa: E722
+                    self._logger.debug("Out callback failed", exc_info=True)
             return None
 
         return await self._send_await_response(
-            to_radio, want_response=want_response, ack_callback=ack_callback, response_callback=response_callback
+            to_radio,
+            want_response=want_response,
+            out_callback=out_callback,
+            ack_callback=ack_callback,
+            response_callback=response_callback,
         )
 
     async def _send_await_response(
@@ -289,13 +336,23 @@ class ClientApiConnection:
         to_radio: mesh_pb2.ToRadio,
         *,
         want_response: bool = False,
+        out_callback: Callable[[Packet], Awaitable[None]] | None = None,
         ack_callback: Callable[[Packet[mesh_pb2.Routing]], Awaitable[None]] | None = None,
         response_callback: Callable[[Packet], Awaitable[None]] | None = None,
-    ) -> None | Packet:
+    ) -> Packet | None:
         ack_packet = None
         response_packet = None
-        async for from_radio in self.listen(on_start=self.send_packet(to_radio)):
-            packet = Packet(from_radio)
+
+        async def on_start() -> None:
+            await self.send_packet(to_radio)
+            if out_callback is not None:
+                try:
+                    await out_callback(Packet(to_radio))
+                except:  # noqa: E722
+                    self._logger.debug("Out callback failed", exc_info=True)
+
+        async for from_radio in self.listen(on_start=on_start()):
+            packet: Packet[Any] = Packet(from_radio)
             if packet.data is None:
                 continue
 
@@ -364,7 +421,7 @@ class ClientApiConnection:
         return await self._send_packet(packet)
 
     @asynccontextmanager
-    async def _ensure_processing_packets(self) -> None:
+    async def _ensure_processing_packets(self) -> AsyncIterator[None]:
         if not self.is_connected:
             raise ClientApiNotConnectedError
 
@@ -415,7 +472,7 @@ class ClientApiConnection:
 
                 except asyncio.CancelledError:
                     self._logger.debug("On demand processor cancelled", exc_info=True)
-                except Exception:  # noqa: BLE001
+                except Exception:
                     self._logger.debug("On demand processor failed", exc_info=True)
                 finally:
                     self._on_demand_streaming_task = None
@@ -447,7 +504,7 @@ class ClientApiConnection:
             self._logger.debug("Reconnect in progress, waiting")
             complete_task = asyncio.create_task(self._reconnect_completed.wait())
             failed_task = asyncio.create_task(self._reconnect_failed.wait())
-            done, pending = await asyncio.wait([complete_task, failed_task], return_when=asyncio.FIRST_COMPLETED)
+            done, _ = await asyncio.wait([complete_task, failed_task], return_when=asyncio.FIRST_COMPLETED)
             if done == {failed_task}:
                 msg = "Already ongoing reconnect failed"
                 raise ClientApiConnectionError(msg)
@@ -484,5 +541,5 @@ class ClientApiConnection:
         await self.send_packet(m)
 
     @staticmethod
-    def _protobuf_log(message: Message) -> str:
-        return repr(message).replace("\n", "")
+    def _protobuf_log(message: Message) -> _LazyProtobufLog:
+        return _LazyProtobufLog(message)

@@ -8,7 +8,7 @@ import base64
 import hashlib
 from copy import deepcopy
 from types import MappingProxyType
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 
 from homeassistant.components.notify import NotifyEntity, NotifyEntityFeature
 from homeassistant.core import callback
@@ -44,12 +44,15 @@ if TYPE_CHECKING:
     from collections.abc import Callable, Mapping
 
     from homeassistant.config_entries import ConfigEntry
-    from homeassistant.core import Event, HomeAssistant, _DataT
+    from homeassistant.core import Event, HomeAssistant
     from homeassistant.helpers.device_registry import DeviceInfo
     from homeassistant.helpers.entity_platform import AddEntitiesCallback, EntityPlatform
     from homeassistant.helpers.entity_registry import EntityRegistry
 
     from .data import MeshtasticConfigEntry
+
+
+PARALLEL_UPDATES = 1
 
 
 def _create_node_entity_filter_factory(config_entry: MeshtasticConfigEntry) -> Callable[[int], bool]:
@@ -83,13 +86,13 @@ async def async_setup_entry(
     should_create_node = _create_node_entity_filter_factory(config_entry)
 
     @callback
-    def _api_node_updated(event: Event[_DataT]) -> None:
-        event_data = deepcopy(event.data)
+    def _api_node_updated(event: Event) -> None:
+        event_data = cast("dict[str, Any]", deepcopy(event.data))
         config_entry_id = event_data.pop(ATTR_EVENT_MESHTASTIC_API_CONFIG_ENTRY_ID, None)
         if config_entry_id != config_entry.entry_id:
             return
-        node_id = event_data.get(ATTR_EVENT_MESHTASTIC_API_NODE, None)
-        node_info = event_data.get(ATTR_EVENT_MESHTASTIC_API_DATA, None)
+        node_id = cast("int", event_data.get(ATTR_EVENT_MESHTASTIC_API_NODE, None))
+        node_info = cast("dict[str, Any]", event_data.get(ATTR_EVENT_MESHTASTIC_API_DATA, None))
 
         if not should_create_node(node_id):
             return
@@ -99,12 +102,12 @@ async def async_setup_entry(
 
         entity = MeshtasticNodeNotify(node_id=node_id, entity_name=f"{node_info['user']['longName']}")
         registered_entity_id = entity_registry.async_get_entity_id(
-            platform.domain, platform.platform_name, entity.unique_id
+            platform.domain, platform.platform_name, cast("str", entity.unique_id)
         )
         if registered_entity_id is None or registered_entity_id not in platform.domain_entities:
             async_add_entities([entity])
         else:
-            existing_entity = platform.domain_entities[registered_entity_id]
+            existing_entity = cast("MeshtasticNodeNotify", platform.domain_entities[registered_entity_id])
             if existing_entity.name != entity.name:
                 existing_entity.update_from(entity)
                 entity_registry.async_update_entity(registered_entity_id, name=entity.name)
@@ -131,11 +134,13 @@ async def _add_node_entities(
     entity_registry = er.async_get(hass)
     new_entities = []
     for e in entities:
-        registered_entity_id = entity_registry.async_get_entity_id(platform.domain, platform.platform_name, e.unique_id)
+        registered_entity_id = entity_registry.async_get_entity_id(
+            platform.domain, platform.platform_name, cast("str", e.unique_id)
+        )
         if registered_entity_id is None or registered_entity_id not in platform.domain_entities:
             new_entities.append(e)
         else:
-            existing_entity = platform.domain_entities[registered_entity_id]
+            existing_entity = cast("MeshtasticNodeNotify", platform.domain_entities[registered_entity_id])
             if existing_entity.name != e.name:
                 existing_entity.update_from(e)
                 entity_registry.async_update_entity(registered_entity_id, name=e.name)
@@ -174,11 +179,13 @@ async def _add_channel_entities(
     entity_registry = er.async_get(hass)
     new_entities = []
     for e in entities:
-        registered_entity_id = entity_registry.async_get_entity_id(platform.domain, platform.platform_name, e.unique_id)
+        registered_entity_id = entity_registry.async_get_entity_id(
+            platform.domain, platform.platform_name, cast("str", e.unique_id)
+        )
         if registered_entity_id is None or registered_entity_id not in platform.domain_entities:
             new_entities.append(e)
         else:
-            existing_entity = platform.domain_entities[registered_entity_id]
+            existing_entity = cast("MeshtasticChannelNotify", platform.domain_entities[registered_entity_id])
             existing_entity.update_from(e)
 
     if new_entities:
@@ -188,21 +195,21 @@ async def _add_channel_entities(
 async def async_unload_entry(
     hass: HomeAssistant,
     entry: ConfigEntry,
-) -> bool:
+) -> None:
     pass
 
 
 class MeshtasticNodeNotify(NotifyEntity):
     _attr_has_entity_name = True
     _attr_should_poll = False
-    _attr_icon = "mdi:radio-handheld"
+    _attr_translation_key = "mesh_node"
 
     def __init__(
         self,
         node_id: int,
         entity_name: str | None,
         device_info: DeviceInfo | None = None,
-        supported_features: NotifyEntityFeature = None,
+        supported_features: NotifyEntityFeature | None = None,
     ) -> None:
         self._node_id = node_id
         self._attr_unique_id = f"meshtastic_node_{node_id}"
@@ -233,7 +240,6 @@ class MeshtasticNodeNotify(NotifyEntity):
 
 class MeshtasticChannelNotify(NotifyEntity):
     _attr_should_poll = False
-    _attr_icon = "mdi:forum"
     _attr_translation_key = "mesh_channel"
 
     def __init__(
@@ -241,7 +247,7 @@ class MeshtasticChannelNotify(NotifyEntity):
         channel: Mapping[str, Any],
         gateway_node_id: int,
         device_info: DeviceInfo | None = None,
-        supported_features: NotifyEntityFeature = None,
+        supported_features: NotifyEntityFeature | None = None,
     ) -> None:
         global_channel_id = _channel_global_id(channel)
         self._global_channel_id = global_channel_id
@@ -270,8 +276,7 @@ class MeshtasticChannelNotify(NotifyEntity):
 
     async def async_send_message(self, message: str, title: str | None = None) -> None:  # noqa: ARG002
         if not self.gateways:
-            msg = "No gateway available"
-            raise ServiceValidationError(msg)
+            raise ServiceValidationError(translation_domain=DOMAIN, translation_key="no_gateway_available")
 
         for gateway_node_id, gateway_node_channel_index in self.gateways.items():
             service_data = {
@@ -287,8 +292,7 @@ class MeshtasticChannelNotify(NotifyEntity):
             else:
                 return
 
-        msg = "Could not send to channel"
-        raise ServiceValidationError(msg)
+        raise ServiceValidationError(translation_domain=DOMAIN, translation_key="channel_send_failed")
 
     @property
     def suggested_object_id(self) -> str | None:

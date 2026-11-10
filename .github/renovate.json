@@ -1,0 +1,35 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "rebaseWhen": "conflicted",
+  "extends": ["config:recommended", ":semanticCommits", ":dependencyDashboard"],
+  "labels": ["dependencies"],
+  "pep621": { "enabled": true },
+  "lockFileMaintenance": { "enabled": true },
+  "github-actions": { "pinDigests": true },
+  "packageRules": [
+    {
+      "description": "The minimum Home Assistant version moves only on purpose, from the dependency dashboard",
+      "matchManagers": ["pep621"],
+      "matchPackageNames": ["homeassistant"],
+      "dependencyDashboardApproval": true
+    },
+    {
+      "description": "These pins are taken from the pinned Home Assistant release and move by hand with it, never on their own",
+      "matchManagers": ["pep621"],
+      "matchPackageNames": ["pytest-homeassistant-custom-component", "protobuf", "josepy", "bleak", "serialx"],
+      "enabled": false
+    },
+    {
+      "description": "The devcontainer runs the Python Home Assistant runs, so only its patch releases and digest move on their own",
+      "matchPackageNames": ["mcr.microsoft.com/devcontainers/python"],
+      "matchUpdateTypes": ["major", "minor"],
+      "enabled": false
+    },
+    {
+      "description": "The protobuf generators make the gencode the vendored protobufs need (see CONTRIBUTING.md) and move only with a regeneration",
+      "matchManagers": ["pep621"],
+      "matchPackageNames": ["grpcio-tools", "mypy-protobuf"],
+      "enabled": false
+    }
+  ]
+}

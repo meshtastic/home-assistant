@@ -4,18 +4,18 @@
 
 from collections.abc import Mapping
 from functools import cached_property
-from typing import Any, TypeVar
+from typing import Any, TypeVar, cast
 
-import google
+from google.protobuf import json_format
 
 from .const import LOGGER
-from .protobuf import admin_pb2, mesh_pb2, portnums_pb2, telemetry_pb2
+from .protobuf import admin_pb2, mesh_beacon_pb2, mesh_pb2, portnums_pb2, telemetry_pb2
 
 T = TypeVar("T", None, mesh_pb2.Routing, telemetry_pb2.Telemetry, admin_pb2.AdminMessage, str)
 
 
 class Packet[T]:
-    def __init__(self, packet: mesh_pb2.FromRadio) -> None:
+    def __init__(self, packet: mesh_pb2.FromRadio | mesh_pb2.ToRadio) -> None:
         self._packet = packet
         self._logger = LOGGER.getChild(self.__class__.__name__)
 
@@ -44,11 +44,27 @@ class Packet[T]:
         return self.mesh_packet.decoded if self.mesh_packet and self.mesh_packet.HasField("decoded") else None
 
     @property
-    def port_num(self) -> portnums_pb2.PortNum | None:
+    def port_num(self) -> portnums_pb2.PortNum.ValueType | None:
         return self.data.portnum if self.data is not None else None
 
+    @property
+    def via_mqtt(self) -> bool:
+        return self.mesh_packet.via_mqtt if self.mesh_packet is not None else False
+
+    @property
+    def xeddsa_signed(self) -> bool:
+        return self.mesh_packet.xeddsa_signed if self.mesh_packet is not None else False
+
+    @property
+    def hop_start(self) -> int | None:
+        return self.mesh_packet.hop_start if self.mesh_packet is not None else None
+
+    @property
+    def hop_limit(self) -> int | None:
+        return self.mesh_packet.hop_limit if self.mesh_packet is not None else None
+
     @cached_property
-    def app_payload(self) -> T:  # noqa: PLR0911
+    def app_payload(self) -> Any:  # noqa: PLR0911
         data = self.data
         if data is None or data.portnum is None:
             return None
@@ -62,6 +78,12 @@ class Packet[T]:
             return routing
         if port_num == portnums_pb2.PortNum.TEXT_MESSAGE_APP:
             return payload.decode()
+        if port_num == portnums_pb2.PortNum.DETECTION_SENSOR_APP:
+            return payload.decode()
+        if port_num == portnums_pb2.PortNum.MESH_BEACON_APP:
+            beacon = mesh_beacon_pb2.MeshBeacon()
+            beacon.ParseFromString(payload)
+            return beacon
         if port_num == portnums_pb2.PortNum.TELEMETRY_APP:
             telemetry = telemetry_pb2.Telemetry()
             telemetry.ParseFromString(payload)
@@ -74,10 +96,14 @@ class Packet[T]:
             position_message = mesh_pb2.Position()
             position_message.ParseFromString(payload)
             return position_message
+        if port_num == portnums_pb2.PortNum.WAYPOINT_APP:
+            waypoint = mesh_pb2.Waypoint()
+            waypoint.ParseFromString(payload)
+            return waypoint
         if port_num == portnums_pb2.PortNum.NODEINFO_APP:
             node_info = mesh_pb2.NodeInfo()
             node_info.user.ParseFromString(payload)
-            node_info.num = self.from_id
+            node_info.num = cast("int", self.from_id)
             return node_info
         if port_num == portnums_pb2.PortNum.TRACEROUTE_APP:
             route_discovery = mesh_pb2.RouteDiscovery()
@@ -103,21 +129,21 @@ class FullNodeInfoPacket(Packet[mesh_pb2.NodeInfo]):
         super().__init__(packet)
 
     @property
-    def port_num(self) -> portnums_pb2.PortNum | None:
+    def port_num(self) -> portnums_pb2.PortNum.ValueType | None:
         return portnums_pb2.PortNum.NODEINFO_APP
 
     @cached_property
     def app_payload(self) -> mesh_pb2.NodeInfo:
-        return self._packet.node_info
+        return cast("mesh_pb2.FromRadio", self._packet).node_info
 
 
 class DatabaseNodeInfoPacket(FullNodeInfoPacket):
     def __init__(self, database: Mapping[str, Any]) -> None:
         from_radio = mesh_pb2.FromRadio()
         try:
-            google.protobuf.json_format.ParseDict(database, from_radio.node_info, ignore_unknown_fields=True)
+            json_format.ParseDict(cast("dict[str, Any]", database), from_radio.node_info, ignore_unknown_fields=True)
         except:  # noqa: E722
             from_radio.node_info.num = database["num"]
-            google.protobuf.json_format.ParseDict(database["user"], from_radio.node_info.user)
+            json_format.ParseDict(database["user"], from_radio.node_info.user)
 
         super().__init__(from_radio)
