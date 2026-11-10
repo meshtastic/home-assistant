@@ -4,7 +4,7 @@
 
 from __future__ import annotations
 
-import datetime
+import datetime as dt
 import typing
 from dataclasses import dataclass
 from functools import partial
@@ -123,11 +123,11 @@ def _build_node_sensors(
     coordinator = runtime_data.coordinator
     gateway = runtime_data.client.get_own_node()
 
-    def last_heard(device: MeshtasticNodeEntity) -> datetime.datetime | None:
+    def last_heard(device: MeshtasticNodeEntity) -> dt.datetime | None:
         last_heard_int = device.coordinator.data[device.node_id].get("lastHeard")
         if not last_heard_int:
             return None
-        return datetime.datetime.fromtimestamp(last_heard_int, tz=datetime.UTC)
+        return dt.datetime.fromtimestamp(last_heard_int, tz=dt.UTC)
 
     entities += [
         MeshtasticSensor(

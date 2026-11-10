@@ -4,7 +4,7 @@
 
 import asyncio
 import contextlib
-import datetime
+import datetime as dt
 import secrets
 from collections import defaultdict
 from dataclasses import dataclass
@@ -40,8 +40,8 @@ _LOGGER = LOGGER.getChild(__name__)
 
 # The radio API carries admin authority over the gateway, so it is reachable only under a token an
 # admin obtained over the authenticated websocket. The web client cannot send HA credentials itself.
-TOKEN_IDLE_TIMEOUT = datetime.timedelta(hours=1)
-TOKEN_MAX_AGE = datetime.timedelta(hours=24)
+TOKEN_IDLE_TIMEOUT = dt.timedelta(hours=1)
+TOKEN_MAX_AGE = dt.timedelta(hours=24)
 DATA_WEB_CLIENT_TOKENS = f"{DOMAIN}_web_client_tokens"
 
 
@@ -49,8 +49,8 @@ DATA_WEB_CLIENT_TOKENS = f"{DOMAIN}_web_client_tokens"
 class _Grant:
     config_entry_id: str
     user_id: str
-    issued: datetime.datetime
-    last_used: datetime.datetime
+    issued: dt.datetime
+    last_used: dt.datetime
 
 
 class WebClientTokens:
@@ -58,14 +58,14 @@ class WebClientTokens:
         self._grants: dict[str, _Grant] = {}
 
     def issue(self, config_entry_id: str, user_id: str) -> str:
-        now = datetime.datetime.now(tz=datetime.UTC)
+        now = dt.datetime.now(tz=dt.UTC)
         self._grants = {token: grant for token, grant in self._grants.items() if not self._expired(grant, now)}
         token = secrets.token_urlsafe(32)
         self._grants[token] = _Grant(config_entry_id, user_id, now, now)
         return token
 
     def check(self, config_entry_id: str, token: str) -> bool:
-        now = datetime.datetime.now(tz=datetime.UTC)
+        now = dt.datetime.now(tz=dt.UTC)
         grant = self._grants.get(token)
         if grant is None or not secrets.compare_digest(grant.config_entry_id, config_entry_id):
             return False
@@ -76,7 +76,7 @@ class WebClientTokens:
         return True
 
     @staticmethod
-    def _expired(grant: _Grant, now: datetime.datetime) -> bool:
+    def _expired(grant: _Grant, now: dt.datetime) -> bool:
         return now - grant.last_used > TOKEN_IDLE_TIMEOUT or now - grant.issued > TOKEN_MAX_AGE
 
 
@@ -120,16 +120,16 @@ class MeshtasticWebApiContext:
         self._clients: dict[str, MeshtasticApiClient] = {}
         self._meshtastic_queues: dict[str, dict[tuple[str, str], asyncio.Queue[mesh_pb2.FromRadio]]] = defaultdict(dict)
         self._meshtastic_radio_stream_consumer: dict[tuple[str, str], asyncio.Task] = {}
-        self._session_last_active: dict[tuple[str, str], datetime.datetime] = {}
+        self._session_last_active: dict[tuple[str, str], dt.datetime] = {}
 
         async def expire_sessions() -> None:
             while True:
                 await asyncio.sleep(30)
-                now = datetime.datetime.now(tz=datetime.UTC)
+                now = dt.datetime.now(tz=dt.UTC)
                 expired_session_keys = [
                     session
                     for session, last_active in self._session_last_active.items()
-                    if (now - last_active > datetime.timedelta(minutes=1))
+                    if (now - last_active > dt.timedelta(minutes=1))
                 ]
                 for session_key in expired_session_keys:
                     _LOGGER.debug("Removing session %s", session_key)
@@ -156,7 +156,7 @@ class MeshtasticWebApiContext:
             return None
         try:
             return self._hass.config_entries.async_get_entry(config_entry_id)
-        except Exception:  # noqa: BLE001
+        except Exception:
             _LOGGER.warning("Failed to get config entry", exc_info=True)
 
     def get_meshtastic_client(self, request: HomeAssistantRequest) -> MeshtasticApiClient | None:
@@ -201,7 +201,7 @@ class MeshtasticWebApiContext:
                             await queue.put(packet)
                     except asyncio.CancelledError:
                         break
-            except Exception:  # noqa: BLE001
+            except Exception:
                 _LOGGER.info("Consume from_radio for session %s stopped unexpectedly", session_key, exc_info=True)
             else:
                 _LOGGER.info("Consume from_radio for session %s stopped", session_key)
@@ -278,7 +278,7 @@ class MeshtasticWebApiContext:
         config_entry_id = self._get_config_entry_id(request)
         session_key = self._get_existing_session_key(request, meshtastic_config_id)
 
-        self._session_last_active[session_key] = datetime.datetime.now(tz=datetime.UTC)
+        self._session_last_active[session_key] = dt.datetime.now(tz=dt.UTC)
         return self._meshtastic_queues.get(config_entry_id, {}).get(session_key, None)
 
     def get_config_entry_session_queues(self, request: HomeAssistantRequest) -> list[asyncio.Queue[mesh_pb2.FromRadio]]:

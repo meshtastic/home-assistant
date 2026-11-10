@@ -70,7 +70,11 @@ ignore = [
     "D104", # Missing docstring (currently no distributed library)
     "D105", # Missing docstring (currently no distributed library)
     "D107", # Missing docstring (currently no distributed library)
+    "PLR0917", # too many positional arguments; entity and platform constructors take them
 ]
+
+[tool.ruff.lint.flake8-copyright]
+notice-rgx = "SPDX-FileCopyrightText: "
 
 [tool.ruff.lint.flake8-pytest-style]
 fixture-parentheses = false

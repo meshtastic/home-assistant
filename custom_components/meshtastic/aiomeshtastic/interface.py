@@ -6,7 +6,7 @@
 
 import asyncio
 import contextlib
-import datetime
+import datetime as dt
 import enum
 import functools
 import itertools
@@ -168,9 +168,9 @@ class MeshInterface:
         debug_out: bool = False,
         no_proto: bool = False,
         no_nodes: bool = False,
-        heartbeat_interval: datetime.timedelta | None = None,
-        acknowledgement_timeout: datetime.timedelta | None = None,
-        response_timeout: datetime.timedelta | None = None,
+        heartbeat_interval: dt.timedelta | None = None,
+        acknowledgement_timeout: dt.timedelta | None = None,
+        response_timeout: dt.timedelta | None = None,
         enable_mqtt_proxy: bool = True,
     ) -> None:
         self._logger = LOGGER.getChild(self.__class__.__name__)
@@ -700,7 +700,7 @@ class MeshInterface:
                 else:
                     # use as fallback when we did not succeed to connect, and we don't have a node id
                     await self._connection.send_heartbeat()
-            except Exception:  # noqa: BLE001
+            except Exception:
                 self._logger.info("Heartbeat failed, reconnecting", exc_info=True)
                 await self._reconnect_while_running(force=True)
             else:
@@ -939,9 +939,9 @@ class MeshInterface:
         reconnect_counter = -1
         if self.is_running:
             self._set_connection_state(ConnectionState.RECONNECTING)
-        now = datetime.datetime.now(tz=datetime.UTC)
+        now = dt.datetime.now(tz=dt.UTC)
         self._previous_reconnects.append(now)
-        recent_reconnects = [t for t in self._previous_reconnects if (now - t) <= datetime.timedelta(seconds=30)]
+        recent_reconnects = [t for t in self._previous_reconnects if (now - t) <= dt.timedelta(seconds=30)]
         if len(recent_reconnects) >= reconnect_counter_max:
             backoff = float(random.randint(30, 60))  # noqa: S311
             self._logger.debug("Too many reconnects in last 30 seconds, waiting %.0f seconds", backoff)
@@ -1031,7 +1031,7 @@ class MeshInterface:
         return task
 
     async def send_time(self, node: int | None = None) -> None:
-        now = datetime.datetime.now(tz=datetime.UTC)
+        now = dt.datetime.now(tz=dt.UTC)
         time_secs = int(now.timestamp())
         admin_message = admin_pb2.AdminMessage()
         admin_message.set_time_only = time_secs
@@ -1051,7 +1051,7 @@ class MeshInterface:
 
     def _get_tz_string(self) -> str | None:
         try:
-            now = datetime.datetime.now()  # noqa: DTZ005
+            now = dt.datetime.now()  # noqa: DTZ005
             local_now = now.astimezone()
             local_tz = local_now.tzinfo
             local_tzname = local_tz.tzname(local_now)
@@ -1202,7 +1202,7 @@ class MeshInterface:
 
     async def send_admin_message(
         self, node: int, message: admin_pb2.AdminMessage, *, ack: bool = True
-    ) -> None | tuple[mesh_pb2.Data, mesh_pb2.FromRadio]:
+    ) -> tuple[mesh_pb2.Data, mesh_pb2.FromRadio] | None:
         return await self._connection.send_mesh_packet(
             channel_index=self._get_admin_channel_index(node=node),
             to_node=node,
