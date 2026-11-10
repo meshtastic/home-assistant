@@ -101,10 +101,9 @@ class MeshtasticDeviceTracker(MeshtasticNodeEntity, TrackerEntity):
         node_id: int,
     ) -> None:
         super().__init__(coordinator, gateway, node_id, DEVICE_TRACKER_DOMAIN, entity_description)
+        self._attr_name = self.coordinator.data[self.node_id].get("user", {}).get("longName", None)
         self._attr_name = None
         self._attr_has_entity_name = True
-        # the position is known already; without this the tracker has none until the next coordinator update
-        self._async_update_attrs()
 
     def _async_update_attrs(self) -> None:
         self._attr_available = (
