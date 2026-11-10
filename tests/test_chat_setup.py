@@ -243,6 +243,26 @@ async def test_send_text_action_is_kept_in_chat_history(hass: HomeAssistant) -> 
 
 
 @pytest.mark.usefixtures("fake_api")
+async def test_send_text_replies_and_reactions_bypass_the_chat_history(hass: HomeAssistant) -> None:
+    entry = _entry({"chat": {"enable": True}})
+    entry.add_to_hass(hass)
+    assert await hass.config_entries.async_setup(entry.entry_id)
+    await hass.async_block_till_done()
+    client = entry.runtime_data.client
+    chat = hass.data[DATA_CHAT][entry.entry_id]
+
+    await hass.services.async_call(
+        DOMAIN, "send_text", {"text": "👍", "channel": "1", "reply_id": 42, "is_reaction": True}, blocking=True
+    )
+    await hass.async_block_till_done()
+    assert client.sent[-1] == {"text": "👍", "to": "^all", "channel": 1, "ack": False}
+    assert chat.history("channel:1") == []
+
+    assert await hass.config_entries.async_unload(entry.entry_id)
+    await hass.async_block_till_done()
+
+
+@pytest.mark.usefixtures("fake_api")
 async def test_send_text_action_without_chat(hass: HomeAssistant) -> None:
     entry = _entry({})
     entry.add_to_hass(hass)

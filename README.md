@@ -624,13 +624,17 @@ History is kept in `.storage/meshtastic.chat.<entry id>` and removed when the ga
 ### Automations and other chats
 
 While Mesh Chat is enabled for a gateway, messages sent with the `meshtastic.send_text` action are kept in the chat
-history too and show their delivery state. The optional `sent_by` field (up to 64 characters) labels them:
+history too. The action keeps its `ack` option: with `ack: true` the message shows its delivery state, without it (the
+default of the action) it is sent once and shown as sent, with no delivery tracking. Messages that answer or react to
+another (`reply_id`, `is_reaction`) are sent as they are and not kept in the history. The optional `sent_by` field (up
+to 64 characters) labels them:
 
 ```yaml
 action: meshtastic.send_text
 data:
   channel: "1"
   text: "Garage door opened"
+  ack: true
   sent_by: "Garage automation"
 ```
 
