@@ -122,7 +122,10 @@ def _build_add_node_schema(
     selector_options = [
         SelectOptionDict(
             value=str(node_id),
-            label=f"{node_info.get('user', {}).get('longName') or 'Unknown'} ({node_info.get('user', {}).get('id') or node_id})",
+            label=(
+                f"{node_info.get('user', {}).get('longName') or 'Unknown'} "
+                f"({node_info.get('user', {}).get('id') or node_id})"
+            ),
         )
         for node_id, node_info in sorted(
             selectable_nodes.items(),
@@ -727,7 +730,10 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                 updated_filter_node_option.append(
                     {
                         "id": int(user_input[CONF_OPTION_NODE]),
-                        "name": (self.nodes[int(user_input[CONF_OPTION_NODE])].get("user", {}).get("longName") or str(user_input[CONF_OPTION_NODE])),
+                        "name": (
+                            self.nodes[int(user_input[CONF_OPTION_NODE])].get("user", {}).get("longName")
+                            or str(user_input[CONF_OPTION_NODE])
+                        ),
                     }
                 )
 
