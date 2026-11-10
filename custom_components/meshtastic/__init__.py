@@ -37,6 +37,7 @@ from . import frontend, meshtastic_web, services
 from .aiomeshtastic.interface import ConnectionState
 from .api import (
     MeshtasticApiClient,
+    MeshtasticApiClientError,
 )
 from .const import (
     CONF_CONNECTION_TCP_HOST,
@@ -135,7 +136,7 @@ async def async_setup_entry(
 
     try:
         await _async_setup_connected_entry(hass, entry, client, coordinator)
-    except BaseException:
+    except BaseException as e:
         # unload never runs for a failed setup, and many radios accept only one API connection;
         # the options flow must not pick up the stopped client either
         entry.runtime_data = None  # type: ignore[assignment]  # cleared so the options flow skips the stopped client
@@ -144,6 +145,9 @@ async def async_setup_entry(
         # a retry must not find the entity platform of the failed attempt still registered
         with contextlib.suppress(ValueError):
             await hass.data[DATA_COMPONENT].async_unload_entry(entry)
+        # the radio stopped answering mid-setup (a reboot, a slow node DB): retry, as a failed connect does
+        if isinstance(e, MeshtasticApiClientError):
+            raise ConfigEntryNotReady from e
         raise
 
     return True

@@ -14,6 +14,7 @@ from homeassistant.config_entries import ConfigEntryState
 from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers import entity_registry as er
 
+from custom_components.meshtastic.api import MeshtasticApiClientError
 from custom_components.meshtastic.const import DOMAIN
 
 from .conftest import GATEWAY_NUM, PEER_NUM, FakeClient, make_node
@@ -152,3 +153,30 @@ async def test_failure_after_the_platform_is_set_up_leaves_no_platform_behind(
     assert await hass.config_entries.async_reload(entry.entry_id)
     await hass.async_block_till_done()
     assert entry.state is ConfigEntryState.LOADED
+
+
+async def test_a_radio_that_stops_answering_mid_setup_retries(
+    hass: HomeAssistant, entry: MockConfigEntry, fake_client: FakeClient
+) -> None:
+    with patch.object(fake_client, "async_get_all_nodes", side_effect=MeshtasticApiClientError("Node not ready")):
+        assert not await hass.config_entries.async_setup(entry.entry_id)
+
+    assert entry.state is ConfigEntryState.SETUP_RETRY
+    fake_client.disconnect.assert_awaited_once()
+
+
+async def test_wind_direction_is_an_angle(hass: HomeAssistant, entry: MockConfigEntry, fake_client: FakeClient) -> None:
+    fake_client.nodes[PEER_NUM]["environmentMetrics"] = {"windDirection": 270, "windSpeed": 3.5}
+
+    assert await hass.config_entries.async_setup(entry.entry_id)
+    await hass.async_block_till_done()
+    entry.runtime_data.coordinator.async_set_updated_data(dict(fake_client.nodes))
+    await hass.async_block_till_done()
+
+    entity_id = er.async_get(hass).async_get_entity_id(
+        "sensor", DOMAIN, f"{entry.entry_id}_sensor_{PEER_NUM}_environment_wind_direction"
+    )
+    state = hass.states.get(entity_id)
+    assert state.attributes["device_class"] == "wind_direction"
+    assert state.attributes["state_class"] == "measurement_angle"
+    assert state.state == "270"

@@ -672,7 +672,7 @@ def _build_environment_metrics_sensors(
             add_sensor("irLux", SensorDeviceClass.ILLUMINANCE, LIGHT_LUX)
             add_sensor("uvLux", SensorDeviceClass.ILLUMINANCE, LIGHT_LUX)
 
-            add_sensor("windDirection", SensorDeviceClass.WIND_SPEED, DEGREE)
+            add_sensor("windDirection", SensorDeviceClass.WIND_DIRECTION, DEGREE, SensorStateClass.MEASUREMENT_ANGLE)
             add_sensor("windSpeed", SensorDeviceClass.WIND_SPEED, UnitOfSpeed.METERS_PER_SECOND)
             add_sensor("windGust", SensorDeviceClass.WIND_SPEED, UnitOfSpeed.METERS_PER_SECOND)
             add_sensor("windLull", SensorDeviceClass.WIND_SPEED, UnitOfSpeed.METERS_PER_SECOND)
@@ -724,7 +724,7 @@ def _build_host_metrics_sensors(
         value_key: str,
         device_class: SensorDeviceClass | None,
         unit_of_measurement: str | None = None,
-        state_class: SensorStateClass = SensorStateClass.MEASUREMENT,
+        state_class: SensorStateClass | None = SensorStateClass.MEASUREMENT,
     ) -> None:
         key = "".join(["_" + c.lower() if c.isupper() else c for c in value_key]).lstrip("_")
         if value_key in node_info["hostMetrics"]:
@@ -763,7 +763,7 @@ def _build_host_metrics_sensors(
             add_sensor("load1", None, PERCENTAGE)
             add_sensor("load5", None, PERCENTAGE)
             add_sensor("load15", None, PERCENTAGE)
-            add_sensor("userString", None, None)
+            add_sensor("userString", None, None, None)
 
     except:  # noqa: E722
         LOGGER.warning("Failed to create host metric entities", exc_info=True)

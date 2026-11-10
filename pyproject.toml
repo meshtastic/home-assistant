@@ -90,6 +90,7 @@ max-complexity = 25
     "PLR2004", # magic values are the expected results in tests
     "S101", # pytest asserts
     "SLF001", # tests exercise internals with fakes
+    "S105", # fake secrets are the fixtures redaction is checked against
 ]
 
 [tool.mypy]
