@@ -12,13 +12,14 @@ import functools
 import itertools
 import random
 from collections import defaultdict, deque
-from collections.abc import AsyncIterator, Awaitable, Callable, Mapping, MutableMapping
+from collections.abc import AsyncIterator, Awaitable, Callable, Coroutine, Mapping, MutableMapping
 from dataclasses import dataclass
 from pathlib import Path
 from types import MappingProxyType, TracebackType
 from typing import (
     Any,
     Self,
+    cast,
 )
 
 from homeassistant.util.ssl import get_default_context
@@ -30,7 +31,7 @@ try:
     _has_aiomqtt = True
 except ImportError:
     _has_aiomqtt = False
-import google
+from google.protobuf import json_format
 from google.protobuf.message import Message
 
 from .connection import (
@@ -112,7 +113,7 @@ class MeshNode:
 
 @dataclass
 class MeshChannel:
-    index: int
+    index: int | None
     name: str
 
 
@@ -208,10 +209,10 @@ class MeshInterface:
         self._listen_lock = asyncio.Lock()
 
         self._packet_stream_listeners: list[ClientApiConnectionPacketStreamListener] = []
-        self._app_listeners: dict[portnums_pb2.PortNum, list[Callable[[MeshNode, Packet], Awaitable[None]]]] = (
-            defaultdict(list)
-        )
-        self._previous_reconnects = deque(maxlen=10)
+        self._app_listeners: dict[
+            portnums_pb2.PortNum.ValueType, list[Callable[[MeshNode, Packet], Awaitable[None]]]
+        ] = defaultdict(list)
+        self._previous_reconnects: deque[dt.datetime] = deque(maxlen=10)
         self._connection_state = ConnectionState.CONNECTED
         self._connection_state_listeners: list[Callable[[ConnectionState], None]] = []
 
@@ -225,12 +226,13 @@ class MeshInterface:
             self._mqtt_client: aiomqtt.Client | None = None
             self._mqtt_connected = False
             self._mqtt_connection_task: asyncio.Task | None = None
-            self._mqtt_config: dict[str, str] | None = None
+            self._mqtt_config: dict[str, Any] | None = None
 
     def add_packet_app_listener(
         self,
-        packet_type: portnums_pb2.PortNum,
-        callback: Callable[[MeshNode, Message | Packet | dict], Awaitable[None]],
+        packet_type: portnums_pb2.PortNum.ValueType,
+        # the payload is a Packet, a dict or the decoded message, as the as_packet / as_dict flags select
+        callback: Callable[[MeshNode, Any], Awaitable[None]],
         *,
         as_dict: bool = False,
         as_packet: bool = False,
@@ -241,7 +243,7 @@ class MeshInterface:
 
         async def wrapper(node: MeshNode, source: Packet) -> None:
             if as_dict:
-                await callback(node, google.protobuf.json_format.MessageToDict(source.app_payload))
+                await callback(node, json_format.MessageToDict(source.app_payload))
             elif as_packet:
                 await callback(node, source)
             else:
@@ -361,6 +363,8 @@ class MeshInterface:
         if self._connected_node_info is None:
             return None
 
+        assert self._connected_node_channels is not None  # noqa: S101  # len() below would raise on None
+        channel: channel_pb2.Channel | None
         if index is not None:
             if len(self._connected_node_channels) <= index:
                 return None
@@ -500,6 +504,7 @@ class MeshInterface:
         port = int(broker.split(":", 1)[1]) if ":" in broker else default_port
 
         # Get node ID for client identifier
+        assert self._connected_node_info is not None  # noqa: S101  # dereferenced on the next line
         node_id = self._connected_node_info.my_node_num
         client_id = f"!{node_id:08x}"
 
@@ -526,6 +531,7 @@ class MeshInterface:
             try:
                 self._logger.debug("Connecting to MQTT broker")
 
+                assert self._mqtt_config is not None  # noqa: S101  # ** on None would raise
                 self._mqtt_client = aiomqtt.Client(**self._mqtt_config)
 
                 # When the context manager exits, the connection is closed
@@ -590,6 +596,7 @@ class MeshInterface:
         for topic in self._mqtt_downlink_topics():
             self._logger.debug("Subscribing to MQTT topic %s", topic)
             try:
+                assert self._mqtt_client is not None  # noqa: S101  # dereferenced on the next line
                 await self._mqtt_client.subscribe(topic, qos=1)
             except ValueError:
                 # a channel name holding "+" or "#" makes an invalid filter; skip it, keep the connection
@@ -614,6 +621,7 @@ class MeshInterface:
         raise MqttError(msg)
 
     async def _forward_mqtt_downlink(self) -> None:
+        assert self._mqtt_client is not None  # noqa: S101  # dereferenced on the next line
         async for message in self._mqtt_client.messages:
             await self._forward_mqtt_message_to_radio(message)
 
@@ -721,6 +729,7 @@ class MeshInterface:
         elif packet.HasField("channel"):
             # replace by index: a bootstrap requested by another party (e.g. a TCP proxy client) resends all channels
             channels = self._connected_node_channels
+            assert channels is not None  # noqa: S101  # enumerate(None) would raise
             for i, existing in enumerate(channels):
                 if existing.index == packet.channel.index:
                     channels[i] = packet.channel
@@ -797,7 +806,7 @@ class MeshInterface:
             await self._process_packet_for_app_listener(from_radio)
 
     async def _process_packet_for_app_listener(self, from_radio: mesh_pb2.FromRadio) -> None:  # noqa: PLR0912
-        packet = Packet(from_radio)
+        packet: Packet[Any] = Packet(from_radio)
         if packet.mesh_packet is None:
             return
 
@@ -812,22 +821,22 @@ class MeshInterface:
             self._logger.debug("Packet has no payload: %s", repr(packet.data).replace("\n", ""))
             return
 
-        node_id = int(packet.from_id)
+        node_id = int(cast("int", packet.from_id))
         node = self.find_node(node_id) or MeshNode.stub_node(node_id)
 
         if packet.port_num == portnums_pb2.PortNum.TELEMETRY_APP:
             telemetry = packet.app_payload
-            telemetry_info = google.protobuf.json_format.MessageToDict(telemetry)
+            telemetry_info = json_format.MessageToDict(telemetry)
             if node_id in self._node_database:
                 await self._node_database_update(node_id, **telemetry_info)
         elif packet.port_num == portnums_pb2.PortNum.POSITION_APP:
             position = packet.app_payload
-            position_info = google.protobuf.json_format.MessageToDict(position)
+            position_info = json_format.MessageToDict(position)
             if node_id in self._node_database:
                 await self._node_database_update(node_id, position=position_info)
         elif packet.port_num == portnums_pb2.PortNum.NODEINFO_APP:
             node_info = packet.app_payload
-            node_info_dict = google.protobuf.json_format.MessageToDict(node_info)
+            node_info_dict = json_format.MessageToDict(node_info)
             if node_id in self._node_database:
                 await self._node_database_update(node_id, **node_info_dict)
             else:
@@ -840,12 +849,12 @@ class MeshInterface:
             self._add_background_task(listener(node, packet), name=f"app-listener-{packet.port_num}")
 
     async def _process_node_info(self, packet: mesh_pb2.FromRadio) -> None:
-        p = Packet(packet)
+        p: Packet[Any] = Packet(packet)
         if packet.HasField("node_info"):
             node_info = packet.node_info
             node_id = node_info.num
             try:
-                node_info_dict = google.protobuf.json_format.MessageToDict(node_info)
+                node_info_dict = json_format.MessageToDict(node_info)
                 db_node = self._get_or_create_node(node_info.num)
                 db_node.update(node_info_dict)
 
@@ -1015,17 +1024,17 @@ class MeshInterface:
     async def _start_config(self) -> None:
         async with self._connected_node_config_lock:
             self._connected_node_ready.clear()
-            self._connected_node_info: mesh_pb2.MyNodeInfo | None = None
-            self._connected_node_metadata: mesh_pb2.DeviceMetadata | None = None
-            self._connected_node_channels: list[channel_pb2.Channel] | None = []
-            self._connected_node_queue_status: mesh_pb2.QueueStatus | None = None
+            self._connected_node_info = None
+            self._connected_node_metadata = None
+            self._connected_node_channels = []
+            self._connected_node_queue_status = None
             self._node_database = {}
 
             await self._connection.request_config(minimal=self.no_nodes)
             self._connected_node_ready.set()
 
     def _add_background_task(self, coro: Awaitable[None], name: str | None = None) -> asyncio.Task:
-        task = asyncio.create_task(coro, name=name)
+        task = asyncio.create_task(cast("Coroutine[Any, Any, None]", coro), name=name)
         self._background_tasks.add(task)
         task.add_done_callback(self._background_tasks.discard)
         return task
@@ -1053,8 +1062,8 @@ class MeshInterface:
         try:
             now = dt.datetime.now()  # noqa: DTZ005
             local_now = now.astimezone()
-            local_tz = local_now.tzinfo
-            local_tzname = local_tz.tzname(local_now)
+            local_tz = cast("dt.tzinfo", local_now.tzinfo)
+            local_tzname = cast("str", local_tz.tzname(local_now))
             zoneinfo_file = Path("/usr/share/zoneinfo/" + local_tzname)
             with zoneinfo_file.open("rb") as file:
                 data = file.read().split(b"\n")[-2]
@@ -1148,7 +1157,7 @@ class MeshInterface:
     async def _send_message_await_response(  # noqa: PLR0913
         self,
         node: int,
-        message: google.protobuf.message.Message | bytes,
+        message: Message | bytes,
         port_num: portnums_pb2.PortNum.ValueType,
         channel_index: int | None = None,
         from_node: int | None = None,
@@ -1160,7 +1169,7 @@ class MeshInterface:
             timeout if timeout is not UNDEFINED else (self._response_timeout if want_response else self._ack_timeout)
         )
         ack_received = asyncio.Event()
-        error_queue = asyncio.Queue()
+        error_queue: asyncio.Queue[MeshRoutingError] = asyncio.Queue()
 
         async def on_ack(packet: Packet[mesh_pb2.Routing]) -> None:
             ack_received.set()
@@ -1188,9 +1197,9 @@ class MeshInterface:
 
         try:
             if done == {abort_on_error_task}:
-                raise next(iter(done)).result()
+                raise cast("MeshRoutingError", next(iter(done)).result())
             if done == {send_packet_task}:
-                return next(iter(done)).result()
+                return cast("Packet", next(iter(done)).result())
             if not ack_received.is_set():
                 msg = f"No acknowledgement received within {actual_timeout} seconds"
                 raise MeshInterfaceRequestError(msg)
@@ -1202,7 +1211,7 @@ class MeshInterface:
 
     async def send_admin_message(
         self, node: int, message: admin_pb2.AdminMessage, *, ack: bool = True
-    ) -> tuple[mesh_pb2.Data, mesh_pb2.FromRadio] | None:
+    ) -> Packet | None:
         return await self._connection.send_mesh_packet(
             channel_index=self._get_admin_channel_index(node=node),
             to_node=node,
@@ -1223,6 +1232,7 @@ class MeshInterface:
     ) -> Packet[admin_pb2.AdminMessage]:
         if node is None:
             await self._connected_node_ready.wait()
+            assert self._connected_node_info is not None  # noqa: S101  # dereferenced on the next line
             node = self._connected_node_info.my_node_num
         return await self._send_message_await_response(
             node=node,
@@ -1234,6 +1244,7 @@ class MeshInterface:
         )
 
     def _get_admin_channel_index(self, node: int) -> int:
+        assert self._connected_node_info is not None  # noqa: S101  # dereferenced on the next line
         if node == self._connected_node_info.my_node_num:
             return 0
 
@@ -1250,15 +1261,15 @@ class MeshInterface:
     async def send_text_message(  # noqa: PLR0912, PLR0913
         self,
         text: str,
-        destination: MeshNode | MeshChannel | int | str = None,
+        destination: MeshNode | MeshChannel | int | str | None = None,
         *,
         want_ack: bool = False,
         channel_index: int | None = None,
-        priority: MeshPacket.Priority | None = None,
+        priority: MeshPacket.Priority.ValueType | None = None,
         reply_id: int | None = None,
         is_reaction: bool = False,
         on_message_sent: Callable[[Packet], Awaitable[None]] | None = None,
-    ) -> None:
+    ) -> Packet | None:
         if isinstance(destination, MeshNode):
             to_node = destination.id
             channel_index = None
@@ -1279,6 +1290,7 @@ class MeshInterface:
             to_node = self.BROADCAST_NUM
 
         if channel_index is not None:
+            assert self._connected_node_channels is not None  # noqa: S101  # len() below would raise on None
             if len(self._connected_node_channels) <= channel_index:
                 msg = "Unavailable channel index"
                 raise ValueError(msg)
@@ -1292,6 +1304,7 @@ class MeshInterface:
             msg = "reply_id is required when sending a reaction"
             raise ValueError(msg)
 
+        out_callback: Callable[[Packet], Awaitable[None]] | None
         if on_message_sent is not None:
 
             async def out_callback(packet: Packet) -> None:
@@ -1299,6 +1312,7 @@ class MeshInterface:
         else:
             out_callback = None
 
+        assert self._connected_node_info is not None  # noqa: S101  # dereferenced in the call below
         return await self._connection.send_mesh_packet(
             channel_index=channel_index,
             to_node=to_node,

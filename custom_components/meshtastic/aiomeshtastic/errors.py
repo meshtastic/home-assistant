@@ -18,6 +18,6 @@ class MeshInterfaceRequestError(MeshtasticError):
 
 
 class MeshRoutingError(MeshtasticError):
-    def __init__(self, error: mesh_pb2.Routing.Error) -> None:
+    def __init__(self, error: mesh_pb2.Routing.Error.ValueType) -> None:
         self._error = error
         super().__init__(f"Routing error: {error}")

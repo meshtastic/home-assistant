@@ -100,7 +100,7 @@ async def async_unload_entry(
     return await helpers.async_unload_entry(hass, entry)
 
 
-@dataclass(kw_only=True)
+@dataclass(frozen=True, kw_only=True)
 class MeshtasticTextEntityDescription(TextEntityDescription):
     value_fn: Callable[[MeshtasticText], str]
     attributes_fn: Callable[[MeshtasticText], dict[str, Any]] | None = None

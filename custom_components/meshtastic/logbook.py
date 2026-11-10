@@ -5,7 +5,7 @@
 from __future__ import annotations
 
 from copy import deepcopy
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 
 import homeassistant.helpers.device_registry as dr
 import homeassistant.helpers.entity_registry as er
@@ -46,19 +46,21 @@ from .entity import (
 if TYPE_CHECKING:
     from collections.abc import Callable, Mapping
 
+    from homeassistant.components.logbook.models import LazyEventPartialState
+
     from .data import MeshtasticConfigEntry
 
 
 @callback
 def async_describe_events(
     hass: HomeAssistant,
-    async_describe_event: Callable[[str, str, Callable[[Event], dict[str, str]]], None],
+    async_describe_event: Callable[[str, str, Callable[[LazyEventPartialState], dict[str, Any]]], None],
 ) -> None:
     device_registry = dr.async_get(hass)
     entity_registry = er.async_get(hass)
 
     @callback
-    def async_describe_message_event(event: Event) -> dict[str, str]:
+    def async_describe_message_event(event: LazyEventPartialState) -> dict[str, Any]:
         entity_name = entity.name if (entity := entity_registry.entities.get(event.data[ATTR_ENTITY_ID])) else None
 
         if from_name := event.data.get(EVENT_MESHTASTIC_MESSAGE_LOG_EVENT_DATA_ATTR_FROM_NAME):
@@ -84,7 +86,7 @@ def async_describe_events(
             LOGBOOK_ENTRY_ICON: icon,
         }
 
-    async_describe_event(DOMAIN, EVENT_MESHTASTIC_DOMAIN_MESSAGE_LOG, async_describe_message_event)
+    async_describe_event(DOMAIN, cast("str", EVENT_MESHTASTIC_DOMAIN_MESSAGE_LOG), async_describe_message_event)
 
 
 async def async_setup_message_logger(hass: HomeAssistant, entry: MeshtasticConfigEntry) -> CALLBACK_TYPE:  # noqa: PLR0915
@@ -94,10 +96,10 @@ async def async_setup_message_logger(hass: HomeAssistant, entry: MeshtasticConfi
     def _publish_message_log_event(  # noqa: PLR0913
         hass: HomeAssistant,
         entry: MeshtasticConfigEntry,
-        from_device_id: str,
+        from_device_id: str | None,
         from_node_id: str,
-        to_channel_entity_id: str,
-        to_dm_entity_id: str,
+        to_channel_entity_id: str | None,
+        to_dm_entity_id: str | None,
         message: str,
     ) -> None:
         if (node_info := entry.runtime_data.client.get_node_info(int(from_node_id))) is not None:
@@ -105,18 +107,18 @@ async def async_setup_message_logger(hass: HomeAssistant, entry: MeshtasticConfi
         else:
             from_name = f"!{from_node_id:08x}"
         message_log_event_data: MeshtasticDomainMessageLogEventData = {
-            CONF_ENTITY_ID: to_dm_entity_id or to_channel_entity_id,
-            CONF_DEVICE_ID: from_device_id,
-            EVENT_MESHTASTIC_MESSAGE_LOG_EVENT_DATA_ATTR_FROM_NAME: from_name,
-            EVENT_MESHTASTIC_MESSAGE_LOG_EVENT_DATA_ATTR_PKI: bool(to_dm_entity_id),
-            EVENT_MESHTASTIC_MESSAGE_LOG_EVENT_DATA_ATTR_MESSAGE: message,
+            "entity_id": cast("str", to_dm_entity_id or to_channel_entity_id),  # caller guards non-empty
+            "device_id": from_device_id,
+            "from_name": from_name,
+            "pki": bool(to_dm_entity_id),
+            "message": message,
         }
         hass.bus.async_fire(event_type=EVENT_MESHTASTIC_DOMAIN_MESSAGE_LOG, event_data=message_log_event_data)
 
     async def _on_text_message(
         event: Event, *, produce_domain_event: bool = True, produce_log_event: bool = True
     ) -> None:
-        event_data = deepcopy(event.data)
+        event_data = cast("dict[str, Any]", deepcopy(event.data))
         config_entry_id = event_data.pop(ATTR_EVENT_MESHTASTIC_API_CONFIG_ENTRY_ID, None)
         if config_entry_id != entry.entry_id:
             return
@@ -150,7 +152,7 @@ async def async_setup_message_logger(hass: HomeAssistant, entry: MeshtasticConfi
                 hass.bus.async_fire(event_type=EVENT_MESHTASTIC_DOMAIN_EVENT, event_data=domain_event_data)
 
             if to_device:
-                domain_event_data: MeshtasticDomainEventData = {
+                domain_event_data = {
                     CONF_DEVICE_ID: to_device.id,
                     CONF_TYPE: MeshtasticDomainEventType.MESSAGE_RECEIVED,
                     EVENT_MESHTASTIC_DOMAIN_EVENT_DATA_ATTR_MESSAGE: message,
@@ -176,7 +178,7 @@ async def async_setup_message_logger(hass: HomeAssistant, entry: MeshtasticConfi
 
     def extract_device_and_entity_from_channel(
         config_entry_id: str, gateway_node_id: int, to: Mapping[str, Any], to_device: dr.DeviceEntry | None
-    ) -> tuple[None, dr.DeviceEntry | None]:
+    ) -> tuple[dr.DeviceEntry | None, str | None]:
         if (to_channel_id := to.get("channel", None)) is not None:
             channel_unique_id = GatewayChannelEntity.build_unique_id(config_entry_id, gateway_node_id, to_channel_id)
             to_channel_entity_id = entity_registry.async_get_entity_id(DOMAIN, DOMAIN, channel_unique_id)

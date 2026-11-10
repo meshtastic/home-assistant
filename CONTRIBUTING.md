@@ -25,7 +25,7 @@ Report a bug by [opening a new issue](../../issues/new/choose). A useful report 
 [Ruff](https://docs.astral.sh/ruff/) is the formatter and linter, pinned in the `dev`
 dependency group of `pyproject.toml`, which [uv](https://docs.astral.sh/uv/) manages (`uv.lock`).
 `scripts/setup` runs `uv sync --group dev --group test` and `scripts/lint` formats and fixes what it can.
-CI runs `ruff check .` and `ruff format --check .` on every pull request, next to the HACS and hassfest
+CI runs `ruff check .`, `ruff format --check .` and `mypy` on every pull request, next to the HACS and hassfest
 validations. Runtime requirements stay in `custom_components/meshtastic/manifest.json`.
 
 ## Tests

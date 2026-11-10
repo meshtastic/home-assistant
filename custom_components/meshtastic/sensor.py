@@ -61,7 +61,7 @@ PARALLEL_UPDATES = 0
 
 
 def _build_sensors(nodes: Mapping[int, Mapping[str, Any]], runtime_data: MeshtasticData) -> Iterable[MeshtasticSensor]:
-    entities = []
+    entities: list[MeshtasticSensor] = []
     entities += _build_node_sensors(nodes, runtime_data)
     entities += _build_device_sensors(nodes, runtime_data)
     entities += _build_local_stats_sensors(nodes, runtime_data)
@@ -88,10 +88,10 @@ async def async_unload_entry(
     return await helpers.async_unload_entry(hass, entry)
 
 
-@dataclass(kw_only=True)
+@dataclass(frozen=True, kw_only=True)
 class MeshtasticSensorEntityDescription(SensorEntityDescription):
     exists_fn: Callable[[MeshtasticSensor], bool] = lambda _: True
-    value_fn: Callable[[MeshtasticSensor], StateType]
+    value_fn: Callable[[MeshtasticSensor], StateType | dt.datetime]
     attributes_fn: Callable[[MeshtasticSensor], dict[str, Any]] | None = None
 
 
@@ -628,7 +628,7 @@ def _build_environment_metrics_sensors(
 
     def add_sensor_base(  # noqa: PLR0913
         node_id: int,
-        node_info: dict[str, Any],
+        node_info: Mapping[str, Any],
         value_key: str,
         device_class: SensorDeviceClass | None,
         unit_of_measurement: str | None = None,
@@ -720,7 +720,7 @@ def _build_host_metrics_sensors(
 
     def add_sensor_base(  # noqa: PLR0913
         node_id: int,
-        node_info: dict[str, Any],
+        node_info: Mapping[str, Any],
         value_key: str,
         device_class: SensorDeviceClass | None,
         unit_of_measurement: str | None = None,
@@ -789,7 +789,7 @@ def _build_air_quality_metrics_sensors(
 
     def add_sensor_base(  # noqa: PLR0913
         node_id: int,
-        node_info: dict[str, Any],
+        node_info: Mapping[str, Any],
         value_key: str,
         device_class: SensorDeviceClass | None,
         unit_of_measurement: str | None = None,
@@ -855,7 +855,7 @@ def _build_soil_water_metrics_sensors(
 
     def add_sensor_base(  # noqa: PLR0913
         node_id: int,
-        node_info: dict[str, Any],
+        node_info: Mapping[str, Any],
         value_key: str,
         device_class: SensorDeviceClass | None,
         unit_of_measurement: str | None = None,

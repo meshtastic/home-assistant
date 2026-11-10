@@ -5,6 +5,7 @@
 import asyncio
 from abc import abstractmethod
 from collections.abc import AsyncIterable
+from typing import cast
 
 from google.protobuf import message
 
@@ -101,17 +102,17 @@ class StreamingClientTransport(ClientApiConnection):
         pass
 
     async def _read_header(self) -> bytes | None:
-        header = await self._read_bytes(exactly=1)
+        header = cast("bytes", await self._read_bytes(exactly=1))  # exact reads return bytes or raise
         if header[0] != StreamingClientTransport.START1:
             await self._on_other_data(header)
             return None
 
-        header += await self._read_bytes(exactly=1)
+        header += cast("bytes", await self._read_bytes(exactly=1))
         if header[1] != StreamingClientTransport.START2:
             await self._on_other_data(header)
             return None
 
-        header += await self._read_bytes(exactly=2)
+        header += cast("bytes", await self._read_bytes(exactly=2))
         return header
 
         header = await self._read_bytes(StreamingClientTransport.MAGIC_LEN)

@@ -20,4 +20,4 @@ with contextlib.suppress(ImportError):
     _interface.append(BluetoothConnection)
 
 
-__all__ = list(_interface)
+__all__ = [cls.__name__ for cls in _interface]

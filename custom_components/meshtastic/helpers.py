@@ -36,7 +36,7 @@ def get_nodes(entry: MeshtasticConfigEntry) -> typing.Mapping[int, typing.Mappin
     }
 
 
-_remove_listeners = defaultdict(lambda: defaultdict(list))
+_remove_listeners: defaultdict[str, defaultdict[str, list[Callable[[], None]]]] = defaultdict(lambda: defaultdict(list))
 
 
 async def setup_platform_entry(

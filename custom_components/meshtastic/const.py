@@ -5,7 +5,7 @@
 
 import enum
 from logging import Logger, getLogger
-from typing import Final, TypedDict
+from typing import Final, NotRequired, TypedDict
 
 from homeassistant.util.event_type import EventType
 
@@ -96,9 +96,10 @@ EVENT_MESHTASTIC_DOMAIN_EVENT_DATA_ATTR_MESSAGE: Final = "message"
 
 
 class MeshtasticDomainEventData(TypedDict):
-    CONF_DEVICE_ID: str
-    CONF_ENTITY_ID: str | None
-    EVENT_MESHTASTIC_DOMAIN_EVENT_DATA_ATTR_MESSAGE: str
+    device_id: str
+    type: MeshtasticDomainEventType
+    entity_id: NotRequired[str]
+    message: NotRequired[str]
 
 
 # Primary user facing event
@@ -111,12 +112,11 @@ EVENT_MESHTASTIC_MESSAGE_LOG_EVENT_DATA_ATTR_MESSAGE: Final = "message"
 
 
 class MeshtasticDomainMessageLogEventData(TypedDict):
-    CONF_DEVICE_ID: str
-    CONF_ENTITY_ID: str
-    EVENT_MESHTASTIC_MESSAGE_LOG_EVENT_DATA_ATTR_MESSAGE: str
-    EVENT_MESHTASTIC_MESSAGE_LOG_EVENT_DATA_ATTR_FROM_NAME: str
-    EVENT_MESHTASTIC_MESSAGE_LOG_EVENT_DATA_ATTR_PKI: bool
-    EVENT_MESHTASTIC_DOMAIN_EVENT_DATA_ATTR_MESSAGE: str
+    device_id: str | None
+    entity_id: str
+    message: str
+    from_name: str
+    pki: bool
 
 
 # Event used for logbook

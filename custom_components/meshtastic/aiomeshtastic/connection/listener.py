@@ -13,7 +13,7 @@ from ..protobuf import mesh_pb2  # noqa: TID252
 class ClientApiConnectionPacketStreamListener:
     def __init__(self, queue_size: int = 16) -> None:
         self._failure: Exception | None = None
-        self._queue = asyncio.Queue(maxsize=queue_size)
+        self._queue: asyncio.Queue[mesh_pb2.FromRadio] = asyncio.Queue(maxsize=queue_size)
         self._closed = asyncio.Event()
 
     async def notify(self, packet: mesh_pb2.FromRadio) -> None:

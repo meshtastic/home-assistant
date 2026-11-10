@@ -23,5 +23,8 @@ jobs:
             python-version: "3.14"
             enable-cache: true
 
+        - name: "Type check"
+          run: uv run --group dev --group test mypy
+
         - name: "Test"
           run: uv run --group dev --group test python -m pytest tests
