@@ -185,7 +185,7 @@ async def test_send_text_action_is_kept_in_chat_history(hass: HomeAssistant) -> 
     chat = hass.data[DATA_CHAT][entry.entry_id]
 
     await hass.services.async_call(
-        DOMAIN, "send_text", {"text": "hello", "channel": "1", "sent_by": "Telegram: Alice"}, blocking=True
+        DOMAIN, "send_text", {"text": "hello", "channel": "1", "ack": True, "sent_by": "Telegram: Alice"}, blocking=True
     )
     await hass.async_block_till_done()
     message = chat.history("channel:1")[-1]
@@ -194,7 +194,7 @@ async def test_send_text_action_is_kept_in_chat_history(hass: HomeAssistant) -> 
     assert message["sent_by"] == "Telegram: Alice"
     assert client.sent[-1] == {"text": "hello", "to": BROADCAST, "channel": 1, "timeout": 60}
 
-    await hass.services.async_call(DOMAIN, "send_text", {"text": "direct", "to": str(ANNA)}, blocking=True)
+    await hass.services.async_call(DOMAIN, "send_text", {"text": "direct", "to": str(ANNA), "ack": True}, blocking=True)
     await hass.async_block_till_done()
     assert chat.history(f"node:{ANNA}")[-1]["sent_by"] is None
     assert client.sent[-1]["to"] == ANNA
@@ -202,16 +202,29 @@ async def test_send_text_action_is_kept_in_chat_history(hass: HomeAssistant) -> 
 
     # a direct message on an explicit channel keeps that channel
     await hass.services.async_call(
-        DOMAIN, "send_text", {"text": "direct on 2", "to": str(ANNA), "channel": "2"}, blocking=True
+        DOMAIN, "send_text", {"text": "direct on 2", "to": str(ANNA), "channel": "2", "ack": True}, blocking=True
     )
     await hass.async_block_till_done()
     assert client.sent[-1] == {"text": "direct on 2", "to": ANNA, "channel": 2, "timeout": 60}
     assert chat.history(f"node:{ANNA}")[-1]["text"] == "direct on 2"
 
     # without a channel the primary channel is used
-    await hass.services.async_call(DOMAIN, "send_text", {"text": "primary"}, blocking=True)
+    await hass.services.async_call(DOMAIN, "send_text", {"text": "primary", "ack": True}, blocking=True)
     await hass.async_block_till_done()
     assert chat.history("channel:0")[-1]["text"] == "primary"
+
+    # without ack (the default of the action) the message is sent once, without delivery tracking
+    await hass.services.async_call(
+        DOMAIN, "send_text", {"text": "fire and forget", "to": str(ANNA), "channel": "2", "ack": False}, blocking=True
+    )
+    await hass.async_block_till_done()
+    assert client.sent[-1] == {"text": "fire and forget", "to": ANNA, "channel": 2, "ack": False}
+    assert client.sent_ids[-1][0] == chat.history(f"node:{ANNA}")[-1]["packet_id"]
+    assert chat.history(f"node:{ANNA}")[-1]["status"] == "sent"
+    await hass.services.async_call(DOMAIN, "send_text", {"text": "default"}, blocking=True)
+    await hass.async_block_till_done()
+    assert client.sent[-1]["ack"] is False
+    assert chat.history("channel:0")[-1]["status"] == "sent"
 
     with pytest.raises(ServiceValidationError, match="longer than"):
         await hass.services.async_call(DOMAIN, "send_text", {"text": "x" * 201}, blocking=True)

@@ -215,14 +215,22 @@ class MeshtasticApiClient:
 
         return transformed
 
-    async def send_text(
+    async def send_text(  # noqa: PLR0913
         self,
         text: str,
         destination_id: int | str = MeshInterface.BROADCAST_ADDR,
         *,
         want_ack: bool = False,
         channel_index: int | None = None,
+        packet_id: int | None = None,
+        reply_id: int | None = None,
     ) -> bool:
+        """
+        Send a text message without waiting for an acknowledgement.
+
+        ``reply_id`` marks it as the answer to the packet with that id, ``packet_id`` (see ``new_packet_id``)
+        fixes the id of the new packet.
+        """
         try:
             await asyncio.wait_for(
                 self._interface.send_text_message(
@@ -230,6 +238,8 @@ class MeshtasticApiClient:
                     destination=destination_id,
                     want_ack=want_ack,
                     channel_index=channel_index,
+                    packet_id=packet_id,
+                    reply_id=reply_id,
                 ),
                 timeout=30,
             )

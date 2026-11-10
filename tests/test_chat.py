@@ -104,15 +104,19 @@ class FakeClient:
             raise self.ack
         return self.ack
 
-    async def send_text(
+    async def send_text(  # noqa: PLR0913
         self,
         text: str,
         destination_id: int | str = BROADCAST,
         *,
         channel_index: int | None = None,
         want_ack: bool = False,
-    ) -> None:
+        packet_id: int | None = None,
+        reply_id: int | None = None,
+    ) -> bool:
         self.sent.append({"text": text, "to": destination_id, "channel": channel_index, "ack": want_ack})
+        self.sent_ids.append((packet_id, reply_id))
+        return True
 
     async def async_get_channels(self) -> list[dict[str, Any]]:
         return [self.channels[i] for i in sorted(self.channels)]

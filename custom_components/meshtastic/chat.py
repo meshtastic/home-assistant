@@ -866,6 +866,7 @@ class MeshtasticChat:
         sent_by: str | None = None,
         channel_index: int | None = None,
         reply_to: str | None = None,
+        want_ack: bool = True,
     ) -> dict[str, Any]:
         """
         Send a message and keep it in the history.
@@ -876,6 +877,8 @@ class MeshtasticChat:
         decides (the node's PKI channel or the primary channel).
         ``reply_to`` is the id of a message of the same conversation this one answers: it is sent as a Meshtastic
         reply (the apps show it as a quote) and kept with the quoted text.
+        ``want_ack`` requests an acknowledgement and tracks the delivery of the message; without it the message is
+        only handed to the mesh and shown as sent.
         """
         kind, target = parse_conversation(conversation)
         prefix = self.prefix_for(user)
@@ -923,7 +926,7 @@ class MeshtasticChat:
         self._append(conversation, message)
 
         task = self.hass.async_create_background_task(
-            self._async_deliver(conversation, message, destination, channel_index),
+            self._async_deliver(conversation, message, destination, channel_index, want_ack=want_ack),
             name=f"{DOMAIN}_chat_send_{message['id']}",
         )
         self._pending.add(task)
@@ -931,18 +934,34 @@ class MeshtasticChat:
         return dict(message)
 
     async def _async_deliver(
-        self, conversation: str, message: dict[str, Any], destination: int, channel_index: int | None
+        self,
+        conversation: str,
+        message: dict[str, Any],
+        destination: int,
+        channel_index: int | None,
+        *,
+        want_ack: bool = True,
     ) -> None:
         client = self.entry.runtime_data.client
         try:
-            ack_from, error = await client.send_text_with_ack(
-                message["text"],
-                destination,
-                channel_index=channel_index,
-                ack_timeout=CHAT_ACK_TIMEOUT,
-                packet_id=message["packet_id"],
-                reply_id=message["reply_to"],
-            )
+            if want_ack:
+                ack_from, error = await client.send_text_with_ack(
+                    message["text"],
+                    destination,
+                    channel_index=channel_index,
+                    ack_timeout=CHAT_ACK_TIMEOUT,
+                    packet_id=message["packet_id"],
+                    reply_id=message["reply_to"],
+                )
+            else:
+                sent = await client.send_text(
+                    message["text"],
+                    destination,
+                    want_ack=False,
+                    channel_index=channel_index,
+                    packet_id=message["packet_id"],
+                    reply_id=message["reply_to"],
+                )
         except asyncio.CancelledError:
             message["status"] = MessageStatus.NO_ACK
             self._publish("update", conversation, message)
@@ -954,7 +973,14 @@ class MeshtasticChat:
             self._publish("update", conversation, message)
             return
 
-        if error is None:
+        if not want_ack:
+            # no delivery tracking: the message counts as sent once the mesh has taken it
+            if sent:
+                message["status"] = MessageStatus.SENT
+            else:
+                message["status"] = MessageStatus.FAILED
+                message["error"] = "Timed out while sending"
+        elif error is None:
             message["status"] = MessageStatus.NO_ACK
         elif error != "NONE":
             message["status"] = MessageStatus.FAILED
