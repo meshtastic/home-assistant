@@ -90,7 +90,8 @@ class FakeClient:
     async def async_get_node_local_config(self) -> dict[str, Any]:
         return {
             "security": {"privateKey": "secret", "adminKey": ["a"]},
-            "network": {"wifiSsid": "home", "wifiPsk": "wifi-password"},
+            "network": {"wifiSsid": "home", "wifiPsk": "wifi-password", "ntpServer": "ntp.lan"},
+            "deviceConfig": {"rsyslogServer": "syslog.lan"},
             "bluetooth": {"fixedPin": 123456, "mode": "FIXED_PIN"},
         }
 

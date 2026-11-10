@@ -145,7 +145,7 @@ channel broadcast; the channel index is the gateway's own.
 | `meshtastic_api_position` | a position is received | the decoded `Position`, plus `latitude` and `longitude` in degrees |
 | `meshtastic_api_telemetry` | telemetry is received | the metrics group; the envelope adds `telemetry_type` (`device_metrics`, `local_stats`, `environment_metrics`, `power_metrics` or `host_metrics`) |
 | `meshtastic_api_node_updated` | a node announces itself (NodeInfo) | `num` and `user` (`id`, `longName`, `shortName`, `hwModel`, `publicKey` and so on) |
-| `meshtastic_api_packet` | any packet reaches the gateway | the whole decoded `MeshPacket` |
+| `meshtastic_api_packet` | any packet reaches the gateway | the whole decoded `MeshPacket`; admin packets without their payload |
 
 `position` and `telemetry` events also put `node_info: {name: <long name>}` in the envelope.
 Decoded protobuf messages use the protobuf JSON names (`longName`, `geofenceRadius`), so fields left at

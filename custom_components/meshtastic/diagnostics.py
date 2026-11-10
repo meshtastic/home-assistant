@@ -56,6 +56,8 @@ TO_REDACT = set(sensitive_json_names()) | {
     "gateway",
     "subnet",
     "dns",
+    "ntpServer",
+    "rsyslogServer",
     # MQTT module
     "address",
     "username",

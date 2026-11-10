@@ -160,3 +160,37 @@ async def test_a_renumber_onto_an_existing_device_is_not_merged(hass: HomeAssist
 
     assert device_registry.async_get_device_by_identifier((DOMAIN, str(PEER_NUM)), entry.entry_id).id == old.id
     assert device_registry.async_get_device_by_identifier((DOMAIN, str(NEW_PEER)), entry.entry_id).id == new.id
+
+
+async def test_another_radio_behind_the_same_connection_is_not_taken_for_a_renumber(
+    hass: HomeAssistant, fake_client: FakeClient
+) -> None:
+    entry = make_entry({CONF_OPTION_FILTER_NODES: [{"id": GATEWAY_NUM, "name": "Gateway", "public_key": GATEWAY_KEY}]})
+    entry.add_to_hass(hass)
+    entity_registry = er.async_get(hass)
+    device_registry = dr.async_get(hass)
+    old_device = device_registry.async_get_or_create(
+        config_entry_id=entry.entry_id, identifiers={(DOMAIN, str(GATEWAY_NUM))}, name="Gateway"
+    )
+    old_unique_id = f"{entry.entry_id}_gateway_{GATEWAY_NUM}"
+    entity_registry.async_get_or_create(
+        "meshtastic", "meshtastic", old_unique_id, config_entry=entry, device_id=old_device.id
+    )
+
+    # a swapped serial port: a different radio, with its own key, now answers on this entry's connection
+    other = canonical(PEER_KEY)
+    fake_client.nodes = {
+        other: make_node(other, "Other radio", PEER_KEY),
+        GATEWAY_NUM: make_node(GATEWAY_NUM, "Gateway", GATEWAY_KEY),
+    }
+    fake_client.gateway_num = other
+
+    assert await hass.config_entries.async_setup(entry.entry_id)
+    await hass.async_block_till_done()
+
+    assert entity_registry.async_get_entity_id("meshtastic", "meshtastic", old_unique_id) is not None
+    assert (
+        device_registry.async_get_device_by_identifier((DOMAIN, str(GATEWAY_NUM)), entry.entry_id).id == old_device.id
+    )
+    assert entry.unique_id == str(GATEWAY_NUM)
+    assert entry.options[CONF_OPTION_FILTER_NODES][0]["public_key"] == GATEWAY_KEY

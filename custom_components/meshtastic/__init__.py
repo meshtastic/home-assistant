@@ -61,7 +61,7 @@ from .entity import MeshtasticDeviceClass, MeshtasticEntity
 from .helpers import fetch_meshtastic_hardware_names
 from .logbook import async_setup_message_logger
 from .meshtastic_tcp import async_setup_tcp_proxy, async_unload_tcp_proxy
-from .renumber import find_renumbered_nodes, node_public_key, rewrite_unique_id
+from .renumber import canonical_node_num, find_renumbered_nodes, node_public_key, rewrite_unique_id
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Mapping, MutableMapping
@@ -220,8 +220,8 @@ async def _async_follow_renumbered_nodes(
         ),
         None,
     )
-    if gateway_num is not None and old_gateway_num is not None and old_gateway_num != gateway_num:
-        renumbered[old_gateway_num] = gateway_num
+    if old_gateway_num is not None and _is_gateway_renumber(old_gateway_num, gateway_node, filter_nodes, nodes):
+        renumbered[old_gateway_num] = gateway_node["num"]
 
     for old_num, new_num in renumbered.items():
         if device_registry.async_get_device_by_identifier((DOMAIN, str(new_num)), entry.entry_id) is not None:
@@ -257,10 +257,33 @@ async def _async_follow_renumbered_nodes(
     updates: dict[str, Any] = {}
     if new_filter_nodes != filter_nodes:
         updates["options"] = {**entry.options, CONF_OPTION_FILTER_NODES: new_filter_nodes}
-    if old_gateway_num is not None and entry.unique_id == str(old_gateway_num) and gateway_num != old_gateway_num:
+    if old_gateway_num in renumbered and entry.unique_id == str(old_gateway_num):
         updates["unique_id"] = str(gateway_num)
     if updates:
         hass.config_entries.async_update_entry(entry, **updates)
+
+
+def _is_gateway_renumber(
+    old_num: int,
+    gateway_node: Mapping[str, Any],
+    filter_nodes: list[dict[str, Any]],
+    nodes: Mapping[int, Mapping[str, Any]],
+) -> bool:
+    # a swapped port or reused address puts another radio behind the same connection, so its number changing
+    # is only a renumber when the key is the old gateway's, or, with no old key known, the firmware 2.8 one
+    new_num = gateway_node.get("num")
+    if new_num is None or new_num == old_num:
+        return False
+    new_key = node_public_key(gateway_node)
+    old_key = next((el.get("public_key") for el in filter_nodes if el["id"] == old_num), None) or node_public_key(
+        nodes.get(old_num)
+    )
+    same = old_key == new_key if old_key else new_key is not None and canonical_node_num(new_key) == new_num
+    if not same:
+        LOGGER.warning(
+            "Gateway changed from node %s to %s with another key; treating it as a new radio", old_num, new_num
+        )
+    return same
 
 
 async def _setup_meshtastic_devices(
