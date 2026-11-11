@@ -587,7 +587,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     async def _finish_steps(self) -> ConfigFlowResult:
         return self.async_create_entry(
-            title=self.gateway_node["user"]["longName"], data=self.data, options=self.options
+            title=_node_long_name(self.gateway_node["num"], self.gateway_node), data=self.data, options=self.options
         )
 
     @staticmethod

@@ -92,6 +92,28 @@ async def test_manual_tcp_flow_creates_entry_with_nodes_and_options(
     setup_entry.assert_awaited_once()
 
 
+async def test_gateway_without_a_long_name_is_titled_by_its_id(
+    hass: HomeAssistant, validate_input: AsyncMock, nodes: dict[int, dict[str, Any]]
+) -> None:
+    del nodes[GATEWAY_NUM]["user"]["longName"]
+    flow_id = await _start_manual_tcp(hass)
+
+    result = await hass.config_entries.flow.async_configure(
+        flow_id, {CONF_CONNECTION_TCP_HOST: HOST, CONF_CONNECTION_TCP_PORT: 4403}
+    )
+    assert result["step_id"] == "node"
+    result = await hass.config_entries.flow.async_configure(flow_id, {CONF_OPTION_NODE: str(GATEWAY_NUM)})
+    result = await hass.config_entries.flow.async_configure(flow_id, {"channels": False, "nodes": "selected"})
+    result = await hass.config_entries.flow.async_configure(flow_id, {"enable": False})
+    with _setup_entry_patch():
+        result = await hass.config_entries.flow.async_configure(flow_id, {"enable": False, "port": 4403})
+        await hass.async_block_till_done()
+
+    assert result["type"] is FlowResultType.CREATE_ENTRY
+    assert result["title"] == f"!{GATEWAY_NUM:08x}"
+    validate_input.assert_awaited_once()
+
+
 @pytest.mark.usefixtures("validate_input")
 async def test_duplicate_gateway_aborts_and_updates_the_connection(hass: HomeAssistant, entry: MockConfigEntry) -> None:
     flow_id = await _start_manual_tcp(hass)
