@@ -180,3 +180,29 @@ async def test_wind_direction_is_an_angle(hass: HomeAssistant, entry: MockConfig
     assert state.attributes["device_class"] == "wind_direction"
     assert state.attributes["state_class"] == "measurement_angle"
     assert state.state == "270"
+
+
+async def test_selected_node_without_a_long_name_gets_a_device_named_by_its_id(
+    hass: HomeAssistant, entry: MockConfigEntry, fake_client: FakeClient
+) -> None:
+    del fake_client.nodes[PEER_NUM]["user"]["longName"]
+
+    assert await hass.config_entries.async_setup(entry.entry_id)
+    await hass.async_block_till_done()
+
+    assert entry.state is ConfigEntryState.LOADED
+    device = dr.async_get(hass).async_get_device({(DOMAIN, str(PEER_NUM))})
+    assert device is not None
+    assert device.name == f"!{PEER_NUM:08x}"
+
+
+async def test_node_without_a_user_record_does_not_break_the_notify_platform(
+    hass: HomeAssistant, entry: MockConfigEntry, fake_client: FakeClient, caplog: pytest.LogCaptureFixture
+) -> None:
+    fake_client.nodes[OTHER_NUM] = {"num": OTHER_NUM, "position": {"latitude": 47.0, "longitude": 8.0}}
+
+    assert await hass.config_entries.async_setup(entry.entry_id)
+    await hass.async_block_till_done()
+
+    assert entry.state is ConfigEntryState.LOADED
+    assert "Error while setting up meshtastic platform" not in caplog.text
