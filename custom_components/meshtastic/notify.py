@@ -128,7 +128,8 @@ async def _add_node_entities(
     entities = [
         MeshtasticNodeNotify(node_id=node_id, entity_name=f"{node_info['user']['longName']}")
         for node_id, node_info in nodes.items()
-        if should_create_node(node_id)
+        # like the node update listener: a node needs a name before it can be notified
+        if should_create_node(node_id) and "longName" in node_info.get("user", {})
     ]
     platform = entity_platform.async_get_current_platform()
     entity_registry = er.async_get(hass)

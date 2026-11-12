@@ -359,7 +359,7 @@ async def _setup_meshtastic_device(  # noqa: PLR0913
     d = device_registry.async_get_or_create(
         config_entry_id=entry.entry_id,
         identifiers={(DOMAIN, str(node_id))},
-        name=node["user"]["longName"],
+        name=node["user"].get("longName") or node["user"]["id"],
         model=device_hardware_names.get(hw_model) if known else UNDEFINED,
         model_id=str(hw_model) if known else UNDEFINED,
         serial_number=node["user"]["id"],
