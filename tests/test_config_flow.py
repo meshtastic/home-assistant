@@ -256,6 +256,8 @@ async def test_partial_metadata_survives_setup_and_options_reload(
     await hass.config_entries.flow.async_configure(flow_id, {"channels": False, "nodes": "selected"})
     await hass.config_entries.flow.async_configure(flow_id, {"enable": False})
     result = await hass.config_entries.flow.async_configure(flow_id, {"enable": False, "port": 4403})
+    assert result["step_id"] == "chat"
+    result = await hass.config_entries.flow.async_configure(flow_id, {"enable": False})
     await hass.async_block_till_done()
 
     assert result["type"] is FlowResultType.CREATE_ENTRY
@@ -283,6 +285,7 @@ async def test_partial_metadata_survives_setup_and_options_reload(
             CONF_OPTION_NOTIFY_PLATFORM: dict(entry.options[CONF_OPTION_NOTIFY_PLATFORM]),
             CONF_OPTION_WEB_CLIENT: dict(entry.options[CONF_OPTION_WEB_CLIENT]),
             CONF_OPTION_TCP_PROXY: dict(entry.options[CONF_OPTION_TCP_PROXY]),
+            "chat": dict(entry.options["chat"]),
         },
     )
     await hass.async_block_till_done()

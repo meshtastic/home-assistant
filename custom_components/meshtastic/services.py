@@ -420,6 +420,7 @@ async def _setup_service_send_text_handler(
                     sent_by=call.data.get(ATTR_SERVICE_SEND_TEXT_DATA_SENT_BY),
                     channel_index=channel_index,
                     want_ack=call.data[ATTR_SERVICE_DATA_ACK],
+                    raise_on_error=True,
                 )
             except vol.Invalid as e:
                 raise ServiceValidationError(str(e)) from e

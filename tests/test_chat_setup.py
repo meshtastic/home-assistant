@@ -19,6 +19,7 @@ from homeassistant.setup import async_setup_component
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.meshtastic.aiomeshtastic.interface import ConnectionState
+from custom_components.meshtastic.api import MeshtasticApiClientError
 from custom_components.meshtastic.chat import DATA_CHAT
 from custom_components.meshtastic.const import CHAT_SENT_BY_MAX_LENGTH, DOMAIN
 from custom_components.meshtastic.frontend import CHAT_PANEL_URL_PATH
@@ -237,6 +238,31 @@ async def test_send_text_action_is_kept_in_chat_history(hass: HomeAssistant) -> 
 
     with pytest.raises(ServiceValidationError, match="longer than"):
         await hass.services.async_call(DOMAIN, "send_text", {"text": "x" * 201}, blocking=True)
+
+    assert await hass.config_entries.async_unload(entry.entry_id)
+    await hass.async_block_till_done()
+
+
+@pytest.mark.usefixtures("fake_api")
+@pytest.mark.parametrize("ack", [True, False])
+async def test_send_text_action_raises_when_the_chat_cannot_send(hass: HomeAssistant, *, ack: bool) -> None:
+    """Like sending without the chat, a failed send fails the action; the chat keeps the failed message."""
+    entry = _entry({"chat": {"enable": True}})
+    entry.add_to_hass(hass)
+    assert await hass.config_entries.async_setup(entry.entry_id)
+    await hass.async_block_till_done()
+    client = entry.runtime_data.client
+    chat = hass.data[DATA_CHAT][entry.entry_id]
+    client.ack = MeshtasticApiClientError("radio unreachable")
+    client.send_error = MeshtasticApiClientError("radio unreachable")
+
+    with pytest.raises(MeshtasticApiClientError, match="radio unreachable"):
+        await hass.services.async_call(DOMAIN, "send_text", {"text": "lost", "ack": ack}, blocking=True)
+    await hass.async_block_till_done()
+    message = chat.history("channel:0")[-1]
+    assert message["text"] == "lost"
+    assert message["status"] == "failed"
+    assert message["error"] == "radio unreachable"
 
     assert await hass.config_entries.async_unload(entry.entry_id)
     await hass.async_block_till_done()

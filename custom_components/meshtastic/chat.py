@@ -870,6 +870,7 @@ class MeshtasticChat:
         channel_index: int | None = None,
         reply_to: str | None = None,
         want_ack: bool = True,
+        raise_on_error: bool = False,
     ) -> dict[str, Any]:
         """
         Send a message and keep it in the history.
@@ -882,6 +883,9 @@ class MeshtasticChat:
         reply (the apps show it as a quote) and kept with the quoted text.
         ``want_ack`` requests an acknowledgement and tracks the delivery of the message; without it the message is
         only handed to the mesh and shown as sent.
+        ``raise_on_error`` makes the call wait until the radio has taken the message and raise the error when it
+        could not be sent, like sending without the chat does; the delivery itself still runs in the background.
+        The failed message stays in the history.
         """
         kind, target = parse_conversation(conversation)
         prefix = self.prefix_for(user)
@@ -928,15 +932,22 @@ class MeshtasticChat:
         }
         self._append(conversation, message)
 
+        handed_over: asyncio.Future[None] | None = self.hass.loop.create_future() if raise_on_error else None
         task = self.hass.async_create_background_task(
-            self._async_deliver(conversation, message, destination, channel_index, want_ack=want_ack),
+            self._async_deliver(
+                conversation, message, destination, channel_index, want_ack=want_ack, handed_over=handed_over
+            ),
             name=f"{DOMAIN}_chat_send_{message['id']}",
         )
         self._pending.add(task)
         task.add_done_callback(self._pending.discard)
+        if handed_over is not None:
+            # never leave the caller waiting, whatever ends the delivery
+            task.add_done_callback(lambda _: None if handed_over.done() else handed_over.set_result(None))
+            await asyncio.shield(handed_over)
         return dict(message)
 
-    async def _async_deliver(  # noqa: PLR0912
+    async def _async_deliver(  # noqa: PLR0912, PLR0913
         self,
         conversation: str,
         message: dict[str, Any],
@@ -944,8 +955,14 @@ class MeshtasticChat:
         channel_index: int | None,
         *,
         want_ack: bool = True,
+        handed_over: asyncio.Future[None] | None = None,
     ) -> None:
         client = self.entry.runtime_data.client
+
+        def _handed_over() -> None:
+            if handed_over is not None and not handed_over.done():
+                handed_over.set_result(None)
+
         try:
             if want_ack:
                 ack_from, error = await client.send_text_with_ack(
@@ -955,6 +972,7 @@ class MeshtasticChat:
                     ack_timeout=CHAT_ACK_TIMEOUT,
                     packet_id=message["packet_id"],
                     reply_id=message["reply_to"],
+                    on_sent=_handed_over,
                 )
             else:
                 sent = await client.send_text(
@@ -968,13 +986,17 @@ class MeshtasticChat:
         except asyncio.CancelledError:
             message["status"] = MessageStatus.NO_ACK
             self._publish("update", conversation, message)
+            _handed_over()
             raise
         except (MeshtasticApiClientError, ValueError) as e:
             _LOGGER.debug("Failed to send chat message", exc_info=True)
             message["status"] = MessageStatus.FAILED
             message["error"] = _error_text(e)
             self._publish("update", conversation, message)
+            if handed_over is not None and not handed_over.done():
+                handed_over.set_exception(e)
             return
+        _handed_over()
 
         if not want_ack:
             # no delivery tracking: the message counts as sent once the mesh has taken it

@@ -45,7 +45,7 @@ from custom_components.meshtastic.chat import (
 from custom_components.meshtastic.const import CHAT_CHANNEL_NAME_MAX_BYTES, CHAT_MAX_TEXT_BYTES, DOMAIN
 
 if TYPE_CHECKING:
-    from collections.abc import AsyncGenerator
+    from collections.abc import AsyncGenerator, Callable
 
     from homeassistant.core import HomeAssistant
     from pytest_homeassistant_custom_component.typing import WebSocketGenerator
@@ -64,6 +64,7 @@ class FakeClient:
         self.sent_ids: list[tuple[int | None, int | None]] = []  # (packet id, reply id) of what was sent
         self._packet_id = 1000
         self.ack: tuple[int | None, str | None] | Exception = (GATEWAY, "NONE")
+        self.send_error: Exception | None = None
         self.favorites: set[int] = {ANNA}
         self.favorite_calls: list[tuple[int, bool]] = []
         self.requests: list[tuple[str, int, str | None]] = []
@@ -103,11 +104,14 @@ class FakeClient:
         ack_timeout: float = 60,
         packet_id: int | None = None,
         reply_id: int | None = None,
+        on_sent: Callable[[], None] | None = None,
     ) -> tuple[int | None, str | None]:
         self.sent.append({"text": text, "to": destination_id, "channel": channel_index, "timeout": ack_timeout})
         self.sent_ids.append((packet_id, reply_id))
         if isinstance(self.ack, Exception):
             raise self.ack
+        if on_sent is not None:
+            on_sent()
         return self.ack
 
     async def send_text(  # noqa: PLR0913
@@ -123,6 +127,8 @@ class FakeClient:
     ) -> bool:
         self.sent.append({"text": text, "to": destination_id, "channel": channel_index, "ack": want_ack})
         self.sent_ids.append((packet_id, reply_id))
+        if self.send_error is not None:
+            raise self.send_error
         return True
 
     async def async_get_channels(self) -> list[dict[str, Any]]:

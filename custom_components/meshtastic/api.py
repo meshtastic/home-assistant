@@ -362,16 +362,23 @@ class MeshtasticApiClient:
         ack_timeout: float = 60,
         packet_id: int | None = None,
         reply_id: int | None = None,
+        on_sent: Callable[[], None] | None = None,
     ) -> tuple[int | None, str | None]:
         """
         Send a text message requesting an acknowledgement.
 
         ``reply_id`` marks it as the answer to the packet with that id, ``packet_id`` (see ``new_packet_id``)
-        fixes the id of the new packet.
+        fixes the id of the new packet. ``on_sent`` is called once the packet has been handed to the radio,
+        before the wait for the acknowledgement.
 
         Returns (node id that sent the routing ack, routing error name). Both are None if no acknowledgement
         arrived before the timeout. An error name of "NONE" means the packet was acknowledged without error.
         """
+
+        async def _on_message_sent(packet: Packet) -> None:  # noqa: ARG001
+            if on_sent is not None:
+                on_sent()
+
         try:
             ack_packet = await asyncio.wait_for(
                 self._interface.send_text_message(
@@ -381,6 +388,7 @@ class MeshtasticApiClient:
                     channel_index=channel_index,
                     packet_id=packet_id,
                     reply_id=reply_id,
+                    on_message_sent=_on_message_sent,
                 ),
                 timeout=ack_timeout,
             )
