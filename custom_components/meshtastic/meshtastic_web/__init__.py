@@ -317,6 +317,9 @@ async def async_setup(hass: HomeAssistant) -> bool:
 # @meshtastic/transport-http), or the client reports the connection lost.
 FROM_RADIO_HOLD_SECONDS = 5.0
 
+# Set under the token's own path, so two tabs of one browser each keep their own.
+SESSION_COOKIE = "meshtastic_config_id"
+
 # The client persists its database in OPFS, which needs a cross-origin isolated document.
 # credentialless, not require-corp, because the third-party map style sends no CORP header.
 CROSS_ORIGIN_ISOLATION_HEADERS = {
@@ -446,7 +449,7 @@ class MeshtasticWebApiV1ToRadioView(MeshtasticWebApiV1View):
         if to_radio.HasField("want_config_id"):
             config_id = str(to_radio.want_config_id)
             self._context.add_session(request, config_id)
-            response.set_cookie("config_id", config_id)
+            response.set_cookie(SESSION_COOKIE, config_id, path=f"{URL_BASE}/web/{config_entry_id}/{token}")
 
         await connection.forward(body, to_radio)
         self._add_protobuf_headers(response)
@@ -459,7 +462,7 @@ class MeshtasticWebApiV1FromRadioView(MeshtasticWebApiV1View):
 
     async def get(self, request: HomeAssistantRequest, config_entry_id: str, token: str) -> web.Response:
         await self._check_access(config_entry_id, token)
-        config_id = request.cookies.get("config_id")
+        config_id = request.cookies.get(SESSION_COOKIE)
         if config_id is None:
             await asyncio.sleep(1)
             bad_request = web.HTTPBadRequest()
@@ -496,7 +499,7 @@ class MeshtasticWebJsonReportView(MeshtasticWebApiV1View):
 
     async def get(self, request: HomeAssistantRequest, config_entry_id: str, token: str) -> web.Response:
         await self._check_access(config_entry_id, token)
-        config_id = request.cookies.get("config_id")
+        config_id = request.cookies.get(SESSION_COOKIE)
         if config_id is None:
             response = web.HTTPBadRequest()
             response.headers.add("Cache-Control", "no-cache")

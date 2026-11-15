@@ -6,10 +6,12 @@
 
 from __future__ import annotations
 
+import asyncio
 import datetime as dt
 from http import HTTPStatus
+from types import SimpleNamespace
 from typing import TYPE_CHECKING
-from unittest.mock import patch
+from unittest.mock import AsyncMock, patch
 from urllib.parse import parse_qs, urlparse
 
 import pytest
@@ -17,6 +19,7 @@ from homeassistant.auth.const import GROUP_ID_READ_ONLY
 from homeassistant.helpers import entity_registry as er
 from homeassistant.setup import async_setup_component
 
+from custom_components.meshtastic.aiomeshtastic.protobuf import mesh_pb2
 from custom_components.meshtastic.const import (
     CONF_OPTION_FILTER_NODES,
     CONF_OPTION_WEB_CLIENT,
@@ -28,9 +31,13 @@ from custom_components.meshtastic.meshtastic_web import TOKEN_IDLE_TIMEOUT, WebC
 from .conftest import GATEWAY_NUM, PEER_NUM, make_entry
 
 if TYPE_CHECKING:
+    from collections.abc import AsyncIterator
+
     from homeassistant.core import HomeAssistant
     from pytest_homeassistant_custom_component.common import MockConfigEntry, MockUser
     from pytest_homeassistant_custom_component.typing import ClientSessionGenerator, WebSocketGenerator
+
+    from .conftest import FakeClient
 
 NODES = [{"id": GATEWAY_NUM, "name": "Gateway"}, {"id": PEER_NUM, "name": "Peer"}]
 
@@ -180,6 +187,46 @@ async def test_a_token_ends_with_its_admin(
         await hass.auth.async_remove_user(hass_admin_user)
 
     assert (await http.get(f"{path}/api/v1/fromradio")).status == HTTPStatus.FORBIDDEN
+
+
+async def test_two_tabs_in_one_browser_keep_their_own_sessions(
+    hass: HomeAssistant,
+    hass_ws_client: WebSocketGenerator,
+    hass_client_no_auth: ClientSessionGenerator,
+    fake_client: FakeClient,
+) -> None:
+    async def from_radio_stream() -> AsyncIterator[mesh_pb2.FromRadio]:
+        await asyncio.Event().wait()
+        yield mesh_pb2.FromRadio()
+
+    fake_client._interface = SimpleNamespace(  # type: ignore[attr-defined]
+        _connection=SimpleNamespace(forward=AsyncMock()), from_radio_stream=from_radio_stream
+    )
+    _, gateway = await setup_gateway(hass)
+    paths = [
+        parse_qs(urlparse((await open_web_client(hass_ws_client, hass, gateway))["result"]["url"]).query)["path"][0]
+        for _ in range(2)
+    ]
+    # one client, so one cookie jar: two tabs of the same browser
+    http = await hass_client_no_auth()
+
+    try:
+        for config_id, path in enumerate(paths, start=1):
+            put = await http.put(
+                f"{path}/api/v1/toradio",
+                data=mesh_pb2.ToRadio(want_config_id=config_id).SerializeToString(),
+                headers={"Content-Type": "application/x-protobuf"},
+            )
+            assert put.status == HTTPStatus.OK
+        with patch("custom_components.meshtastic.meshtastic_web.FROM_RADIO_HOLD_SECONDS", 0.01):
+            statuses = [(await http.get(f"{path}/api/v1/fromradio")).status for path in paths]
+    finally:
+        consumers = [task for task in asyncio.all_tasks() if task.get_name() == "meshtasic-web-consume"]
+        for consumer in consumers:
+            consumer.cancel()
+        await asyncio.gather(*consumers, return_exceptions=True)
+
+    assert statuses == [HTTPStatus.OK, HTTPStatus.OK]
 
 
 def test_a_token_expires_when_idle() -> None:
