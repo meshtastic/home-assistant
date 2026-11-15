@@ -1193,11 +1193,10 @@ class MeshInterface:
             )
         )
 
-        done, pending = await asyncio.wait(
-            [abort_on_error_task, send_packet_task], timeout=actual_timeout, return_when=asyncio.FIRST_COMPLETED
-        )
-
         try:
+            done, _ = await asyncio.wait(
+                [abort_on_error_task, send_packet_task], timeout=actual_timeout, return_when=asyncio.FIRST_COMPLETED
+            )
             if done == {abort_on_error_task}:
                 raise cast("MeshRoutingError", next(iter(done)).result())
             if done == {send_packet_task}:
@@ -1207,9 +1206,9 @@ class MeshInterface:
                 raise MeshInterfaceRequestError(msg)
             msg = f"No response received within {actual_timeout} seconds"
             raise MeshInterfaceRequestError(msg)
-        finally:
-            for p in pending:
-                p.cancel()
+        finally:  # also when the request itself is cancelled
+            abort_on_error_task.cancel()
+            send_packet_task.cancel()
 
     async def send_admin_message(
         self, node: int, message: admin_pb2.AdminMessage, *, ack: bool = True

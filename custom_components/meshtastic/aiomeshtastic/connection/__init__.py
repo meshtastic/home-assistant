@@ -414,7 +414,11 @@ class ClientApiConnection:
             self._logger.debug("Queue is full, waiting")
             queue_status_update_task = asyncio.create_task(self._queue_status_update.wait())
             sleep_task = asyncio.create_task(asyncio.sleep(1.0))
-            await asyncio.wait([queue_status_update_task, sleep_task], return_when=asyncio.FIRST_COMPLETED)
+            try:
+                await asyncio.wait([queue_status_update_task, sleep_task], return_when=asyncio.FIRST_COMPLETED)
+            finally:  # also when the send itself is cancelled
+                queue_status_update_task.cancel()
+                sleep_task.cancel()
 
         self._queue_status.free -= 1
         return await self._send_packet(packet)
