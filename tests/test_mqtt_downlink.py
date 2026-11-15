@@ -257,8 +257,12 @@ async def test_dropped_connection_reconnects_and_forwards(monkeypatch: pytest.Mo
             await real_sleep(0)
     second = FakeMqttClient.instances[1]
     await asyncio.wait_for(second.subscribed.wait(), timeout=1)
+    await interface._process_connected_node_packets(mesh_pb2.FromRadio(channel=channel(0, "Private")))
+    assert not interface._mqtt_config_changed.is_set()
     second.queue.put_nowait(message("msh/US/2/e/Private/!1234abcd", b"\x02"))
     await asyncio.wait_for(connection.has_sent.wait(), timeout=1)
+    assert not second.closed
+    assert len(FakeMqttClient.instances) == 2
     interface._is_stopped.set()
     await asyncio.wait_for(task, timeout=1)
 
@@ -318,6 +322,144 @@ async def test_message_the_radio_refuses_is_logged(caplog: pytest.LogCaptureFixt
     await interface._forward_mqtt_message_to_radio(message("msh/US/2/e/Private/!1234abcd", b"\x01"))
 
     assert "Radio did not accept MQTT message on msh/US/2/e/Private/!1234abcd" in caplog.text
+
+
+@pytest.mark.parametrize("update", ["channel", "lora", "mqtt"])
+async def test_replayed_configuration_keeps_session_and_downlink(monkeypatch: pytest.MonkeyPatch, update: str) -> None:
+    """Identical protobuf packets must leave the broker session and radio forwarding running."""
+    FakeMqttClient.instances = []
+    monkeypatch.setattr(interface_module.aiomqtt, "Client", FakeMqttClient)
+    interface, connection = make_interface([channel(0, "Private")])
+    mqtt = interface._connected_node_module_config.mqtt
+    mqtt.enabled = mqtt.proxy_to_client_enabled = True
+    interface._connected_node_info = mesh_pb2.MyNodeInfo(my_node_num=1)
+    interface._is_running.set()
+    task = asyncio.create_task(interface._maintain_mqtt_connection())
+    try:
+        async with asyncio.timeout(1):
+            while not FakeMqttClient.instances:
+                await real_sleep(0)
+        client = FakeMqttClient.instances[0]
+        await asyncio.wait_for(client.subscribed.wait(), 1)
+        if update == "channel":
+            packet = mesh_pb2.FromRadio(channel=interface._connected_node_channels[0])
+        elif update == "lora":
+            packet = mesh_pb2.FromRadio(config=config_pb2.Config(lora=interface._connected_node_local_config.lora))
+        else:
+            packet = mesh_pb2.FromRadio(moduleConfig=module_config_pb2.ModuleConfig(mqtt=mqtt))
+        # Deserialization produces distinct protobuf objects, as a radio replay does.
+        for _ in range(3):
+            await interface._process_connected_node_packets(mesh_pb2.FromRadio.FromString(packet.SerializeToString()))
+            assert not interface._mqtt_config_changed.is_set()
+        client.queue.put_nowait(message("msh/US/2/e/Private/!1234abcd", b"replayed-config"))
+        await asyncio.wait_for(connection.has_sent.wait(), 1)
+        assert connection.sent[0].mqttClientProxyMessage.data == b"replayed-config"
+        assert not client.closed
+        assert FakeMqttClient.instances == [client]
+        assert client.subscriptions == ["msh/US/2/e/Private/+", "msh/US/2/e/PKI/+"]
+    finally:
+        interface._is_stopped.set()
+        await asyncio.wait_for(task, 1)
+
+
+@pytest.mark.parametrize("update", ["channel", "lora", "mqtt"])
+async def test_first_configuration_and_replay(update: str) -> None:
+    """Treat a missing record as new, including an all-default protobuf message."""
+    interface, _ = make_interface([])
+    interface._connected_node_local_config.ClearField("lora")
+    interface._connected_node_module_config.ClearField("mqtt")
+    if update == "channel":
+        packet = mesh_pb2.FromRadio(channel=channel_pb2.Channel())
+    elif update == "lora":
+        packet = mesh_pb2.FromRadio(config=config_pb2.Config(lora=config_pb2.Config.LoRaConfig()))
+    else:
+        packet = mesh_pb2.FromRadio(
+            moduleConfig=module_config_pb2.ModuleConfig(mqtt=module_config_pb2.ModuleConfig.MQTTConfig())
+        )
+    await interface._process_connected_node_packets(packet)
+    assert interface._mqtt_config_changed.is_set()
+    interface._mqtt_config_changed.clear()
+    await interface._process_connected_node_packets(mesh_pb2.FromRadio.FromString(packet.SerializeToString()))
+    assert not interface._mqtt_config_changed.is_set()
+
+
+async def test_new_channel_is_inserted_in_order_and_triggers_refresh() -> None:
+    """A new index is a change even if other channels were already recorded."""
+    interface, _ = make_interface([channel(0), channel(2, "Third")])
+    await interface._process_connected_node_packets(mesh_pb2.FromRadio(channel=channel(1, "Second")))
+    assert [item.index for item in interface._connected_node_channels] == [0, 1, 2]
+    assert interface._mqtt_config_changed.is_set()
+
+
+async def test_channel_can_arrive_before_channel_list_is_initialized() -> None:
+    """Accept an early channel packet as the first recorded channel."""
+    interface, _ = make_interface([])
+    interface._connected_node_channels = None
+    packet = mesh_pb2.FromRadio(channel=channel(0, "First"))
+    await interface._process_connected_node_packets(packet)
+    assert interface._connected_node_channels[0].settings.name == "First"
+    assert interface._mqtt_config_changed.is_set()
+    interface._mqtt_config_changed.clear()
+    await interface._process_connected_node_packets(packet)
+    assert not interface._mqtt_config_changed.is_set()
+
+
+@pytest.mark.parametrize("update", ["channel", "lora", "mqtt"])
+async def test_mutating_received_packet_does_not_change_stored_configuration(update: str) -> None:
+    """A listener can reuse a packet without mutating the previous value used for comparison."""
+    interface, _ = make_interface([])
+    if update == "channel":
+        packet = mesh_pb2.FromRadio(channel=channel(0, "Before"))
+    elif update == "lora":
+        packet = mesh_pb2.FromRadio(config=config_pb2.Config(lora=config_pb2.Config.LoRaConfig(use_preset=True)))
+    else:
+        packet = mesh_pb2.FromRadio(moduleConfig=module_config_pb2.ModuleConfig())
+        packet.moduleConfig.mqtt.root = "before"
+    await interface._process_connected_node_packets(packet)
+    interface._mqtt_config_changed.clear()
+
+    if update == "channel":
+        packet.channel.settings.name = "After"
+        assert interface._connected_node_channels[0].settings.name == "Before"
+    elif update == "lora":
+        packet.config.lora.use_preset = False
+        assert interface._connected_node_local_config.lora.use_preset
+    else:
+        packet.moduleConfig.mqtt.root = "after"
+        assert interface._connected_node_module_config.mqtt.root == "before"
+    await interface._process_connected_node_packets(packet)
+    assert interface._mqtt_config_changed.is_set()
+
+
+async def test_unrelated_configuration_does_not_change_mqtt_settings() -> None:
+    """An absent MQTT or LoRa field leaves the previously stored record and event untouched."""
+    interface, _ = make_interface([channel(0)])
+    await interface._process_connected_node_packets(
+        mesh_pb2.FromRadio(config=config_pb2.Config(device=config_pb2.Config.DeviceConfig()))
+    )
+    packet = mesh_pb2.FromRadio(moduleConfig=module_config_pb2.ModuleConfig())
+    packet.moduleConfig.serial.SetInParent()
+    await interface._process_connected_node_packets(packet)
+    assert interface._connected_node_local_config.lora.use_preset
+    assert interface._connected_node_module_config.mqtt.root == "msh/US"
+    assert not interface._mqtt_config_changed.is_set()
+
+
+@pytest.mark.parametrize("update", ["channel", "lora", "mqtt"])
+async def test_replay_does_not_clear_pending_refresh(update: str) -> None:
+    """A duplicate must not cancel a refresh already requested by an earlier change."""
+    interface, _ = make_interface([channel(0)])
+    interface._mqtt_config_changed.set()
+    if update == "channel":
+        packet = mesh_pb2.FromRadio(channel=channel(0))
+    elif update == "lora":
+        packet = mesh_pb2.FromRadio(config=config_pb2.Config(lora=interface._connected_node_local_config.lora))
+    else:
+        packet = mesh_pb2.FromRadio(
+            moduleConfig=module_config_pb2.ModuleConfig(mqtt=interface._connected_node_module_config.mqtt)
+        )
+    await interface._process_connected_node_packets(packet)
+    assert interface._mqtt_config_changed.is_set()
 
 
 @pytest.mark.parametrize("update", ["channel", "lora", "mqtt"])

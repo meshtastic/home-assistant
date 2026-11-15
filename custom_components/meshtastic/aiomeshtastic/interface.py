@@ -849,15 +849,21 @@ class MeshInterface:
         elif packet.HasField("channel"):
             # replace by index: a bootstrap requested by another party (e.g. a TCP proxy client) resends all channels
             channels = self._connected_node_channels
-            assert channels is not None  # noqa: S101  # enumerate(None) would raise
+            if channels is None:
+                channels = self._connected_node_channels = []
+            # Other packet listeners receive the same FromRadio; don't retain their mutable submessage.
+            channel = channel_pb2.Channel()
+            channel.CopyFrom(packet.channel)
             for i, existing in enumerate(channels):
-                if existing.index == packet.channel.index:
-                    channels[i] = packet.channel
+                if existing.index == channel.index:
+                    changed = existing != channel
+                    channels[i] = channel
                     break
             else:
-                channels.append(packet.channel)
+                changed = True
+                channels.append(channel)
                 channels.sort(key=lambda c: c.index)
-            if self._mqtt_proxy_enabled:
+            if changed and self._mqtt_proxy_enabled:
                 self._mqtt_config_changed.set()
         elif packet.HasField("queueStatus"):
             self._connected_node_queue_status = packet.queueStatus
@@ -883,8 +889,12 @@ class MeshInterface:
         if config.HasField("display"):
             self._connected_node_local_config.display.CopyFrom(config.display)
         if config.HasField("lora"):
+            changed = (
+                not self._connected_node_local_config.HasField("lora")
+                or self._connected_node_local_config.lora != config.lora
+            )
             self._connected_node_local_config.lora.CopyFrom(config.lora)
-            if self._mqtt_proxy_enabled:
+            if changed and self._mqtt_proxy_enabled:
                 self._mqtt_config_changed.set()
         if config.HasField("bluetooth"):
             self._connected_node_local_config.bluetooth.CopyFrom(config.bluetooth)
@@ -894,8 +904,12 @@ class MeshInterface:
     def _process_connected_node_module_config(self, module_config: module_config_pb2.ModuleConfig) -> None:  # noqa: PLR0912
         """Merge module configuration fields and wake the MQTT manager when settings change."""
         if module_config.HasField("mqtt"):
+            changed = (
+                not self._connected_node_module_config.HasField("mqtt")
+                or self._connected_node_module_config.mqtt != module_config.mqtt
+            )
             self._connected_node_module_config.mqtt.CopyFrom(module_config.mqtt)
-            if self._mqtt_proxy_enabled:
+            if changed and self._mqtt_proxy_enabled:
                 self._mqtt_config_changed.set()
         if module_config.HasField("serial"):
             self._connected_node_module_config.serial.CopyFrom(module_config.serial)
