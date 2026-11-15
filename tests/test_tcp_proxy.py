@@ -20,9 +20,8 @@ class FakeConnection:
     def __init__(self) -> None:
         self.sent: list[mesh_pb2.ToRadio] = []
 
-    async def _send_packet(self, packet: bytes) -> bool:
-        to_radio = mesh_pb2.ToRadio()
-        to_radio.ParseFromString(packet)
+    async def forward(self, packet: bytes, to_radio: mesh_pb2.ToRadio) -> bool:
+        assert mesh_pb2.ToRadio.FromString(packet) == to_radio
         self.sent.append(to_radio)
         return True
 

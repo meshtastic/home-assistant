@@ -31,6 +31,7 @@ Supported Features:
  * MQTT client proxy support (forwards messages from radio to MQTT broker, and broker messages for channels with downlink enabled back to the radio)
  * [Mesh Chat](#mesh-chat): a sidebar chat to read and send messages, with replies, emoji, node and channel details,
    a map of the mesh and optional channel management
+ * Nodes with incomplete user metadata remain selectable using their node number as a fallback name.
  * Reconfigure a gateway's connection, and diagnostics with secrets redacted
 
 For more details, see the [documentation](#documentation).
@@ -431,6 +432,7 @@ To open the web client:
 - Messages are sent and received through the gateway radio only. Nodes the gateway does not hear are not reachable.
 - Waypoint geofence enter and exit are evaluated by the device and are not reported as events.
 - The TCP proxy has no authentication: anyone who can reach its port controls the gateway.
+- A TCP gateway sends nothing when it restarts. When Home Assistant, the web client or a TCP proxy client changes the gateway's settings or asks it to restart, Home Assistant checks the connection a few seconds after the restart is due instead of waiting for its five-minute heartbeat.
 
 ## Troubleshooting
 

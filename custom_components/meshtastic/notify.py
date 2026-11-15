@@ -123,10 +123,11 @@ async def _add_node_entities(
     entity_registry: EntityRegistry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
+    """Add selected node notification entities using node numbers for missing names."""
     should_create_node = _create_node_entity_filter_factory(config_entry)
     nodes = await config_entry.runtime_data.client.async_get_all_nodes()
     entities = [
-        MeshtasticNodeNotify(node_id=node_id, entity_name=f"{node_info['user']['longName']}")
+        MeshtasticNodeNotify(node_id=node_id, entity_name=node_info.get("user", {}).get("longName") or str(node_id))
         for node_id, node_info in nodes.items()
         if should_create_node(node_id)
     ]
