@@ -61,6 +61,8 @@ class ClientApiConnection:
         self._packet_stream_listeners: list[ClientApiConnectionPacketStreamListener] = []
         self._on_demand_streaming_task: asyncio.Task | None = None
         self._pending_config_requests: dict[int, asyncio.Event] = {}
+        # told of every write to the radio, Home Assistant's own and other clients'
+        self.on_write: Callable[[mesh_pb2.ToRadio], None] | None = None
         self._processing_packets_consumer_count = 0
         self._processing_packets_consumer_lock = asyncio.Lock()
         self._on_demand_streaming_processing_lock = asyncio.Lock()
@@ -397,6 +399,26 @@ class ClientApiConnection:
         return self._current_packet_id
 
     async def send_packet(self, to_radio: mesh_pb2.ToRadio) -> bool:
+        try:
+            return await self._send_queued(to_radio)
+        finally:
+            self._note_write(to_radio)
+
+    async def forward(self, packet: bytes, to_radio: mesh_pb2.ToRadio) -> bool:
+        """Send another client's ToRadio (the web client's or a proxy client's) to the radio as received."""
+        try:
+            return await self._send_packet(packet)
+        finally:
+            self._note_write(to_radio)
+
+    def _note_write(self, to_radio: mesh_pb2.ToRadio) -> None:
+        if self.on_write is not None:
+            try:
+                self.on_write(to_radio)
+            except Exception:
+                self._logger.warning("Watching a write to the radio failed", exc_info=True)
+
+    async def _send_queued(self, to_radio: mesh_pb2.ToRadio) -> bool:
         packet: bytes = to_radio.SerializeToString()
 
         if not to_radio.HasField("packet"):

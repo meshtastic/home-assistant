@@ -11,6 +11,7 @@ import enum
 import functools
 import itertools
 import random
+import time
 from collections import defaultdict, deque
 from collections.abc import AsyncIterator, Awaitable, Callable, Coroutine, Mapping, MutableMapping
 from dataclasses import dataclass
@@ -34,6 +35,7 @@ except ImportError:
 from google.protobuf import json_format
 from google.protobuf.message import Message
 
+from .admin import changes_gateway, gateway_admin
 from .connection import (
     ClientApiConnection,
     ClientApiConnectionPacketStreamListener,
@@ -156,6 +158,15 @@ class ConnectionState(enum.StrEnum):
     FAILED = "failed"
 
 
+# firmware restarts this long after a commit, a reset or a setting that needs it
+_RESTART_DELAY_S = 7.0
+# a TCP gateway sends nothing when it restarts, so its connection is checked this long after it should have
+_RESTART_PROBE_GRACE_S = 5.0
+_RESTART_PROBE_TIMEOUT_S = 15.0
+# admin that restarts the radio after its own delay, and the firmware timer each sets: a negative delay cancels it
+_RESTART_TIMERS = {"reboot_seconds": "reboot", "reboot_ota_seconds": "reboot", "shutdown_seconds": "shutdown"}
+
+
 class MeshInterface:
     PKC_CHANNEL_INDEX = 8
 
@@ -215,6 +226,12 @@ class MeshInterface:
         self._previous_reconnects: deque[dt.datetime] = deque(maxlen=10)
         self._connection_state = ConnectionState.CONNECTED
         self._connection_state_listeners: list[Callable[[ConnectionState], None]] = []
+
+        # every client's admin writes reach the radio, so restarts are watched here
+        self._restart_probe: asyncio.Task | None = None
+        # when to check the connection, and the firmware timer that restart is on, if any
+        self._restart_checks: list[tuple[float, str | None]] = []
+        self._restart_checks_changed = asyncio.Event()
 
         # MQTT client for persistent connection
         self._mqtt_proxy_enabled = enable_mqtt_proxy
@@ -401,6 +418,7 @@ class MeshInterface:
         await self.stop()
 
     async def start(self) -> None:
+        self._connection.on_write = self._on_write
         await self._connection.connect()
         self._is_running.set()
         self._is_stopped.clear()
@@ -698,23 +716,64 @@ class MeshInterface:
     async def _heartbeat_loop(self) -> None:
         while True:
             await asyncio.sleep(self._heartbeat_interval_s)
-            try:
-                if self._reconnect_lock.locked():
-                    self._logger.debug("Skipping heartbeat during reconnect")
-                    continue
-                self._logger.debug("Sending heartbeat")
-                if self._connected_node_ready.is_set():
-                    # perform request with an actual response from node, self._connection.send_heartbeat() does not
-                    # reliably work to detect broken connections as there is no response
-                    await self.request_connection_status()
-                else:
-                    # use as fallback when we did not succeed to connect, and we don't have a node id
-                    await self._connection.send_heartbeat()
-            except Exception:
-                self._logger.info("Heartbeat failed, reconnecting", exc_info=True)
-                await self._reconnect_while_running(force=True)
+            await self._check_connection("Heartbeat")
+
+    async def _check_connection(self, kind: str, timeout: float = UNDEFINED) -> None:  # noqa: ASYNC109
+        if self._reconnect_lock.locked():
+            self._logger.debug("Skipping %s during reconnect", kind.lower())
+            return
+        try:
+            self._logger.debug("Sending %s", kind.lower())
+            if self._connected_node_ready.is_set():
+                # perform request with an actual response from node, self._connection.send_heartbeat() does not
+                # reliably work to detect broken connections as there is no response
+                await self.request_connection_status(timeout=timeout)
             else:
-                self._logger.debug("Heartbeat success")
+                # use as fallback when we did not succeed to connect, and we don't have a node id
+                await self._connection.send_heartbeat()
+        except Exception:
+            self._logger.info("%s failed, reconnecting", kind, exc_info=True)
+            await self._reconnect_while_running(force=True)
+        else:
+            self._logger.debug("%s success", kind)
+
+    def _on_write(self, to_radio: mesh_pb2.ToRadio) -> None:
+        if not self._is_running.is_set() or self._connected_node_info is None:
+            return  # a send finishing during stop(), whose tasks are already cancelled, or no gateway yet
+        admin = gateway_admin(to_radio, self._connected_node_info.my_node_num)
+        if admin is not None and changes_gateway(admin):
+            # an admin write to the gateway, from Home Assistant or any client, may make the radio restart
+            variant = admin.WhichOneof("payload_variant")
+            self._schedule_restart_check(variant, getattr(admin, variant) if variant in _RESTART_TIMERS else None)
+
+    def _schedule_restart_check(self, variant: str | None, seconds: int | None) -> None:
+        # whether a write restarts the radio is the firmware's decision, so every one is followed by a check
+        timer = _RESTART_TIMERS.get(variant or "")
+        if seconds is not None and seconds < 0:
+            self._restart_checks = [check for check in self._restart_checks if check[1] != timer]
+        else:
+            # a later write's check covers every earlier one on the same timer due before it, so a burst is checked
+            # once; one on another timer stays, as cancelling this one must not cancel it
+            due = time.monotonic() + (_RESTART_DELAY_S if seconds is None else seconds) + _RESTART_PROBE_GRACE_S
+            self._restart_checks = [check for check in self._restart_checks if check[1] != timer or check[0] > due] + [
+                (due, timer)
+            ]
+        self._restart_checks_changed.set()
+        if self._restart_checks and (self._restart_probe is None or self._restart_probe.done()):
+            self._restart_probe = self._add_background_task(self._probe_restart(), name="restart-probe")
+
+    async def _probe_restart(self) -> None:
+        # writes add and replace checks while this waits or checks, so the list is read again each time
+        while self._restart_checks:
+            wait = min(due for due, _ in self._restart_checks) - time.monotonic()
+            if wait > 0:
+                self._restart_checks_changed.clear()
+                with contextlib.suppress(TimeoutError):
+                    await asyncio.wait_for(self._restart_checks_changed.wait(), wait)
+                continue
+            now = time.monotonic()
+            self._restart_checks = [check for check in self._restart_checks if check[0] > now]
+            await self._check_connection("Restart check", _RESTART_PROBE_TIMEOUT_S)
 
     async def _process_connected_node_packets(self, packet: mesh_pb2.FromRadio) -> None:
         if packet.HasField("rebooted") and packet.rebooted:
@@ -1073,11 +1132,18 @@ class MeshInterface:
         except:  # noqa: E722
             return None
 
-    async def request_connection_status(self, node: int | None = None) -> connection_status_pb2.DeviceConnectionStatus:
+    async def request_connection_status(
+        self,
+        node: int | None = None,
+        *,
+        timeout: float = UNDEFINED,  # noqa: ASYNC109
+    ) -> connection_status_pb2.DeviceConnectionStatus:
         admin_message = admin_pb2.AdminMessage()
         admin_message.get_device_connection_status_request = True
 
-        response = await self.send_admin_message_await_response(node=node, message=admin_message, expect_response=True)
+        response = await self.send_admin_message_await_response(
+            node=node, message=admin_message, timeout=timeout, expect_response=True
+        )
         return response.app_payload.get_device_connection_status_response
 
     async def request_device_config(self, node: int | None = None) -> config_pb2.Config.DeviceConfig:

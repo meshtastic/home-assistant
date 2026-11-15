@@ -457,7 +457,7 @@ class MeshtasticWebApiV1ToRadioView(MeshtasticWebApiV1View):
             self._context.add_session(request, config_id)
             response.set_cookie("config_id", config_id)
 
-        await connection._send_packet(body)  # noqa: SLF001
+        await connection.forward(body, to_radio)
         self._add_protobuf_headers(response)
         return response
 
