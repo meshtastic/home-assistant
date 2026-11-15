@@ -230,7 +230,7 @@ async def _build_default_handler(  # noqa: PLR0915
         if ATTR_SERVICE_DATA_FROM in call.data:
             from_id = call.data[ATTR_SERVICE_DATA_FROM]
             if from_id.startswith("!"):
-                if gateway_node["user"]["id"] != from_id:
+                if (gateway_node.get("user") or {}).get("id") != from_id:
                     return _SERVICE_CANT_HANDLE_RESPONSE
             elif from_id.isnumeric():
                 if int(from_id) != gateway_node["num"]:
