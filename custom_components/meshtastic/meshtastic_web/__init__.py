@@ -64,16 +64,19 @@ class WebClientTokens:
         self._grants[token] = _Grant(config_entry_id, user_id, now, now)
         return token
 
-    def check(self, config_entry_id: str, token: str) -> bool:
+    def check(self, config_entry_id: str, token: str) -> _Grant | None:
         now = dt.datetime.now(tz=dt.UTC)
         grant = self._grants.get(token)
         if grant is None or not secrets.compare_digest(grant.config_entry_id, config_entry_id):
-            return False
+            return None
         if self._expired(grant, now):
             self._grants.pop(token, None)
-            return False
+            return None
         grant.last_used = now
-        return True
+        return grant
+
+    def revoke(self, token: str) -> None:
+        self._grants.pop(token, None)
 
     @staticmethod
     def _expired(grant: _Grant, now: dt.datetime) -> bool:
@@ -132,7 +135,7 @@ class MeshtasticWebApiContext:
                     if (now - last_active > dt.timedelta(minutes=1))
                 ]
                 for session_key in expired_session_keys:
-                    _LOGGER.debug("Removing session %s", session_key)
+                    _LOGGER.debug("Removing session %s", session_key[1])
                     self._remove_session(session_key)
 
         self._expire_sessions_task: asyncio.Task[None] | None = hass.async_create_background_task(
@@ -180,14 +183,22 @@ class MeshtasticWebApiContext:
 
         return client._interface._connection  # noqa: SLF001
 
+    @staticmethod
+    def _session_key(request: HomeAssistantRequest, meshtastic_config_id: str) -> tuple[str, str]:
+        # Keyed on the token, not the remote address: clients behind one proxy share an address.
+        return (cast("str", request.match_info.get("token")), meshtastic_config_id)
+
     def add_session(
         self, request: HomeAssistantRequest, meshtastic_config_id: str
     ) -> asyncio.Queue[mesh_pb2.FromRadio]:
         config_entry_id = self._get_config_entry_id(request)
-        session_key = (cast("str", request.remote), meshtastic_config_id)
+        session_key = self._session_key(request, meshtastic_config_id)
+        self._remove_session(session_key, config_entry_id)
 
         session_queue: asyncio.Queue[mesh_pb2.FromRadio] = asyncio.Queue()
         self._meshtastic_queues[config_entry_id][session_key] = session_queue
+        # A session that is never polled still expires.
+        self._session_last_active[session_key] = dt.datetime.now(tz=dt.UTC)
 
         async def consume(queue: asyncio.Queue[mesh_pb2.FromRadio]) -> None:
             try:
@@ -203,9 +214,11 @@ class MeshtasticWebApiContext:
                     except asyncio.CancelledError:
                         break
             except Exception:
-                _LOGGER.info("Consume from_radio for session %s stopped unexpectedly", session_key, exc_info=True)
+                _LOGGER.info(
+                    "Consume from_radio for session %s stopped unexpectedly", meshtastic_config_id, exc_info=True
+                )
             else:
-                _LOGGER.info("Consume from_radio for session %s stopped", session_key)
+                _LOGGER.info("Consume from_radio for session %s stopped", meshtastic_config_id)
 
         self._meshtastic_radio_stream_consumer[session_key] = asyncio.create_task(
             consume(session_queue), name="meshtasic-web-consume"
@@ -216,39 +229,9 @@ class MeshtasticWebApiContext:
     def _get_existing_session_key(
         self, request: HomeAssistantRequest, meshtastic_config_id: str
     ) -> tuple[str, str] | None:
-        config_entry_id = self._get_config_entry_id(request)
-        session_key: tuple[str, str] | None = (cast("str", request.remote), meshtastic_config_id)
-
-        config_entry_queues = self._meshtastic_queues.get(config_entry_id, {})
-        if session_key not in config_entry_queues:
-            session_key = None
-
-        if session_key is None:
-            session_key = next(
-                (
-                    (remote, config_id)
-                    for (remote, config_id), q in config_entry_queues.items()
-                    if config_id == meshtastic_config_id
-                ),
-                None,
-            )
-
-        if session_key is not None and session_key not in config_entry_queues:
-            session_key = None
-
-        if session_key is None:
-            session_key = next(
-                (
-                    (remote, config_id)
-                    for (remote, config_id), q in config_entry_queues.items()
-                    if remote == request.remote
-                ),
-                None,
-            )
-
-        if session_key is not None and session_key not in config_entry_queues:
-            session_key = None
-
+        session_key = self._session_key(request, meshtastic_config_id)
+        if session_key not in self._meshtastic_queues.get(self._get_config_entry_id(request), {}):
+            return None
         return session_key
 
     def remove_session(self, request: HomeAssistantRequest, meshtastic_config_id: str) -> bool:
@@ -277,8 +260,9 @@ class MeshtasticWebApiContext:
         self, request: HomeAssistantRequest, meshtastic_config_id: str
     ) -> asyncio.Queue[mesh_pb2.FromRadio] | None:
         config_entry_id = self._get_config_entry_id(request)
-        # may be None at runtime; None is a valid (if useless) dict key and the lookup then yields no queue
-        session_key = cast("tuple[str, str]", self._get_existing_session_key(request, meshtastic_config_id))
+        session_key = self._get_existing_session_key(request, meshtastic_config_id)
+        if session_key is None:
+            return None
 
         self._session_last_active[session_key] = dt.datetime.now(tz=dt.UTC)
         return self._meshtastic_queues.get(config_entry_id, {}).get(session_key, None)
@@ -407,8 +391,15 @@ class MeshtasticWebApiV1View(HomeAssistantView):
             "X-Protobuf-Schema", "https://raw.githubusercontent.com/meshtastic/protobufs/master/meshtastic/mesh.proto"
         )
 
-    def _check_access(self, config_entry_id: str, token: str) -> None:
-        if not self._tokens.check(config_entry_id, token):
+    async def _check_access(self, config_entry_id: str, token: str) -> None:
+        grant = self._tokens.check(config_entry_id, token)
+        if grant is not None:
+            # The grant is its admin's: it ends when they are removed, deactivated or demoted.
+            user = await self._hass.auth.async_get_user(grant.user_id)
+            if user is None or not user.is_active or not user.is_admin:
+                self._tokens.revoke(token)
+                grant = None
+        if grant is None:
             # 403, not 401: HA's ban middleware counts every 401 as a failed login, and a tab left open
             # across a restart polls with its lost token every few seconds
             raise web.HTTPForbidden(
@@ -434,7 +425,7 @@ class MeshtasticWebApiV1ToRadioView(MeshtasticWebApiV1View):
     name = "meshtastic:web_v1_to_radio"
 
     async def put(self, request: HomeAssistantRequest, config_entry_id: str, token: str) -> web.Response:
-        self._check_access(config_entry_id, token)
+        await self._check_access(config_entry_id, token)
         connection = self.get_connection(request)
         if connection is None:
             await asyncio.sleep(1)
@@ -467,7 +458,7 @@ class MeshtasticWebApiV1FromRadioView(MeshtasticWebApiV1View):
     name = "meshtastic:web_v1_from_radio"
 
     async def get(self, request: HomeAssistantRequest, config_entry_id: str, token: str) -> web.Response:
-        self._check_access(config_entry_id, token)
+        await self._check_access(config_entry_id, token)
         config_id = request.cookies.get("config_id")
         if config_id is None:
             await asyncio.sleep(1)
@@ -504,7 +495,7 @@ class MeshtasticWebJsonReportView(MeshtasticWebApiV1View):
     name = "meshtastic:web_json_report"
 
     async def get(self, request: HomeAssistantRequest, config_entry_id: str, token: str) -> web.Response:
-        self._check_access(config_entry_id, token)
+        await self._check_access(config_entry_id, token)
         config_id = request.cookies.get("config_id")
         if config_id is None:
             response = web.HTTPBadRequest()

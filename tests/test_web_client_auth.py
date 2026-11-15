@@ -13,6 +13,7 @@ from unittest.mock import patch
 from urllib.parse import parse_qs, urlparse
 
 import pytest
+from homeassistant.auth.const import GROUP_ID_READ_ONLY
 from homeassistant.helpers import entity_registry as er
 from homeassistant.setup import async_setup_component
 
@@ -28,7 +29,7 @@ from .conftest import GATEWAY_NUM, PEER_NUM, make_entry
 
 if TYPE_CHECKING:
     from homeassistant.core import HomeAssistant
-    from pytest_homeassistant_custom_component.common import MockConfigEntry
+    from pytest_homeassistant_custom_component.common import MockConfigEntry, MockUser
     from pytest_homeassistant_custom_component.typing import ClientSessionGenerator, WebSocketGenerator
 
 NODES = [{"id": GATEWAY_NUM, "name": "Gateway"}, {"id": PEER_NUM, "name": "Peer"}]
@@ -151,6 +152,34 @@ async def test_an_old_gateway_link_leads_to_the_panel(
 
     assert response.status == HTTPStatus.TEMPORARY_REDIRECT
     assert response.headers["Location"] == "/meshtastic"
+
+
+@pytest.mark.parametrize("change", ["demoted", "deactivated", "removed"])
+@pytest.mark.usefixtures("fake_client")
+async def test_a_token_ends_with_its_admin(
+    hass: HomeAssistant,
+    hass_ws_client: WebSocketGenerator,
+    hass_client_no_auth: ClientSessionGenerator,
+    hass_admin_user: MockUser,
+    change: str,
+) -> None:
+    _, gateway = await setup_gateway(hass)
+    websocket = await hass_ws_client(hass)
+    await websocket.send_json_auto_id({"type": "meshtastic/web_client/open", "entity_id": gateway})
+    response = await websocket.receive_json()
+    await websocket.close()
+    path = parse_qs(urlparse(response["result"]["url"]).query)["path"][0]
+    http = await hass_client_no_auth()
+    assert (await http.get(f"{path}/api/v1/fromradio")).status == HTTPStatus.BAD_REQUEST
+
+    if change == "demoted":
+        await hass.auth.async_update_user(hass_admin_user, group_ids=[GROUP_ID_READ_ONLY])
+    elif change == "deactivated":
+        await hass.auth.async_update_user(hass_admin_user, is_active=False)
+    else:
+        await hass.auth.async_remove_user(hass_admin_user)
+
+    assert (await http.get(f"{path}/api/v1/fromradio")).status == HTTPStatus.FORBIDDEN
 
 
 def test_a_token_expires_when_idle() -> None:
