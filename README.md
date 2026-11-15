@@ -415,7 +415,7 @@ that are not connected via TCP (like serial or bluetooth) or don't support TCP a
 
 **Security Note**: The web client controls the gateway with full admin rights. Only Home Assistant admins can
 open it: the Open button issues a token for that gateway, and the radio API answers only under that token. A token
-lapses after an hour unused, a day after it was issued, or when Home Assistant restarts; press Open again for a new one. Anyone holding the
+lapses after an hour unused, a day after it was issued, when Home Assistant restarts, or when the admin who opened it is removed, deactivated or no longer an admin; press Open again for a new one. Anyone holding the
 web client's URL holds the token, so don't share it.
 
 To open the web client:
