@@ -29,6 +29,7 @@ Supported Features:
  * Various other service actions (e.g. request metrics, trace route)
  * Bundled meshtastic web client for manual interaction with gateway, opened by Home Assistant admins
  * MQTT client proxy support (forwards messages from radio to MQTT broker, and broker messages for channels with downlink enabled back to the radio)
+ * Nodes with incomplete user metadata remain selectable using their node number as a fallback name.
  * Reconfigure a gateway's connection, and diagnostics with secrets redacted
 
 For more details, see the [documentation](#documentation).

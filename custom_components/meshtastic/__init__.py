@@ -327,8 +327,10 @@ async def _setup_meshtastic_device(  # noqa: PLR0913
     node: Mapping[str, Any],
     node_id: int,
 ) -> None:
+    """Register a selected node, using stable identifiers when user metadata is incomplete."""
     gateway_node_id = cast("int", gateway_node["num"])
-    mac_address = base64.b64decode(node["user"]["macaddr"]).hex(":") if "macaddr" in node["user"] else None
+    user = node.get("user", {})
+    mac_address = base64.b64decode(user["macaddr"]).hex(":") if "macaddr" in user else None
     connections = set()
     if mac_address:
         connections.add((dr.CONNECTION_NETWORK_MAC, mac_address))
@@ -354,15 +356,15 @@ async def _setup_meshtastic_device(  # noqa: PLR0913
         connections.add((DOMAIN, f"{gateway_node_id}/{node_id}/{hops_away}/{snr}"))
 
     # MessageToDict omits hwModel for UNSET and placeholder nodes spell it out; keep any known model
-    hw_model = node["user"].get("hwModel")
+    hw_model = user.get("hwModel")
     known = hw_model not in (None, "UNSET")
     d = device_registry.async_get_or_create(
         config_entry_id=entry.entry_id,
         identifiers={(DOMAIN, str(node_id))},
-        name=node["user"]["longName"],
+        name=user.get("longName") or str(node_id),
         model=device_hardware_names.get(hw_model) if known else UNDEFINED,
         model_id=str(hw_model) if known else UNDEFINED,
-        serial_number=node["user"]["id"],
+        serial_number=user.get("id") or f"!{node_id:08x}",
         via_device_id=via_device_id,
         sw_version=client.metadata.get("firmwareVersion")
         if gateway_node["num"] == node_id and client.metadata

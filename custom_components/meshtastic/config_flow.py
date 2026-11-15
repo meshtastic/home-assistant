@@ -112,6 +112,7 @@ def _build_add_node_schema(
     nodes: Mapping[int, Any],
     node_selection_required: bool = True,  # noqa: FBT001, FBT002
 ) -> vol.Schema:
+    """Offer unselected nodes with fallback labels for missing user metadata."""
     already_selected_node_nums = [el["id"] for el in options[CONF_OPTION_FILTER_NODES]]
     selectable_nodes = {
         node_id: node_info for node_id, node_info in nodes.items() if node_id not in already_selected_node_nums
@@ -122,7 +123,10 @@ def _build_add_node_schema(
     selector_options = [
         SelectOptionDict(
             value=str(node_id),
-            label=f"{node_info['user']['longName']} ({node_info['user']['id']})",
+            label=(
+                f"{node_info.get('user', {}).get('longName') or 'Unknown'} "
+                f"({node_info.get('user', {}).get('id') or node_id})"
+            ),
         )
         for node_id, node_info in sorted(
             selectable_nodes.items(),
@@ -519,6 +523,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     async def async_step_node(
         self, user_input: dict[str, Any] | None = None, *, load_nodes: bool = False
     ) -> ConfigFlowResult:
+        """Save a selected node with its name or number, then continue configuration."""
         errors: dict[str, str] = {}
         if user_input is not None:
             node_id = int(user_input[CONF_OPTION_NODE])
@@ -529,7 +534,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 self.options[CONF_OPTION_FILTER_NODES].append(
                     {
                         "id": node_id,
-                        "name": self.nodes[node_id]["user"]["longName"],
+                        "name": (self.nodes[node_id].get("user", {}).get("longName") or str(node_id)),
                     }
                 )
                 if user_input.get(CONF_OPTION_ADD_ANOTHER_NODE, False):
@@ -574,8 +579,11 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         return self.async_show_form(step_id="tcp_proxy", data_schema=schema, errors=errors)
 
     async def _finish_steps(self) -> ConfigFlowResult:
+        """Create the gateway entry with its available name or node number."""
         return self.async_create_entry(
-            title=self.gateway_node["user"]["longName"], data=self.data, options=self.options
+            title=self.gateway_node.get("user", {}).get("longName") or str(self.gateway_node["num"]),
+            data=self.data,
+            options=self.options,
         )
 
     @staticmethod
@@ -681,6 +689,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
         self.nodes: Mapping[int, Mapping[str, Any]] | None = None
 
     async def async_step_init(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:  # noqa: PLR0912
+        """Edit selected nodes and gateway options using available node metadata."""
         errors: dict[str, str] = {}
 
         # runtime_data is unset on an entry that never loaded, and None after a failed setup
@@ -707,7 +716,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
             if CONF_OPTION_FILTER_NODES in self.options
             else self.config_entry.options[CONF_OPTION_FILTER_NODES]
         )
-        all_nodes = {str(k): v["user"]["longName"] for k, v in self.nodes.items()}
+        all_nodes = {str(k): v.get("user", {}).get("longName") or str(k) for k, v in self.nodes.items()}
         already_selected_node_ids = [el["id"] for el in current_filter_node_option]
 
         if user_input is not None:
@@ -727,7 +736,10 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                 updated_filter_node_option.append(
                     {
                         "id": int(user_input[CONF_OPTION_NODE]),
-                        "name": self.nodes[int(user_input[CONF_OPTION_NODE])]["user"]["longName"],
+                        "name": (
+                            self.nodes[int(user_input[CONF_OPTION_NODE])].get("user", {}).get("longName")
+                            or str(user_input[CONF_OPTION_NODE])
+                        ),
                     }
                 )
 

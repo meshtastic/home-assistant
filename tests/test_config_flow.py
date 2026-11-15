@@ -11,7 +11,10 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from homeassistant import config_entries
+from homeassistant.config_entries import ConfigEntryState
 from homeassistant.data_entry_flow import FlowResultType
+from homeassistant.helpers import device_registry as dr
+from homeassistant.helpers import entity_registry as er
 
 from custom_components.meshtastic.api import MeshtasticApiClientCommunicationError
 from custom_components.meshtastic.config_flow import CannotConnectError, validate_input_for_connection
@@ -212,3 +215,82 @@ async def test_reconfigure_cannot_connect_shows_the_form_again(
     assert result["type"] is FlowResultType.FORM
     assert result["errors"] == {"base": "cannot_connect"}
     assert entry.data[CONF_CONNECTION_TCP_HOST] == HOST
+
+
+@pytest.mark.parametrize(
+    "user",
+    [
+        None,
+        {},
+        {"longName": "Known name"},
+        {"id": "!12345678"},
+        {"shortName": "Name"},
+        {"longName": "Known name", "id": "!12345678", "shortName": "Name"},
+    ],
+)
+async def test_partial_metadata_survives_setup_and_options_reload(
+    hass: HomeAssistant, validate_input: AsyncMock, fake_client: Any, user: dict[str, str] | None
+) -> None:
+    """Create and load a gateway, then add a peer through options with partial metadata."""
+    for node in fake_client.nodes.values():
+        if user is None:
+            node.pop("user")
+        else:
+            node["user"] = dict(user)
+    validate_input.return_value = (fake_client.nodes[GATEWAY_NUM], fake_client.nodes)
+    flow_id = await _start_manual_tcp(hass)
+    result = await hass.config_entries.flow.async_configure(
+        flow_id, {CONF_CONNECTION_TCP_HOST: HOST, CONF_CONNECTION_TCP_PORT: 4403}
+    )
+    assert result["step_id"] == "node"
+    selector_options = result["data_schema"].schema[CONF_OPTION_NODE].config["options"]
+    name = (user or {}).get("longName") or "Unknown"
+    user_id = (user or {}).get("id") or GATEWAY_NUM
+    assert {"value": str(GATEWAY_NUM), "label": f"{name} ({user_id})"} in selector_options
+    result = await hass.config_entries.flow.async_configure(flow_id, {CONF_OPTION_NODE: str(GATEWAY_NUM)})
+    assert result["step_id"] == "notify_platform"
+    await hass.config_entries.flow.async_configure(flow_id, {"channels": False, "nodes": "selected"})
+    await hass.config_entries.flow.async_configure(flow_id, {"enable": False})
+    result = await hass.config_entries.flow.async_configure(flow_id, {"enable": False, "port": 4403})
+    await hass.async_block_till_done()
+
+    assert result["type"] is FlowResultType.CREATE_ENTRY
+    expected_name = (user or {}).get("longName") or str(GATEWAY_NUM)
+    assert result["title"] == expected_name
+    (entry,) = hass.config_entries.async_entries(DOMAIN)
+    assert entry.state is ConfigEntryState.LOADED
+    assert entry.options[CONF_OPTION_FILTER_NODES] == [{"id": GATEWAY_NUM, "name": expected_name}]
+    gateway = dr.async_get(hass).async_get_device_by_identifier((DOMAIN, str(GATEWAY_NUM)), entry.entry_id)
+    registry = er.async_get(hass)
+    gateway_entity_id = registry.async_get_entity_id(DOMAIN, DOMAIN, f"{entry.entry_id}_gateway_{GATEWAY_NUM}")
+    assert gateway_entity_id is not None
+    assert hass.states.get(gateway_entity_id) is not None
+    assert registry.async_get_entity_id("notify", DOMAIN, f"meshtastic_node_{GATEWAY_NUM}") is not None
+    assert gateway.name == expected_name
+    assert gateway.serial_number == ((user or {}).get("id") or f"!{GATEWAY_NUM:08x}")
+
+    result = await hass.config_entries.options.async_init(entry.entry_id)
+    assert result["type"] is FlowResultType.FORM
+    result = await hass.config_entries.options.async_configure(
+        result["flow_id"],
+        {
+            CONF_OPTION_FILTER_NODES: [str(GATEWAY_NUM)],
+            CONF_OPTION_NODE: str(PEER_NUM),
+            CONF_OPTION_NOTIFY_PLATFORM: dict(entry.options[CONF_OPTION_NOTIFY_PLATFORM]),
+            CONF_OPTION_WEB_CLIENT: dict(entry.options[CONF_OPTION_WEB_CLIENT]),
+            CONF_OPTION_TCP_PROXY: dict(entry.options[CONF_OPTION_TCP_PROXY]),
+        },
+    )
+    await hass.async_block_till_done()
+    assert result["type"] is FlowResultType.CREATE_ENTRY
+    assert entry.state is ConfigEntryState.LOADED
+    peer_name = (user or {}).get("longName") or str(PEER_NUM)
+    assert entry.options[CONF_OPTION_FILTER_NODES] == [
+        {"id": GATEWAY_NUM, "name": expected_name},
+        {"id": PEER_NUM, "name": peer_name},
+    ]
+    peer = dr.async_get(hass).async_get_device_by_identifier((DOMAIN, str(PEER_NUM)), entry.entry_id)
+    assert peer.name == peer_name
+    assert peer.serial_number == ((user or {}).get("id") or f"!{PEER_NUM:08x}")
+    assert peer.via_device_id == gateway.id
+    assert registry.async_get_entity_id("notify", DOMAIN, f"meshtastic_node_{PEER_NUM}") is not None

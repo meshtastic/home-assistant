@@ -327,6 +327,7 @@ class MeshInterface:
         short_name: str | None = None,
         long_name: str | None = None,
     ) -> MeshNode | None:
+        """Find a node by number or available user fields, synthesizing a missing user ID."""
         if node_id is None and user_id is None and short_name is None and long_name is None:
             msg = "Most provide node_id, user_id, short_name or long_name"
             raise ValueError(msg)
@@ -336,12 +337,13 @@ class MeshInterface:
         else:
 
             def matches(node_info: Mapping[str, Any]) -> bool:
-                if user_id is not None and node_info["user"]["id"] == user_id:
+                """Match only available user metadata against the requested identifiers."""
+                if user_id is not None and node_info.get("user", {}).get("id") == user_id:
                     return True
-                if short_name is not None and node_info["user"]["shortName"] == short_name:
+                if short_name is not None and node_info.get("user", {}).get("shortName", "") == short_name:
                     return True
 
-                return bool(long_name is not None and node_info["user"]["longName"] == long_name)
+                return bool(long_name is not None and node_info.get("user", {}).get("longName", "") == long_name)
 
             node_info = next((node_info for node_info in self._node_database.values() if matches(node_info)), None)
 
@@ -350,9 +352,9 @@ class MeshInterface:
 
         return MeshNode(
             id=node_info["num"],
-            user_id=node_info["user"]["id"],
-            short_name=node_info["user"]["shortName"],
-            long_name=node_info["user"]["longName"],
+            user_id=node_info.get("user", {}).get("id") or f"!{node_info['num']:08x}",
+            short_name=node_info.get("user", {}).get("shortName", ""),
+            long_name=node_info.get("user", {}).get("longName", ""),
         )
 
     def find_channel(self, index: int | None = None, name: str | None = None) -> MeshChannel | None:

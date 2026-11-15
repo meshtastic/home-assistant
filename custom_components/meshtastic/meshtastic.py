@@ -32,6 +32,7 @@ async def async_setup_entry(
     config_entry: MeshtasticConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
+    """Create gateway and channel entities even when gateway user metadata is incomplete."""
     client = config_entry.runtime_data.client
     gateway_node = await client.async_get_own_node()
     local_config = await client.async_get_node_local_config()
@@ -40,8 +41,8 @@ async def async_setup_entry(
     gateway_node_entity = GatewayEntity(
         config_entry_id=config_entry.entry_id,
         node=gateway_node["num"],
-        long_name=gateway_node["user"]["longName"],
-        short_name=gateway_node["user"]["shortName"],
+        long_name=gateway_node.get("user", {}).get("longName") or str(gateway_node["num"]),
+        short_name=gateway_node.get("user", {}).get("shortName", ""),
         # state attributes reach the recorder, backups and every API client, so secrets never go in
         local_config=without_sensitive_local_config(local_config),
         module_config=without_sensitive_module_config(module_config),
