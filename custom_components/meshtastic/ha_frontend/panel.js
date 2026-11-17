@@ -2,153 +2,181 @@
 //
 // SPDX-License-Identifier: MIT
 
-import {
-  LitElement,
-  html,
-  css,
-} from "https://unpkg.com/lit-element@2.4.0/lit-element.js?module";
+// Plain custom element: no imports, so the panel loads from the integration's own static path alone.
 
-class MeshtasticPanel extends LitElement {
-  static get properties() {
-    return {
-      hass: { type: Object },
-      narrow: { type: Boolean },
-      route: { type: Object },
-      panel: { type: Object },
-    };
+const STYLE = `
+  :host {
+    display: block;
   }
 
-  render() {
-    if (!this.hass) {
-      return html``;
+  h1 {
+    margin-top: 8px;
+    margin-left: 16px;
+    margin-inline-start: 16px;
+    margin-inline-end: initial;
+    font-family: var(--paper-font-headline_-_font-family);
+    -webkit-font-smoothing: var(--paper-font-headline_-_-webkit-font-smoothing);
+    white-space: var(--paper-font-headline_-_white-space);
+    overflow: var(--paper-font-headline_-_overflow);
+    text-overflow: var(--paper-font-headline_-_text-overflow);
+    font-size: var(--paper-font-headline_-_font-size);
+    font-weight: var(--paper-font-headline_-_font-weight);
+    line-height: var(--paper-font-headline_-_line-height);
+  }
+
+  .container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 8px;
+    padding: 8px 16px 16px;
+  }
+
+  .card-content {
+    display: flex;
+    justify-content: center;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .card-content h2 {
+    font-size: 16px;
+    font-weight: 400;
+    margin-top: 8px;
+    margin-bottom: 0px;
+    max-width: 100%;
+  }
+
+  .card-content ha-icon {
+    --mdc-icon-size: 40px;
+    color: var(--primary-text-color);
+  }
+
+  .card-actions {
+    padding: 8px 0 16px;
+    justify-content: center;
+    display: flex;
+  }
+`;
+
+class MeshtasticPanel extends HTMLElement {
+  constructor() {
+    super();
+    this._hass = undefined;
+    this._narrow = false;
+    this._signature = undefined;
+    this.attachShadow({ mode: "open" });
+  }
+
+  set hass(hass) {
+    this._hass = hass;
+    this._render();
+  }
+
+  get hass() {
+    return this._hass;
+  }
+
+  set narrow(narrow) {
+    this._narrow = narrow;
+    this._signature = undefined;
+    this._render();
+  }
+
+  get narrow() {
+    return this._narrow;
+  }
+
+  _gateways() {
+    return Object.values(this._hass.entities)
+      .filter((e) => e.platform === "meshtastic" && e.entity_id.startsWith("meshtastic."))
+      .map((e) => ({ entity: e.entity_id, state: this._hass.states[e.entity_id] }))
+      .filter(({ state }) => state && state.attributes["device_class"] === "gateway")
+      .map(({ entity, state }) => ({
+        entity,
+        name: state.attributes["friendly_name"] || entity,
+        unavailable: state.state === "unavailable",
+      }));
+  }
+
+  _render() {
+    if (!this._hass) {
+      return;
+    }
+    const gateways = this._gateways();
+    // hass changes on every state update, so rebuild only when the cards would differ
+    const signature = JSON.stringify([this._narrow, gateways]);
+    if (signature === this._signature) {
+      return;
+    }
+    this._signature = signature;
+
+    const root = this.shadowRoot;
+    root.replaceChildren();
+
+    const style = document.createElement("style");
+    style.textContent = STYLE;
+
+    const bar = document.createElement("ha-top-app-bar-fixed");
+    const menu = document.createElement("ha-menu-button");
+    menu.slot = "navigationIcon";
+    menu.hass = this._hass;
+    menu.narrow = this._narrow;
+    const title = document.createElement("div");
+    title.slot = "title";
+    title.textContent = "Meshtastic";
+
+    const heading = document.createElement("h1");
+    heading.textContent = "Web Client";
+    const container = document.createElement("div");
+    container.className = "container";
+    for (const gateway of gateways) {
+      container.append(this._card(gateway));
     }
 
-    const mesh_entities = Object.values(this.hass.entities).filter(e => e.platform === "meshtastic" && e.entity_id.startsWith("meshtastic."));
-    const gateway_entities = mesh_entities.filter(e => this.hass.states[e.entity_id].attributes["device_class"] === "gateway");
+    const body = document.createElement("div");
+    body.append(heading, container);
+    bar.append(menu, title, body);
+    root.append(style, bar);
+  }
 
-    const gateway_info = gateway_entities.map(e => ({
-      "entity": e.entity_id,
-      "name": this.hass.states[e.entity_id].attributes["friendly_name"],
-      "unavailable": this.hass.states[e.entity_id].state === "unavailable"
-    }));
+  _card(gateway) {
+    const card = document.createElement("ha-card");
+    card.setAttribute("outlined", "");
 
-    return html`
-      <ha-top-app-bar-fixed>
-        <ha-menu-button
-            slot="navigationIcon"
-            .hass=${this.hass}
-            .narrow=${this.narrow}
-        ></ha-menu-button>
-        <div slot="title">Meshtastic</div>
-        
-        <div class="">
-          <h1>Web Client</h1>
-          <div class="container">
-            ${gateway_info.map((gateway) => html`
-              <ha-card outlined>
-                <div class="card-content">
-                  <img alt="" crossorigin="anonymous" referrerpolicy="no-referrer"
-                       src="https://brands.home-assistant.io/meshtastic/dark_icon.png"
-                       style="visibility: initial;">
-                  <h2>${gateway.name || gateway.entity}</h2>
-                  <h3>&nbsp;</h3>
-                  <div class="card-actions">
-                    ${gateway.unavailable ? html`
-                      <ha-button unelevated disabled="true">Open</ha-button>` : html`
-                      <ha-button unelevated @click=${() => this._openWebClient(gateway.entity)}>Open</ha-button>`}
-                  </div>
-              </ha-card>
-            `)}
-          </div>
-      </ha-top-app-bar-fixed>
-    `;
+    const content = document.createElement("div");
+    content.className = "card-content";
+    const icon = document.createElement("ha-icon");
+    icon.setAttribute("icon", "mdi:radio-handheld");
+    const name = document.createElement("h2");
+    name.textContent = gateway.name;
+    content.append(icon, name);
+
+    const actions = document.createElement("div");
+    actions.className = "card-actions";
+    const button = document.createElement("ha-button");
+    button.setAttribute("unelevated", "");
+    button.textContent = "Open";
+    if (gateway.unavailable) {
+      button.setAttribute("disabled", "");
+    } else {
+      button.addEventListener("click", () => this._openWebClient(gateway.entity));
+    }
+    actions.append(button);
+
+    card.append(content, actions);
+    return card;
   }
 
   async _openWebClient(entityId) {
     // Opened before the await so the browser treats it as part of the click, not a popup.
     const tab = window.open("about:blank", "_blank");
     try {
-      const { url } = await this.hass.callWS({ type: "meshtastic/web_client/open", entity_id: entityId });
+      const { url } = await this._hass.callWS({ type: "meshtastic/web_client/open", entity_id: entityId });
       tab.location.href = url;
     } catch (err) {
       tab.close();
       alert(`Could not open the web client: ${err.message || err.code}`);
     }
-  }
-
-  static get styles() {
-    return css`
-      :host {
-        display: block;
-      }
-
-      :host([virtualize]) {
-        height: 100%;
-      }
-      
-      h1 {
-        margin-top: 8px;
-        margin-left: 16px;
-        margin-inline-start: 16px;
-        margin-inline-end: initial;
-
-        font-family: var(--paper-font-headline_-_font-family);
-        -webkit-font-smoothing: var(--paper-font-headline_-_-webkit-font-smoothing);
-        white-space: var(--paper-font-headline_-_white-space);
-        overflow: var(--paper-font-headline_-_overflow);
-        text-overflow: var(--paper-font-headline_-_text-overflow);
-        font-size: var(--paper-font-headline_-_font-size);
-        font-weight: var(--paper-font-headline_-_font-weight);
-        line-height: var(--paper-font-headline_-_line-height);
-      }
-
-      a {
-        text-decoration: none;
-      }
-      
-      .container {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-        gap: 8px;
-        padding: 8px 16px 16px;
-      }
-
-      .card-content {
-        display: flex;
-        justify-content: center;
-        flex-direction: column;
-        align-items: center;
-      }
-
-      .card-content h2 {
-        font-size: 16px;
-        font-weight: 400;
-        margin-top: 8px;
-        margin-bottom: 0px;
-        max-width: 100%;
-      }
-      
-      .card-content h3 {
-        font-size: 14px;
-        margin: 0px;
-        max-width: 100%;
-        text-align: center;
-        font-weight: normal;
-      }
-
-      .card-content img {
-        width: 40px;
-        height: 40px;
-      }
-
-      .card-actions {
-        border-top: none;
-        padding-top: 0px;
-        padding-bottom: 16px;
-        justify-content: center;
-        display: flex;
-      }
-    `;
   }
 }
 
