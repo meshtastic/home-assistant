@@ -14,8 +14,10 @@ from homeassistant.config_entries import ConfigEntryState
 from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers import entity_registry as er
 
+from custom_components.meshtastic import services
 from custom_components.meshtastic.api import MeshtasticApiClientError
 from custom_components.meshtastic.const import DOMAIN
+from custom_components.meshtastic.services import SUPPORTED_SERVICES
 
 from .conftest import GATEWAY_NUM, PEER_NUM, FakeClient, make_node
 
@@ -68,6 +70,19 @@ async def test_unload_disconnects_the_client_and_keeps_the_registries(
 
     assert entry.state is ConfigEntryState.NOT_LOADED
     fake_client.disconnect.assert_awaited_once()
+
+
+@pytest.mark.usefixtures("fake_client")
+async def test_the_actions_stay_registered_with_no_gateway_loaded(hass: HomeAssistant, entry: MockConfigEntry) -> None:
+    assert await hass.config_entries.async_setup(entry.entry_id)
+    await hass.async_block_till_done()
+    assert entry.runtime_data.coordinator.config_entry is entry
+
+    assert await hass.config_entries.async_unload(entry.entry_id)
+    await hass.async_block_till_done()
+
+    assert set(SUPPORTED_SERVICES) <= set(hass.services.async_services_for_domain(DOMAIN))
+    assert entry.entry_id not in services._service_handlers
     assert dr.async_entries_for_config_entry(dr.async_get(hass), entry.entry_id)
 
 

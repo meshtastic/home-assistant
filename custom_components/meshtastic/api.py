@@ -134,16 +134,17 @@ class MeshtasticApiClient:
             connection = AioTcpConnection(host=data[CONF_CONNECTION_TCP_HOST], port=data[CONF_CONNECTION_TCP_PORT])
         elif connection_type == ConnectionType.BLUETOOTH.value:
             ble_address = data[CONF_CONNECTION_BLUETOOTH_ADDRESS]
-            ble_device = None
-            if hass:
-                # Imported lazily: the bluetooth component is optional and may not be
-                # loaded, and importing it at module scope pulls it in unconditionally.
-                from homeassistant.components.bluetooth import (  # noqa: PLC0415
-                    async_ble_device_from_address,
-                )
+            # Imported lazily: the bluetooth component is optional and may not be
+            # loaded, and importing it at module scope pulls it in unconditionally.
+            from homeassistant.components.bluetooth import (  # noqa: PLC0415
+                async_ble_device_from_address,
+            )
 
-                ble_device = async_ble_device_from_address(hass, ble_address, connectable=True)
-            connection = AioBluetoothConnection(ble_address=ble_address, ble_device=ble_device)
+            # asked on every connect: an adapter or proxy change makes an earlier device stale
+            connection = AioBluetoothConnection(
+                ble_address=ble_address,
+                ble_device_provider=lambda: async_ble_device_from_address(hass, ble_address, connectable=True),
+            )
         elif connection_type == ConnectionType.SERIAL.value:
             connection = AioSerialConnection(device=data[CONF_CONNECTION_SERIAL_PORT])
         else:
@@ -217,30 +218,39 @@ class MeshtasticApiClient:
     def add_connection_state_listener(self, listener: Callable[[ConnectionState], None]) -> Callable[[], None]:
         return self._interface.add_connection_state_listener(listener)
 
+    async def _async_wait_node_ready(self) -> None:
+        # The readiness event is cleared whenever the connection drops or the node re-runs its config
+        # exchange, so an unbounded wait would hang setup on a radio that never comes back.
+        try:
+            ready = await asyncio.wait_for(self._interface.connected_node_ready(), timeout=NODE_READY_TIMEOUT)
+        except TimeoutError as e:
+            msg = f"Node not ready after {NODE_READY_TIMEOUT} seconds"
+            raise MeshtasticApiClientError(msg) from e
+        if not ready:
+            # readiness was cleared again before this waiter resumed
+            msg = "Node stopped being ready"
+            raise MeshtasticApiClientError(msg)
+
     async def async_get_channels(self) -> list[Mapping[str, Any]]:
-        if not await self._interface.connected_node_ready():
-            return []
+        await self._async_wait_node_ready()
         channels = self._interface.connected_node_channels()
         assert channels is not None  # noqa: S101  (iterated immediately; None raised TypeError already)
         return [self._message_to_dict(c) for c in channels]
 
     async def async_get_node_local_config(self) -> dict:
-        if not await self._interface.connected_node_ready():
-            return {}
+        await self._async_wait_node_ready()
         local_config = self._interface.connected_node_local_config()
         assert local_config is not None  # noqa: S101  (MessageToDict dereferences it; None raised already)
         return self._message_to_dict(local_config)
 
     async def async_get_node_module_config(self) -> dict:
-        if not await self._interface.connected_node_ready():
-            return {}
+        await self._async_wait_node_ready()
         module_config = self._interface.connected_node_module_config()
         assert module_config is not None  # noqa: S101  (MessageToDict dereferences it; None raised already)
         return self._message_to_dict(module_config)
 
     async def async_get_own_node(self) -> Mapping[str, Any]:
-        if not await self._interface.connected_node_ready():
-            return {}
+        await self._async_wait_node_ready()
         return self.get_own_node()
 
     def get_own_node(self) -> Mapping[str, Any]:
@@ -250,17 +260,7 @@ class MeshtasticApiClient:
         return self._interface.find_node(node_id=node_id)
 
     async def async_get_all_nodes(self) -> Mapping[int, Mapping[str, Any]]:
-        # The node database is held in memory, so this is cheap once the node is
-        # ready. The readiness event is cleared whenever the connection drops or
-        # the node re-runs its config exchange, though, and waiting on it is
-        # otherwise unbounded -- a radio that never comes back would block the
-        # caller forever. Fail instead, so callers can retry or report.
-        try:
-            await asyncio.wait_for(self._interface.connected_node_ready(), timeout=NODE_READY_TIMEOUT)
-        except TimeoutError as e:
-            msg = f"Node not ready after {NODE_READY_TIMEOUT} seconds"
-            raise MeshtasticApiClientError(msg) from e
-
+        await self._async_wait_node_ready()
         return {node_id: self._transform_node_info(node_info) for node_id, node_info in self._interface.nodes().items()}
 
     def _transform_node_info(self, node_info: Mapping[str, Any]) -> Mapping[str, Any]:
@@ -552,7 +552,7 @@ class MeshtasticApiClient:
                 packet_clone = google.protobuf.json_format.MessageToDict(_without_admin_payload(packet))
                 node_id = packet_clone["from"]
                 self._hass.bus.async_fire(EVENT_MESHTASTIC_API_PACKET, self._build_event_data(node_id, packet_clone))
-            except:  # noqa: E722
+            except Exception:
                 self._logger.warning("Failed to process packet %s", packet.id, exc_info=True)
 
     def _add_background_task(self, coro: Coroutine[Any, Any, None], name: str | None = None) -> asyncio.Task:

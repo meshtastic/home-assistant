@@ -287,7 +287,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             gateway_node, nodes = await validate_input_for_connection(self.hass, data, no_nodes=no_full_load)
         except CannotConnectError:
             errors["base"] = "cannot_connect"
-        except:  # noqa: E722
+        except Exception:
             _LOGGER.warning("Unexpected exception", exc_info=True)
             errors["base"] = "unknown"
         else:
@@ -652,7 +652,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     raise CannotConnectError  # noqa: TRY301
             except CannotConnectError:
                 errors["base"] = "cannot_connect"
-            except:  # noqa: E722
+            except Exception:
                 _LOGGER.warning("Unexpected exception", exc_info=True)
                 errors["base"] = "unknown"
             else:
@@ -708,7 +708,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                 _, self.nodes = await validate_input_for_connection(self.hass, self.config_entry.data)
             except CannotConnectError:
                 errors["base"] = "cannot_connect"
-            except:  # noqa: E722
+            except Exception:
                 _LOGGER.warning("Unexpected exception", exc_info=True)
                 errors["base"] = "unknown"
 

@@ -200,7 +200,7 @@ class ClientApiConnection:
         async def notify(listener: ClientApiConnectionPacketStreamListener, new_packet: mesh_pb2.FromRadio) -> None:
             try:
                 await listener.notify(new_packet)
-            except:  # noqa: E722
+            except Exception:
                 self._logger.warning("Listener notify failed: %s", listener, exc_info=True)
 
         if sequential:
@@ -253,7 +253,7 @@ class ClientApiConnection:
             if on_packet is not None:
                 try:
                     await on_packet(packet)
-                except:  # noqa: E722
+                except Exception:
                     self._logger.warning("Request config packet callback failed", exc_info=True)
             try:
                 if (
@@ -261,7 +261,7 @@ class ClientApiConnection:
                     and packet.config_complete_id == start_config_packet.want_config_id
                 ):
                     return True
-            except:  # noqa: E722
+            except Exception:
                 self._logger.warning("Failed to check request config", exc_info=True)
         return False
 
@@ -320,7 +320,7 @@ class ClientApiConnection:
             if out_callback is not None:
                 try:
                     await out_callback(Packet(to_radio))
-                except:  # noqa: E722
+                except Exception:
                     self._logger.debug("Out callback failed", exc_info=True)
             return None
 
@@ -349,7 +349,7 @@ class ClientApiConnection:
             if out_callback is not None:
                 try:
                     await out_callback(Packet(to_radio))
-                except:  # noqa: E722
+                except Exception:
                     self._logger.debug("Out callback failed", exc_info=True)
 
         async for from_radio in self.listen(on_start=on_start()):
@@ -366,7 +366,7 @@ class ClientApiConnection:
                 if ack_callback is not None:
                     try:
                         await ack_callback(ack_packet)
-                    except:  # noqa: E722
+                    except Exception:
                         self._logger.debug("Ack callback failed", exc_info=True)
             else:
                 self._logger.debug("Received response")
@@ -374,7 +374,7 @@ class ClientApiConnection:
                 if response_callback is not None:
                     try:
                         await response_callback(response_packet)
-                    except:  # noqa: E722
+                    except Exception:
                         self._logger.debug("Response callback failed", exc_info=True)
 
             if want_response and response_packet is None:
@@ -491,7 +491,7 @@ class ClientApiConnection:
                                     await asyncio.sleep(5)
                         except asyncio.CancelledError:
                             raise
-                        except:  # noqa: E722
+                        except Exception:
                             self._logger.warning("On demand processing failed with unexpected error", exc_info=True)
                             await asyncio.sleep(10)
 
@@ -529,7 +529,11 @@ class ClientApiConnection:
             self._logger.debug("Reconnect in progress, waiting")
             complete_task = asyncio.create_task(self._reconnect_completed.wait())
             failed_task = asyncio.create_task(self._reconnect_failed.wait())
-            done, _ = await asyncio.wait([complete_task, failed_task], return_when=asyncio.FIRST_COMPLETED)
+            try:
+                done, _ = await asyncio.wait([complete_task, failed_task], return_when=asyncio.FIRST_COMPLETED)
+            finally:
+                complete_task.cancel()
+                failed_task.cancel()
             if done == {failed_task}:
                 msg = "Already ongoing reconnect failed"
                 raise ClientApiConnectionError(msg)
@@ -551,7 +555,7 @@ class ClientApiConnection:
                     self._reconnect_failed.clear()
                 self._logger.debug("Reconnect completed")
 
-        except:
+        except BaseException:  # a cancelled reconnect must also release the callers waiting on it
             self._logger.debug("Failed to reconnect", exc_info=True)
             async with self._reconnect_status_lock:
                 self._reconnect_completed.clear()

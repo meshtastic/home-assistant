@@ -77,7 +77,7 @@ A gateway is any Meshtastic radio the integration can reach with the phone API, 
 | Bluetooth LE | Any radio with Bluetooth, directly or through a [Bluetooth Proxy](https://esphome.io/components/bluetooth_proxy.html) |
 | Serial (USB) | Radios on a USB port of the Home Assistant host, including nRF52 boards that have no TCP |
 
-USB auto-discovery matches the common nRF52, ESP32, RP2040 and CH340 based radios. Other radios are added by entering the serial port by hand. Firmware 2.8 renumbering is handled, see [Node numbers on firmware 2.8](#node-numbers-on-firmware-28). The minimum Home Assistant version is 2026.8.0.
+USB auto-discovery matches nRF52 based radios. ESP32, RP2040 and CH340 boards share their USB IDs with unrelated devices, so those radios are added by entering the serial port by hand. Firmware 2.8 renumbering is handled, see [Node numbers on firmware 2.8](#node-numbers-on-firmware-28). The minimum Home Assistant version is 2026.8.0.
 
 
 ## Supported Platforms

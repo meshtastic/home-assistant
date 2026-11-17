@@ -106,7 +106,7 @@ async def async_setup_meshtastic_web(hass: HomeAssistant) -> bool:
             hass.data[DATA_WEB_ROUTES_REGISTERED] = await meshtastic_web.async_setup(hass)
         await frontend.async_register_frontend(hass)
         hass.data[DATA_WEB_PANEL_LOADED] = True
-    except:  # noqa: E722
+    except Exception:  # noqa: BLE001
         LOGGER.warning("Failed to setup frontend", exc_info=True)
         return False
     else:
@@ -120,7 +120,7 @@ async def async_unload_meshtastic_web(hass: HomeAssistant) -> bool:
     try:
         await frontend.async_unregister_frontend(hass)
         hass.data[DATA_WEB_PANEL_LOADED] = False
-    except:  # noqa: E722
+    except Exception:  # noqa: BLE001
         LOGGER.warning("Failed to unload frontend", exc_info=True)
         return False
     else:
@@ -131,9 +131,7 @@ async def async_setup_entry(
     hass: HomeAssistant,
     entry: MeshtasticConfigEntry,
 ) -> bool:
-    coordinator = MeshtasticDataUpdateCoordinator(hass=hass)
-    if coordinator.config_entry is None:
-        coordinator.config_entry = entry
+    coordinator = MeshtasticDataUpdateCoordinator(hass=hass, config_entry=entry)
 
     client = MeshtasticApiClient(entry.data, hass=hass, config_entry_id=entry.entry_id)
 
@@ -402,14 +400,14 @@ async def async_unload_entry(
     try:
         if entry.runtime_data and entry.runtime_data.client:
             await entry.runtime_data.client.disconnect()
-    except:  # noqa: E722
+    except Exception:  # noqa: BLE001
         LOGGER.warning("Failed to disconnect client during unload of entry", exc_info=True)
 
     unload_ok = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
     if unload_ok:
         await hass.data[DATA_COMPONENT].async_unload_entry(entry)
 
-        await services.async_unregister_gateway(hass, entry)
+        await services.async_unregister_gateway(entry)
 
         for remove_listener in _remove_listeners.pop(entry.entry_id, []):
             remove_listener()

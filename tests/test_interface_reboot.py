@@ -62,3 +62,60 @@ async def test_reconnects_after_radio_reboot() -> None:
         assert radio.connects == 2
     finally:
         await interface.stop()
+
+
+async def test_a_packet_stream_subscriber_keeps_receiving_after_a_reboot() -> None:
+    radio = FakeRadio()
+    interface = MeshInterface(connection=radio, no_nodes=True, enable_mqtt_proxy=False)
+    await interface.start()
+    received = asyncio.Event()
+
+    async def subscribe() -> None:
+        async for packet in interface.packet_stream():
+            if packet.id == 7:
+                received.set()
+
+    subscriber = asyncio.create_task(subscribe())
+    try:
+        await asyncio.wait_for(interface.connected_node_ready(), timeout=5)
+        radio.receive(mesh_pb2.FromRadio(rebooted=True))
+        await asyncio.wait_for(radio.reconnected.wait(), timeout=5)
+        await asyncio.wait_for(interface.connected_node_ready(), timeout=5)
+
+        radio.receive(mesh_pb2.FromRadio(packet=mesh_pb2.MeshPacket(id=7)))
+
+        await asyncio.wait_for(received.wait(), timeout=5)
+        assert not subscriber.done()
+    finally:
+        subscriber.cancel()
+        await interface.stop()
+
+
+async def test_stop_ends_a_subscriber_left_open_by_a_failed_restart() -> None:
+    radio = FakeRadio()
+    interface = MeshInterface(connection=radio, no_nodes=True, enable_mqtt_proxy=False)
+    await interface.start()
+    restart_failed = asyncio.Event()
+
+    async def subscribe() -> None:
+        async for _ in interface.packet_stream():
+            pass
+
+    async def refuse() -> None:
+        restart_failed.set()
+        raise OSError
+
+    subscriber = asyncio.create_task(subscribe())
+    try:
+        await asyncio.wait_for(interface.connected_node_ready(), timeout=5)
+        radio._connect = refuse  # type: ignore[method-assign]
+        radio.receive(mesh_pb2.FromRadio(rebooted=True))
+        await asyncio.wait_for(restart_failed.wait(), timeout=5)
+        await asyncio.sleep(0)
+        assert not interface.is_running
+
+        await interface.stop()
+
+        await asyncio.wait_for(subscriber, timeout=5)
+    finally:
+        subscriber.cancel()
