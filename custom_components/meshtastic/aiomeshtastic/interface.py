@@ -466,6 +466,10 @@ class MeshInterface:
         await self._stop(close_packet_streams=True)
 
     async def _stop(self, *, close_packet_streams: bool) -> None:
+        # before the guard: a restart that failed leaves the interface stopped with subscribers still open
+        if close_packet_streams:
+            await self._close_packet_streams()
+
         if not self._is_running.is_set():
             return
 
@@ -476,8 +480,6 @@ class MeshInterface:
         # the reboot handler calls stop() from a background task; cancelling it here would skip the start() after
         self._background_tasks.discard(asyncio.current_task())
 
-        if close_packet_streams:
-            await self._close_packet_streams()
         await self._cancel_processing_tasks()
         await self._cancel_background_tasks()
 
@@ -810,7 +812,10 @@ class MeshInterface:
             async def reconnect() -> None:
                 # subscribers of the packet streams outlive the restart, they do not resubscribe
                 await self._stop(close_packet_streams=False)
-                await self.start()
+                try:
+                    await self.start()
+                except Exception:
+                    self._logger.warning("Could not reconnect to the rebooted radio", exc_info=True)
 
             self._add_background_task(reconnect(), name="reconnect")
         elif packet.HasField("my_info"):

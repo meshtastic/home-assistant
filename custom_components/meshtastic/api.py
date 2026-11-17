@@ -222,10 +222,14 @@ class MeshtasticApiClient:
         # The readiness event is cleared whenever the connection drops or the node re-runs its config
         # exchange, so an unbounded wait would hang setup on a radio that never comes back.
         try:
-            await asyncio.wait_for(self._interface.connected_node_ready(), timeout=NODE_READY_TIMEOUT)
+            ready = await asyncio.wait_for(self._interface.connected_node_ready(), timeout=NODE_READY_TIMEOUT)
         except TimeoutError as e:
             msg = f"Node not ready after {NODE_READY_TIMEOUT} seconds"
             raise MeshtasticApiClientError(msg) from e
+        if not ready:
+            # readiness was cleared again before this waiter resumed
+            msg = "Node stopped being ready"
+            raise MeshtasticApiClientError(msg)
 
     async def async_get_channels(self) -> list[Mapping[str, Any]]:
         await self._async_wait_node_ready()
