@@ -131,7 +131,7 @@ def process_while_running(f):  # noqa: ANN001, ANN201
             except asyncio.CancelledError:
                 self._logger.debug("Processing while running, aborting, function: %s", f.__name__)
                 raise
-            except:  # noqa: E722
+            except Exception:
                 self._logger.debug(
                     "Processing while running failed, restarting soon, function: %s", f.__name__, exc_info=True
                 )
@@ -463,6 +463,9 @@ class MeshInterface:
             self._add_background_task(self._init_mqtt_client(), name="init-mqtt-client")
 
     async def stop(self) -> None:
+        await self._stop(close_packet_streams=True)
+
+    async def _stop(self, *, close_packet_streams: bool) -> None:
         if not self._is_running.is_set():
             return
 
@@ -473,7 +476,8 @@ class MeshInterface:
         # the reboot handler calls stop() from a background task; cancelling it here would skip the start() after
         self._background_tasks.discard(asyncio.current_task())
 
-        await self._close_packet_streams()
+        if close_packet_streams:
+            await self._close_packet_streams()
         await self._cancel_processing_tasks()
         await self._cancel_background_tasks()
 
@@ -804,7 +808,8 @@ class MeshInterface:
         if packet.HasField("rebooted") and packet.rebooted:
 
             async def reconnect() -> None:
-                await self.stop()
+                # subscribers of the packet streams outlive the restart, they do not resubscribe
+                await self._stop(close_packet_streams=False)
                 await self.start()
 
             self._add_background_task(reconnect(), name="reconnect")
@@ -951,7 +956,7 @@ class MeshInterface:
                         listener(node, node_info_packet), name=f"app-listener-{portnums_pb2.PortNum.NODEINFO_APP}"
                     )
 
-            except:  # noqa: E722
+            except Exception:
                 self._logger.warning("Failed to process node info", exc_info=True)
 
         # rx_time is 0 on packets the radio could not timestamp; writing it would
@@ -1103,7 +1108,7 @@ class MeshInterface:
             except asyncio.CancelledError:
                 self._logger.debug("Reconnecting cancelled", exc_info=True)
                 break
-            except:  # noqa: E722
+            except Exception:  # noqa: BLE001
                 self._logger.debug("Reconnecting failed, retrying in %.0f seconds", reconnect_delay)
                 await asyncio.sleep(reconnect_delay)
 

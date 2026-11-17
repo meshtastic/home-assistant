@@ -77,7 +77,7 @@ def meshtastic_api_event_callback(f):  # noqa: ANN001, ANN201
             }
 
             return await f(self, node_id, data, **additional_event_data)
-        except:  # noqa: E722
+        except Exception:
             self._logger.warning("Failed to handle meshtastic api event", exc_info=True)
 
     return wrapper
@@ -93,10 +93,12 @@ class MeshtasticDataUpdateCoordinator(DataUpdateCoordinator[NodeData]):
     def __init__(
         self,
         hass: HomeAssistant,
+        config_entry: MeshtasticConfigEntry,
     ) -> None:
         super().__init__(
             hass=hass,
             logger=LOGGER,
+            config_entry=config_entry,
             name=DOMAIN,
             update_interval=timedelta(hours=1),
         )
@@ -119,7 +121,7 @@ class MeshtasticDataUpdateCoordinator(DataUpdateCoordinator[NodeData]):
         for remove_listener in self._remove_event_listeners:
             try:
                 remove_listener()
-            except:  # noqa: E722
+            except Exception:
                 self._logger.debug("Could not remove event listeners", exc_info=True)
 
     @callback

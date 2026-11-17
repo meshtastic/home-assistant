@@ -91,12 +91,22 @@ async def test_a_zero_last_heard_reads_as_unknown(
     assert hass.states.get(entity_id).state == STATE_UNKNOWN
 
 
-async def test_reading_the_node_db_gives_up_when_the_node_never_gets_ready() -> None:
+@pytest.mark.parametrize(
+    "read",
+    [
+        "async_get_all_nodes",
+        "async_get_own_node",
+        "async_get_channels",
+        "async_get_node_local_config",
+        "async_get_node_module_config",
+    ],
+)
+async def test_reading_the_radio_gives_up_when_the_node_never_gets_ready(read: str) -> None:
     client = bare_client()
     client._interface.connected_node_ready.side_effect = lambda: asyncio.Event().wait()
 
     with patch.object(api, "NODE_READY_TIMEOUT", 0.01), pytest.raises(MeshtasticApiClientError):
-        await client.async_get_all_nodes()
+        await getattr(client, read)()
 
 
 @pytest.mark.parametrize(("hop_start", "hops_away"), [(7, 2), (0, None)])

@@ -142,30 +142,17 @@ async def async_setup_services(hass: HomeAssistant) -> None:
 
         raise ServiceValidationError(translation_domain=DOMAIN, translation_key="no_gateway_for_request")
 
-    services = hass.services.async_services_for_domain(DOMAIN)
-
     for service, supports_response in SUPPORTED_SERVICES.items():
-        if service not in services:
-            hass.services.async_register(
-                DOMAIN,
-                service,
-                handle_service_call,
-                schema=SERVICE_TO_SCHEMA[service],
-                supports_response=supports_response,
-            )
-
-
-async def async_remove_services(hass: HomeAssistant) -> None:
-    active_services = hass.services.async_services_for_domain(DOMAIN)
-    for service in SUPPORTED_SERVICES:
-        if service in active_services:
-            hass.services.async_remove(DOMAIN, service)
+        hass.services.async_register(
+            DOMAIN,
+            service,
+            handle_service_call,
+            schema=SERVICE_TO_SCHEMA[service],
+            supports_response=supports_response,
+        )
 
 
 async def async_register_gateway(hass: HomeAssistant, entry: MeshtasticConfigEntry) -> None:
-    # ensure services are registered (when unloading last entry and setup new one, async_setup will not be called
-    await async_setup_services(hass)
-
     client = entry.runtime_data.client
 
     # register gateway specific handlers for service
@@ -177,12 +164,9 @@ async def async_register_gateway(hass: HomeAssistant, entry: MeshtasticConfigEnt
     await _setup_service_request_traceroute_handler(hass, entry, client)
 
 
-async def async_unregister_gateway(hass: HomeAssistant, entry: MeshtasticConfigEntry) -> None:
-    if entry.entry_id in _service_handlers:
-        del _service_handlers[entry.entry_id]
-
-    if not _service_handlers:
-        await async_remove_services(hass)
+async def async_unregister_gateway(entry: MeshtasticConfigEntry) -> None:
+    # the actions stay registered with no gateway loaded and answer with a validation error
+    _service_handlers.pop(entry.entry_id, None)
 
 
 async def _build_default_handler(  # noqa: PLR0915

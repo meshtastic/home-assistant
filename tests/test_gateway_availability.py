@@ -109,8 +109,7 @@ async def coordinator(hass: HomeAssistant) -> AsyncIterator[tuple[MeshtasticData
     entry = MockConfigEntry(domain="meshtastic", options={CONF_OPTION_FILTER_NODES: [{"id": NODE}]})
     client = FakeClient()
     entry.runtime_data = SimpleNamespace(client=client)
-    coordinator = MeshtasticDataUpdateCoordinator(hass)
-    coordinator.config_entry = entry
+    coordinator = MeshtasticDataUpdateCoordinator(hass, entry)
     await coordinator.async_refresh()
     assert coordinator.last_update_success
     yield coordinator, client

@@ -142,7 +142,7 @@ class DatabaseNodeInfoPacket(FullNodeInfoPacket):
         from_radio = mesh_pb2.FromRadio()
         try:
             json_format.ParseDict(cast("dict[str, Any]", database), from_radio.node_info, ignore_unknown_fields=True)
-        except:  # noqa: E722
+        except Exception:  # noqa: BLE001
             from_radio.node_info.num = database["num"]
             json_format.ParseDict(database["user"], from_radio.node_info.user)
 

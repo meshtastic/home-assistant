@@ -536,7 +536,7 @@ def _build_local_stats_sensors(
             )
             for node_id, node_info in nodes_with_local_stats.items()
         ]
-    except:  # noqa: E722
+    except Exception:  # noqa: BLE001
         LOGGER.warning("Failed to create local stats entities", exc_info=True)
 
     return entities
@@ -597,7 +597,7 @@ def _build_power_metrics_sensors(
                         )
                     )
 
-    except:  # noqa: E722
+    except Exception:  # noqa: BLE001
         LOGGER.warning("Failed to create power metrics entities", exc_info=True)
 
     return entities
@@ -691,7 +691,7 @@ def _build_environment_metrics_sensors(
                 add_sensor(f"adcVoltageCh{channel}", SensorDeviceClass.VOLTAGE, UnitOfElectricPotential.VOLT)
                 add_sensor(f"oneWireTemperatureCh{channel}", SensorDeviceClass.TEMPERATURE, UnitOfTemperature.CELSIUS)
 
-    except:  # noqa: E722
+    except Exception:  # noqa: BLE001
         LOGGER.warning("Failed to create environment metric entities", exc_info=True)
 
     return entities
@@ -758,7 +758,7 @@ def _build_host_metrics_sensors(
             add_sensor("load15", None, PERCENTAGE)
             add_sensor("userString", None, None, None)
 
-    except:  # noqa: E722
+    except Exception:  # noqa: BLE001
         LOGGER.warning("Failed to create host metric entities", exc_info=True)
 
     return entities
@@ -824,7 +824,7 @@ def _build_air_quality_metrics_sensors(
             add_sensor("particles25um", SensorDeviceClass.PM25, UnitOfDensity.MICROGRAMS_PER_CUBIC_METER)
             add_sensor("particles50um", None, UnitOfDensity.MICROGRAMS_PER_CUBIC_METER)
             add_sensor("particles100um", None, UnitOfDensity.MICROGRAMS_PER_CUBIC_METER)
-    except:  # noqa: E722
+    except Exception:  # noqa: BLE001
         LOGGER.warning("Failed to create air quality metric entities", exc_info=True)
 
     return entities
@@ -899,7 +899,7 @@ def _build_soil_water_metrics_sensors(
                 SensorDeviceClass.IRRADIANCE,
                 UnitOfIrradiance.WATTS_PER_SQUARE_METER,
             )
-    except:  # noqa: E722
+    except Exception:  # noqa: BLE001
         LOGGER.warning("Failed to create soil water metric entities", exc_info=True)
 
     return entities

@@ -34,6 +34,11 @@ class BluetoothConnectionServiceNotFoundError(ClientApiConnectionError):
         super().__init__("Bluetooth meshtastic service not found")
 
 
+class BluetoothDeviceNotFoundError(ClientApiConnectionError):
+    def __init__(self, address: str) -> None:
+        super().__init__(f"No connectable Bluetooth device at {address}")
+
+
 class BluetoothConnection(ClientApiConnection):
     BTM_SERVICE_UUID = "6ba1b218-15a8-461f-9fa8-5dcae273eafd"
     BTM_CHARACTERISTIC_FROM_RADIO_UUID = "2c55e69e-4993-11ed-b878-0242ac120002"
@@ -44,13 +49,13 @@ class BluetoothConnection(ClientApiConnection):
     def __init__(
         self,
         ble_address: str,
-        ble_device: Any | None = None,
+        ble_device_provider: Callable[[], Any | None] | None = None,
         bleak_client_backend: type[BaseBleakClient] | None = None,
         connect_timeout: float = 10.0,
     ) -> None:
         super().__init__()
         self._ble_address = ble_address
-        self._ble_device = ble_device
+        self._ble_device_provider = ble_device_provider
         self._bleak_client_backend = bleak_client_backend
         self._connect_timeout = connect_timeout
         self._ble_meshtastic_service: BleakGATTService | None = None
@@ -63,10 +68,14 @@ class BluetoothConnection(ClientApiConnection):
         self._force_read_event = asyncio.Event()
 
     async def _connect(self) -> None:
-        if self._ble_device is not None:
+        if self._ble_device_provider is not None:
+            # a device from an earlier connect can name an adapter or proxy that is gone
+            ble_device = self._ble_device_provider()
+            if ble_device is None:
+                raise BluetoothDeviceNotFoundError(self._ble_address)
             self._bleak_client = await establish_connection(
                 client_class=BleakClient,
-                device=self._ble_device,
+                device=ble_device,
                 name=self._ble_address,
                 max_attempts=3,
             )
@@ -104,7 +113,7 @@ class BluetoothConnection(ClientApiConnection):
     async def _disconnect(self) -> None:
         try:
             await self._bleak_client.disconnect()
-        except:  # noqa: E722
+        except Exception:
             self._logger.debug("Disconnecting failed", exc_info=True)
 
     @property
@@ -193,7 +202,7 @@ class BluetoothConnection(ClientApiConnection):
                     with suppress(Exception):
                         await stop_notify()
                     await start_notify()
-                except:  # noqa: E722
+                except Exception:
                     self._logger.debug("Restart notify failed", exc_info=True)
 
             await start_notify()
