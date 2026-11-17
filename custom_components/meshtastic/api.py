@@ -195,8 +195,8 @@ class MeshtasticApiClient:
             await asyncio.sleep(1)
             try:
                 await self._interface.send_time()
-                await self._interface.write_timezone_if_needed()
-            except:  # noqa: E722
+                await self._interface.write_timezone_if_unset(self._hass.config.time_zone)
+            except Exception:
                 self._logger.debug("Send time failed", exc_info=True)
 
         self._add_background_task(send_time())
@@ -204,6 +204,8 @@ class MeshtasticApiClient:
     async def disconnect(self) -> None:
         try:
             cast("asyncio.Task[Any]", self._packet_processor).cancel()
+            for task in self._background_tasks:
+                task.cancel()
             await self._interface.stop()
         except Exception as e:
             raise MeshtasticApiClientCommunicationError from e

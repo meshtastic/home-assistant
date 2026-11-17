@@ -116,6 +116,9 @@
   "version": "0.6.2",
   "zeroconf": [
     "_meshtastic._tcp.local.",
-    "_http._tcp.local."
+    {
+      "type": "_http._tcp.local.",
+      "name": "meshtastic*"
+    }
   ]
 }

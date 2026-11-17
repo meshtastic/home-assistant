@@ -17,7 +17,7 @@ import voluptuous as vol
 from aiohttp import web
 from google.protobuf import message
 from homeassistant.components import websocket_api
-from homeassistant.components.http import HomeAssistantRequest, HomeAssistantView, StaticPathConfig
+from homeassistant.components.http import KEY_HASS, HomeAssistantRequest, HomeAssistantView, StaticPathConfig
 from homeassistant.config_entries import ConfigEntry, ConfigEntryState
 from homeassistant.core import HomeAssistant, callback
 
@@ -286,10 +286,10 @@ class MeshtasticWebSpaView(HomeAssistantView):
 
     async def get(
         self,
-        request: HomeAssistantRequest,  # noqa: ARG002
+        request: HomeAssistantRequest,
         path: str,
     ) -> web.StreamResponse:
-        return _serve_web_client_path(path)
+        return await _serve_web_client_path(request.app[KEY_HASS], path)
 
 
 async def async_setup(hass: HomeAssistant) -> bool:
@@ -328,9 +328,17 @@ CROSS_ORIGIN_ISOLATION_HEADERS = {
 }
 
 
-def _serve_web_client_path(relative_path: str) -> web.StreamResponse:
+async def _serve_web_client_path(hass: HomeAssistant, relative_path: str) -> web.StreamResponse:
+    # the lookup touches the filesystem, so it runs off the event loop
+    file = await hass.async_add_executor_job(_resolve_web_client_path, relative_path)
+    if file is None:
+        return web.HTTPNotFound()
+    return web.FileResponse(file, headers={"Cache-Control": "no-cache", **CROSS_ORIGIN_ISOLATION_HEADERS})
+
+
+def _resolve_web_client_path(relative_path: str) -> Path | None:
     """
-    Serve a bundled file, or index.html for a client-side route.
+    Find the bundled file to serve, or index.html for a client-side route.
 
     The client is a single page app: navigating to /nodes or
     /messages/broadcast/0 puts a real path in the URL, but there is no such
@@ -340,16 +348,15 @@ def _serve_web_client_path(relative_path: str) -> web.StreamResponse:
     genuinely missing asset is not masked by a page of HTML.
     """
     static_root = (Path(__file__).parent / "static").resolve()
-    headers = {"Cache-Control": "no-cache", **CROSS_ORIGIN_ISOLATION_HEADERS}
 
     candidate = (static_root / relative_path).resolve()
     if static_root in candidate.parents and candidate.is_file():
-        return web.FileResponse(candidate, headers=headers)
+        return candidate
 
     if "." in PurePosixPath(relative_path).name:
-        return web.HTTPNotFound()
+        return None
 
-    return web.FileResponse(static_root / "index.html", headers=headers)
+    return static_root / "index.html"
 
 
 class MeshtasticWebConfigEntryView(HomeAssistantView):
@@ -369,7 +376,7 @@ class MeshtasticWebConfigEntryView(HomeAssistantView):
         entity_id: str,
     ) -> web.StreamResponse:
         if not entity_id.startswith("gateway_"):
-            return _serve_web_client_path(entity_id)
+            return await _serve_web_client_path(self._hass, entity_id)
 
         # Old gateway links: the panel's Open button is the way in, since it can authenticate.
         return web.HTTPTemporaryRedirect(location=f"/{DOMAIN}", headers={"Cache-Control": "no-cache"})

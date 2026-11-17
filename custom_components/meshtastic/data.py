@@ -35,3 +35,5 @@ class MeshtasticData:
 
 
 DATA_COMPONENT: HassKey[EntityComponent[MeshtasticEntity]] = HassKey(DOMAIN)
+DATA_WEB_ROUTES_REGISTERED: HassKey[bool] = HassKey(f"{DOMAIN}_web_routes_registered")
+DATA_WEB_PANEL_LOADED: HassKey[bool] = HassKey(f"{DOMAIN}_web_panel_loaded")

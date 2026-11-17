@@ -424,6 +424,14 @@ To open the web client:
 2. Open the "Meshtastic" sidebar item. If you don't see it, reload the Home Assistant interface.
 3. Press "Open" on the gateway. The web client connects to it on its own.
 
+## What the integration does on its own
+
+- **Sets the gateway's clock** each time it connects, as the Meshtastic apps do.
+- **Fills in the gateway's time zone once**, from Home Assistant's time zone, when the radio has none. The radio restarts after that write. A time zone already set on the radio is never changed.
+- **Fetches hardware model names** from `api.meshtastic.org` during setup, to show a readable model for each device. Without internet access setup continues and devices show no model name.
+
+The bundled web client, once opened, loads its map style and map tiles from the internet in your browser, as the Meshtastic web client does everywhere.
+
 ## Known limitations
 
 - A radio serves one phone-API client at a time. The Meshtastic phone apps and other tools can only connect while this integration is not using the radio, unless you enable the [web client](#meshtastic-web-client) or the TCP proxy and connect through it.

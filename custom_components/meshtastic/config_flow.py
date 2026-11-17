@@ -66,6 +66,8 @@ if TYPE_CHECKING:
 
 _LOGGER = LOGGER.getChild(__name__)
 
+_PORT_PROBE_TIMEOUT_SECONDS = 2
+
 CONNECTION_DATA_KEYS = (
     CONF_CONNECTION_TCP_HOST,
     CONF_CONNECTION_TCP_PORT,
@@ -246,14 +248,18 @@ async def validate_tcp_proxy_port(hass: HomeAssistant, config_entry: ConfigEntry
     )
     if port_changed:
         try:
-            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-                if s.connect_ex(("localhost", port)) == 0:
-                    return False
-        except:  # noqa: E722
+            return not await hass.async_add_executor_job(_is_local_port_in_use, port)
+        except Exception:
             _LOGGER.debug("Failed to validate tcp proxy port", exc_info=True)
             return False
 
     return True
+
+
+def _is_local_port_in_use(port: int) -> bool:
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.settimeout(_PORT_PROBE_TIMEOUT_SECONDS)
+        return s.connect_ex(("localhost", port)) == 0
 
 
 class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):

@@ -22,6 +22,8 @@ from custom_components.meshtastic.const import DOMAIN
 from .conftest import GATEWAY_NUM, PEER_NUM, FakeClient
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     from homeassistant.core import HomeAssistant
     from pytest_homeassistant_custom_component.common import MockConfigEntry
 
@@ -40,9 +42,19 @@ async def test_coordinator_updates_add_only_entities_the_platform_lacks(hass: Ho
         return SimpleNamespace(unique_id=unique_id, entity_id=None)
 
     listeners = []
+    on_unload = []
+
+    def remove_listener() -> None:
+        return None
+
+    def add_listener(listener: Callable[[], None]) -> Callable[[], None]:
+        listeners.append(listener)
+        return remove_listener
+
     entry = SimpleNamespace(
         entry_id="entry",
-        runtime_data=SimpleNamespace(coordinator=SimpleNamespace(async_add_listener=listeners.append)),
+        async_on_unload=on_unload.append,
+        runtime_data=SimpleNamespace(coordinator=SimpleNamespace(async_add_listener=add_listener)),
     )
     platform = SimpleNamespace(domain="sensor", entities={"sensor.a": entity("a")})
     added = []
@@ -60,6 +72,7 @@ async def test_coordinator_updates_add_only_entities_the_platform_lacks(hass: Ho
         listeners[0]()
 
     assert added == [["a", "b"], ["b"]]
+    assert on_unload == [remove_listener]  # the entry drops the listener when it unloads
 
 
 async def test_a_zero_last_heard_reads_as_unknown(
