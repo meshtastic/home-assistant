@@ -12,9 +12,11 @@ import functools
 import itertools
 import random
 import time
+import zoneinfo
 from collections import defaultdict, deque
 from collections.abc import AsyncIterator, Awaitable, Callable, Coroutine, Mapping, MutableMapping
 from dataclasses import dataclass
+from importlib import resources
 from pathlib import Path
 from types import MappingProxyType, TracebackType
 from typing import (
@@ -163,7 +165,30 @@ _RESTART_DELAY_S = 7.0
 # a TCP gateway sends nothing when it restarts, so its connection is checked this long after it should have
 _RESTART_PROBE_GRACE_S = 5.0
 _RESTART_PROBE_TIMEOUT_S = 15.0
+
+
 # admin that restarts the radio after its own delay, and the firmware timer each sets: a negative delay cancels it
+def posix_tz_string(zone: str) -> str | None:
+    """Return the POSIX TZ string a TZif file carries as its last line, which is what the firmware's tzdef takes."""
+    try:
+        zoneinfo.ZoneInfo(zone)  # rejects a name that is not a zone, a path among them
+        data = _read_tzif(zone)
+        if not data.startswith(b"TZif") or not data.endswith(b"\n"):
+            return None
+        footer = data[:-1].rsplit(b"\n", 1)[-1].decode("ascii")
+    except Exception:  # noqa: BLE001
+        return None
+    return footer if footer.isprintable() and footer else None
+
+
+def _read_tzif(zone: str) -> bytes:
+    for root in zoneinfo.TZPATH:
+        file = Path(root) / zone
+        if file.is_file():
+            return file.read_bytes()
+    return resources.files("tzdata.zoneinfo").joinpath(*zone.split("/")).read_bytes()
+
+
 _RESTART_TIMERS = {"reboot_seconds": "reboot", "reboot_ota_seconds": "reboot", "shutdown_seconds": "shutdown"}
 
 
@@ -1107,30 +1132,19 @@ class MeshInterface:
         admin_message.set_time_only = time_secs
         await self.send_admin_message_await_response(node=node, message=admin_message, expect_response=False)
 
-    async def write_timezone_if_needed(self, node: int | None = None) -> bool:
-        tz_string = await asyncio.get_running_loop().run_in_executor(None, self._get_tz_string)
+    async def write_timezone_if_unset(self, zone: str, node: int | None = None) -> bool:
+        # a zone already on the radio is the user's choice, and writing the device config restarts the radio
+        device_config = await self.request_device_config(node=node)
+        if device_config.tzdef:
+            return False
+
+        tz_string = await asyncio.get_running_loop().run_in_executor(None, posix_tz_string, zone)
         if tz_string is None:
             return False
 
-        device_config = await self.request_device_config(node=node)
-        if not device_config.tzdef or device_config.tzdef != tz_string:
-            device_config.tzdef = tz_string
-            await self.write_device_config(device_config, node=node)
-            return True
-        return False
-
-    def _get_tz_string(self) -> str | None:
-        try:
-            now = dt.datetime.now()  # noqa: DTZ005
-            local_now = now.astimezone()
-            local_tz = cast("dt.tzinfo", local_now.tzinfo)
-            local_tzname = cast("str", local_tz.tzname(local_now))
-            zoneinfo_file = Path("/usr/share/zoneinfo/" + local_tzname)
-            with zoneinfo_file.open("rb") as file:
-                data = file.read().split(b"\n")[-2]
-                return data.decode("utf-8")
-        except:  # noqa: E722
-            return None
+        device_config.tzdef = tz_string
+        await self.write_device_config(device_config, node=node)
+        return True
 
     async def request_connection_status(
         self,

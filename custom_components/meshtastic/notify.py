@@ -43,7 +43,6 @@ from .const import (
 if TYPE_CHECKING:
     from collections.abc import Callable, Mapping
 
-    from homeassistant.config_entries import ConfigEntry
     from homeassistant.core import Event, HomeAssistant
     from homeassistant.helpers.device_registry import DeviceInfo
     from homeassistant.helpers.entity_platform import AddEntitiesCallback, EntityPlatform
@@ -112,7 +111,7 @@ async def async_setup_entry(
                 existing_entity.update_from(entity)
                 entity_registry.async_update_entity(registered_entity_id, name=entity.name)
 
-    hass.bus.async_listen(EVENT_MESHTASTIC_API_NODE_UPDATED, _api_node_updated)
+    config_entry.async_on_unload(hass.bus.async_listen(EVENT_MESHTASTIC_API_NODE_UPDATED, _api_node_updated))
 
 
 @callback
@@ -191,13 +190,6 @@ async def _add_channel_entities(
 
     if new_entities:
         async_add_entities(new_entities)
-
-
-async def async_unload_entry(
-    hass: HomeAssistant,
-    entry: ConfigEntry,
-) -> None:
-    pass
 
 
 class MeshtasticNodeNotify(NotifyEntity):

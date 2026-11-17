@@ -57,7 +57,13 @@ from .const import (
     ConnectionType,
 )
 from .coordinator import MeshtasticDataUpdateCoordinator
-from .data import DATA_COMPONENT, MeshtasticConfigEntry, MeshtasticData
+from .data import (
+    DATA_COMPONENT,
+    DATA_WEB_PANEL_LOADED,
+    DATA_WEB_ROUTES_REGISTERED,
+    MeshtasticConfigEntry,
+    MeshtasticData,
+)
 from .entity import MeshtasticDeviceClass, MeshtasticEntity
 from .helpers import fetch_meshtastic_hardware_names
 from .logbook import async_setup_message_logger
@@ -91,13 +97,15 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
 
 
 async def async_setup_meshtastic_web(hass: HomeAssistant) -> bool:
-    if hass.data[DOMAIN].config.get("meshtastic_web_loaded", False):
+    if hass.data.get(DATA_WEB_PANEL_LOADED, False):
         return True
 
     try:
-        await meshtastic_web.async_setup(hass)
+        # routes cannot be removed from the HTTP server, so they are registered once and stay
+        if not hass.data.get(DATA_WEB_ROUTES_REGISTERED, False):
+            hass.data[DATA_WEB_ROUTES_REGISTERED] = await meshtastic_web.async_setup(hass)
         await frontend.async_register_frontend(hass)
-        hass.data[DOMAIN].config["meshtastic_web_loaded"] = True
+        hass.data[DATA_WEB_PANEL_LOADED] = True
     except:  # noqa: E722
         LOGGER.warning("Failed to setup frontend", exc_info=True)
         return False
@@ -106,12 +114,12 @@ async def async_setup_meshtastic_web(hass: HomeAssistant) -> bool:
 
 
 async def async_unload_meshtastic_web(hass: HomeAssistant) -> bool:
-    if not hass.data[DOMAIN].config.get("meshtastic_web_loaded", False):
+    if not hass.data.get(DATA_WEB_PANEL_LOADED, False):
         return True
 
     try:
         await frontend.async_unregister_frontend(hass)
-        hass.data[DOMAIN].config["meshtastic_web_loaded"] = False
+        hass.data[DATA_WEB_PANEL_LOADED] = False
     except:  # noqa: E722
         LOGGER.warning("Failed to unload frontend", exc_info=True)
         return False

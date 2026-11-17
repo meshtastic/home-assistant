@@ -81,13 +81,6 @@ async def async_setup_entry(
     await helpers.setup_platform_entry(hass, entry, async_add_entities, _build_sensors)
 
 
-async def async_unload_entry(
-    hass: HomeAssistant,
-    entry: MeshtasticConfigEntry,
-) -> bool:
-    return await helpers.async_unload_entry(hass, entry)
-
-
 @dataclass(frozen=True, kw_only=True)
 class MeshtasticSensorEntityDescription(SensorEntityDescription):
     exists_fn: Callable[[MeshtasticSensor], bool] = lambda _: True
