@@ -69,9 +69,9 @@ EVENT_MESHTASTIC_API_MESH_BEACON = EVENT_MESHTASTIC_API_BASE + "_mesh_beacon"
 EVENT_MESHTASTIC_API_POSITION = EVENT_MESHTASTIC_API_BASE + "_position"
 EVENT_MESHTASTIC_API_WAYPOINT = EVENT_MESHTASTIC_API_BASE + "_waypoint"
 
-# How long to wait for the connected node to finish its config exchange
-# before treating the connection as unusable.
-NODE_READY_TIMEOUT = 30
+# How long to wait for the connected node to finish its config exchange before treating the
+# connection as unusable. A large node database on a slow link takes well over 30 seconds.
+NODE_READY_TIMEOUT = 180
 
 ATTR_EVENT_MESHTASTIC_API_CONFIG_ENTRY_ID = "config_entry_id"
 ATTR_EVENT_MESHTASTIC_API_NODE = "node"
