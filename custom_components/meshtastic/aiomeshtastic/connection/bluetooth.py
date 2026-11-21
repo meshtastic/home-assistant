@@ -7,10 +7,11 @@ import asyncio
 import struct
 from collections.abc import AsyncGenerator, Awaitable, Callable
 from contextlib import suppress
-from typing import TYPE_CHECKING, Any, cast
+from typing import TYPE_CHECKING, Any, TypeVar, cast
 
 import bleak
 from bleak import BaseBleakClient, BleakClient, BleakGATTCharacteristic
+from bleak.exc import BleakDBusError, BleakGATTProtocolError
 from bleak_retry_connector import establish_connection
 from google.protobuf import message
 
@@ -25,8 +26,44 @@ if TYPE_CHECKING:
     from bleak.backends.service import BleakGATTService
 
 
+_T = TypeVar("_T")
+
+# GATT status codes a bond can cure: insufficient authentication and insufficient encryption
+_AUTH_ATT_CODES = frozenset({0x05, 0x0F})
+_PAIR_TIMEOUT = 30
+
+
 class BluetoothConnectionError(ClientApiConnectionError):
     pass
+
+
+class BluetoothPairingRequiredError(BluetoothConnectionError):
+    def __init__(self) -> None:
+        super().__init__(
+            "The radio requires Bluetooth pairing and pairing did not succeed. Home Assistant cannot enter a PIN: "
+            "pair the radio with the host or Bluetooth proxy first, or set its Bluetooth pairing mode to No PIN"
+        )
+
+
+def _is_auth_error(err: BaseException) -> bool:
+    """Tell a GATT authentication or encryption failure from any other Bluetooth error."""
+    seen: set[int] = set()
+    current: BaseException | None = err
+    while current is not None and id(current) not in seen:
+        seen.add(id(current))
+        if isinstance(current, BleakGATTProtocolError):  # BlueZ and bleak 3 backends
+            return int(current.code) in _AUTH_ATT_CODES
+        if isinstance(current, BleakDBusError):  # BlueZ answers NotPermitted "Not paired" without an ATT code
+            return (
+                current.dbus_error == "org.bluez.Error.NotPermitted"
+                and "not paired" in (current.dbus_error_details or "").lower()
+            )
+        # bleak_esphome re-raises aioesphomeapi's BluetoothGATTAPIError as a plain BleakError, so read its cause
+        gatt_error = getattr(current, "error", None)
+        if type(current).__name__ == "BluetoothGATTAPIError" and gatt_error is not None:
+            return getattr(gatt_error, "error", None) in _AUTH_ATT_CODES
+        current = current.__cause__
+    return False
 
 
 class BluetoothConnectionServiceNotFoundError(ClientApiConnectionError):
@@ -66,8 +103,52 @@ class BluetoothConnection(ClientApiConnection):
         self._write_lock = asyncio.Lock()
         self._last_packet_number = None
         self._force_read_event = asyncio.Event()
+        self._pair_lock = asyncio.Lock()
+        self._pair_attempted = False
+        self._paired = False
 
     async def _connect(self) -> None:
+        self._pair_attempted = False
+        self._paired = False
+        await self._open_client()
+
+    async def _gatt(self, operation: Callable[[], Awaitable[_T]]) -> _T:
+        """
+        Run a GATT operation, pairing once and retrying once if the radio demands authentication.
+
+        A radio without a PIN never fails with an authentication error, so it is never asked to pair.
+        """
+        try:
+            return await operation()
+        except bleak.BleakError as err:
+            if not _is_auth_error(err):
+                raise
+            await self._pair_once(err)
+        try:
+            return await operation()
+        except bleak.BleakError as err:
+            if _is_auth_error(err):
+                raise BluetoothPairingRequiredError from err
+            raise
+
+    async def _pair_once(self, cause: BaseException) -> None:
+        async with self._pair_lock:  # concurrent operations fail together; only the first pairs
+            if self._pair_attempted:
+                if not self._paired:
+                    raise BluetoothPairingRequiredError from cause
+                return
+            self._pair_attempted = True
+            self._logger.info("Radio rejected a GATT operation for missing authentication, requesting pairing")
+            try:
+                await asyncio.wait_for(self._bleak_client.pair(), timeout=_PAIR_TIMEOUT)
+            except Exception as err:  # BleakError, NotImplementedError on old proxy firmware, TimeoutError
+                self._logger.debug("Pairing failed", exc_info=True)
+                raise BluetoothPairingRequiredError from err
+            self._paired = True
+            if not self._bleak_client.is_connected:
+                await self._open_client()
+
+    async def _open_client(self) -> None:
         if self._ble_device_provider is not None:
             # a device from an earlier connect can name an adapter or proxy that is gone
             ble_device = self._ble_device_provider()
@@ -190,8 +271,10 @@ class BluetoothConnection(ClientApiConnection):
         try:
 
             async def start_notify() -> None:
-                await asyncio.wait_for(
-                    self._bleak_client.start_notify(self._ble_from_num, notification_handler), timeout=30
+                await self._gatt(
+                    lambda: asyncio.wait_for(
+                        self._bleak_client.start_notify(self._ble_from_num, notification_handler), timeout=30
+                    )
                 )
 
             async def stop_notify() -> None:
@@ -211,7 +294,7 @@ class BluetoothConnection(ClientApiConnection):
             notify_timeout_duration = 300
             max_notify_timeouts_before_restart = 2
             while True:
-                raw_packet = await self._bleak_client.read_gatt_char(self._ble_from_radio)
+                raw_packet = await self._gatt(lambda: self._bleak_client.read_gatt_char(self._ble_from_radio))
                 packet = raw_packet if isinstance(raw_packet, bytes) else bytes(raw_packet)
                 if packet == b"":
                     # no more packets available, waiting for notification or force_read event.
@@ -264,7 +347,7 @@ class BluetoothConnection(ClientApiConnection):
 
         async with self._write_lock:
             try:
-                await self._bleak_client.write_gatt_char(self._ble_to_radio, data)
+                await self._gatt(lambda: self._bleak_client.write_gatt_char(self._ble_to_radio, data))
             except bleak.BleakError:
                 self._logger.debug("Failed to send data", exc_info=True)
                 return False
