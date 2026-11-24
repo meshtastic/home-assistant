@@ -81,7 +81,22 @@ A Bluetooth connection never starts by pairing. When the radio rejects the first
 
 - **No PIN:** works on a local adapter and through a Bluetooth Proxy.
 - **Fixed PIN, local BlueZ adapter:** pairing succeeds only when a BlueZ pairing agent supplies the PIN, or the radio is already bonded with the host (for example with `bluetoothctl`). Home Assistant registers no agent.
-- **Fixed PIN, Bluetooth Proxy:** the integration sends a pairing request to the proxy, which sends no PIN. The proxy answers the radio's passkey request only if its ESPHome configuration supplies it (`on_passkey_request` with `ble_client.passkey_reply`).
+- **Fixed PIN, Bluetooth Proxy:** the integration sends a pairing request to the proxy, which sends no PIN. Pairing completes only when the proxy's ESPHome configuration sets `esp32_ble.io_capability` to `keyboard_only` and answers the radio's passkey request with a `ble_client` for that radio. With the default `io_capability` (`none`) the proxy makes a bond without MITM protection, which the radio rejects with the same authentication error, so it looks as if pairing was never tried. The bond survives Home Assistant restarts and proxy reboots. Each `ble_client` takes one of the proxy's connection slots, so raise `esp32_ble.max_connections` to cover them, and add one per radio, each with its own PIN:
+
+  ```yaml
+  esp32_ble:
+    io_capability: keyboard_only
+    auth_req_mode: sc_mitm_bond  # optional: states the MITM and bonding requirement
+
+  ble_client:
+    - mac_address: AA:BB:CC:DD:EE:FF  # the radio
+      id: meshtastic_radio
+      auto_connect: false  # never connects itself; only answers the passkey request
+      on_passkey_request:
+        - ble_client.passkey_reply:
+            id: meshtastic_radio
+            passkey: 123456  # the radio's fixed PIN
+  ```
 - **Random PIN:** not supported on either backend, since the PIN shown on the radio cannot be entered. Set the radio's Bluetooth pairing mode to a fixed PIN or No PIN.
 
 USB auto-discovery matches nRF52 based radios. ESP32, RP2040 and CH340 boards share their USB IDs with unrelated devices, so those radios are added by entering the serial port by hand. Firmware 2.8 renumbering is handled, see [Node numbers on firmware 2.8](#node-numbers-on-firmware-28). The minimum Home Assistant version is 2026.8.0.
