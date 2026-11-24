@@ -76,14 +76,18 @@ async def test_manual_tcp_flow_creates_entry_with_nodes_and_options(
     assert result["step_id"] == "web_client"
     result = await hass.config_entries.flow.async_configure(flow_id, {"enable": False})
     assert result["step_id"] == "tcp_proxy"
+    result = await hass.config_entries.flow.async_configure(flow_id, {"enable": False, "port": 4403})
+    assert result["step_id"] == "chat"
 
     with _setup_entry_patch() as setup_entry:
-        result = await hass.config_entries.flow.async_configure(flow_id, {"enable": False, "port": 4403})
+        result = await hass.config_entries.flow.async_configure(flow_id, {"enable": False})
         await hass.async_block_till_done()
 
     assert result["type"] is FlowResultType.CREATE_ENTRY
     assert result["title"] == "Gateway"
     assert result["data"] == {CONF_CONNECTION_TYPE: "tcp", **connection}
+    # chat is off unless asked for; the other chat options keep their defaults
+    assert result["options"].pop("chat")["enable"] is False
     assert result["options"] == {
         CONF_OPTION_FILTER_NODES: [{"id": PEER_NUM, "name": "Peer"}, {"id": GATEWAY_NUM, "name": "Gateway"}],
         CONF_OPTION_NOTIFY_PLATFORM: {"channels": False, "nodes": "selected"},
@@ -252,6 +256,8 @@ async def test_partial_metadata_survives_setup_and_options_reload(
     await hass.config_entries.flow.async_configure(flow_id, {"channels": False, "nodes": "selected"})
     await hass.config_entries.flow.async_configure(flow_id, {"enable": False})
     result = await hass.config_entries.flow.async_configure(flow_id, {"enable": False, "port": 4403})
+    assert result["step_id"] == "chat"
+    result = await hass.config_entries.flow.async_configure(flow_id, {"enable": False})
     await hass.async_block_till_done()
 
     assert result["type"] is FlowResultType.CREATE_ENTRY
@@ -279,6 +285,7 @@ async def test_partial_metadata_survives_setup_and_options_reload(
             CONF_OPTION_NOTIFY_PLATFORM: dict(entry.options[CONF_OPTION_NOTIFY_PLATFORM]),
             CONF_OPTION_WEB_CLIENT: dict(entry.options[CONF_OPTION_WEB_CLIENT]),
             CONF_OPTION_TCP_PROXY: dict(entry.options[CONF_OPTION_TCP_PROXY]),
+            "chat": dict(entry.options["chat"]),
         },
     )
     await hass.async_block_till_done()
