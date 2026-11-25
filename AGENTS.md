@@ -90,7 +90,8 @@ per config entry from 2026.8, so look them up with `async_get_device_by_identifi
 ## CI and merging
 
 - CI is `lint.yml` (ruff), `tests.yml` (mypy and pytest on Python 3.14, both through uv), `validate.yml` (HACS and hassfest,
-  also nightly) and `release.yml` (zip on release).
+  also nightly) and `release.yml` (zip on release, then the notes posted to Discord #home-assistant through the
+  `DISCORD_WEBHOOK_HOME_ASSISTANT` secret; skipped for prereleases or while the secret is unset).
 - Fork pull requests from first-time contributors wait for a maintainer to approve their workflow runs.
 - Contributors sign the CLA; the CLA assistant check is not required, so Renovate pull requests merge with it pending.
 - `main` takes changes through the merge queue, squash-merged with Conventional titles. Ruff, Pytest, HACS
