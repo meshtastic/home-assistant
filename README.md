@@ -28,7 +28,7 @@ Supported Features:
  * Device triggers & actions for automations
  * Various other service actions (e.g. request metrics, trace route)
  * Bundled meshtastic web client for manual interaction with gateway, opened by Home Assistant admins
- * MQTT client proxy support (forwards messages from radio to MQTT broker, and broker messages for channels with downlink enabled back to the radio)
+ * MQTT client proxy support (forwards messages from radio to MQTT broker, and broker messages for channels with downlink enabled back to the radio; refreshes broker settings and subscriptions when radio configuration changes)
  * [Mesh Chat](#mesh-chat): a sidebar chat to read and send messages, with replies, emoji, node and channel details,
    a map of the mesh and optional channel management
  * Nodes with incomplete user metadata remain selectable using their node number as a fallback name.
