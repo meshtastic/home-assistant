@@ -57,9 +57,10 @@ jobs:
             echo "DISCORD_WEBHOOK_HOME_ASSISTANT is not set, skipping"
             exit 0
           fi
-          # jq keeps quotes and newlines in the notes valid JSON; Discord caps an embed description at 4096
+          # jq keeps quotes and newlines in the notes valid JSON; Discord caps an embed title at 256, a description at 4096
+          title="Home Assistant integration ${NAME:-$TAG}"
           payload=$(jq -n \
-            --arg title "Home Assistant integration ${NAME:-$TAG}" \
+            --arg title "${title:0:256}" \
             --arg description "${BODY:0:4096}" \
             --arg url "$URL" \
             '{content: null, embeds: [{title: $title, description: $description, url: $url, color: 6809855}]}')
