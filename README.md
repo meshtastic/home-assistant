@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 [![GitHub Release][releases-shield]][releases]
 [![License][license-shield]](LICENSE)
 
-[![Marketplace and HACS](https://img.shields.io/badge/Marketplace%20%7C%20HACS-Custom-orange.svg?style=for-the-badge)](https://my.home-assistant.io/redirect/hacs_repository/?owner=meshtastic&repository=home-assistant&category=integration)
+[![Marketplace and HACS](https://img.shields.io/badge/Marketplace%20%7C%20HACS-Default-41BDF5.svg?style=for-the-badge)](https://my.home-assistant.io/redirect/hacs_repository/?owner=meshtastic&repository=home-assistant&category=integration)
 [![HA Analytics](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fanalytics.home-assistant.io%2Fcustom_integrations.json&query=%24.meshtastic.total&style=for-the-badge&label=Active%20Installations&color=red)](https://analytics.home-assistant.io/custom_integrations.json)
 
 
@@ -42,8 +42,8 @@ For more details, see the [documentation](#documentation).
 
 Home Assistant 2026.11 and newer include the Marketplace (**Settings** > **Marketplace**), which replaces HACS. On 2026.10 and older, use [HACS](https://www.hacs.xyz). The minimum Home Assistant version is 2026.8.0.
 
-1. Add this repository as a custom repository. On 2026.11 and newer, open the Marketplace, select **Add from link** and enter `meshtastic/home-assistant`, or use the Marketplace link: [![Open the repository in the Marketplace](https://my.home-assistant.io/badges/marketplace_repository.svg)](https://my.home-assistant.io/redirect/marketplace_repository/?owner=meshtastic&repository=home-assistant&category=integration) On any version, this link opens the Marketplace (2026.11 and newer) or HACS (older): [![Add Repository](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=meshtastic&repository=home-assistant&category=integration)
-2. Install the integration from the Marketplace or HACS.
+1. Search for **Meshtastic** in the Marketplace or HACS, or open it directly. On 2026.11 and newer: [![Open the repository in the Marketplace](https://my.home-assistant.io/badges/marketplace_repository.svg)](https://my.home-assistant.io/redirect/marketplace_repository/?owner=meshtastic&repository=home-assistant&category=integration) On any version, this link opens the Marketplace (2026.11 and newer) or HACS (older): [![Open the repository](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=meshtastic&repository=home-assistant&category=integration)
+2. Install the integration.
 3. Restart Home Assistant.
 4. Set up the integration using the UI: [![Add Integration](https://my.home-assistant.io/badges/config_flow_start.svg)](https://my.home-assistant.io/redirect/config_flow_start/?domain=meshtastic)
 

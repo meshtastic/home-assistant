@@ -92,7 +92,10 @@ per config entry from 2026.8, so look them up with `async_get_device_by_identifi
 - CI is `lint.yml` (ruff), `tests.yml` (mypy and pytest on Python 3.14, both through uv), `validate.yml` (HACS and hassfest,
   also nightly) and `release.yml` (zip on release).
 - Fork pull requests from first-time contributors wait for a maintainer to approve their workflow runs.
-- The CLA assistant check must pass. Pull requests are squash-merged with Conventional titles.
+- Contributors sign the CLA; the CLA assistant check is not required, so Renovate pull requests merge with it pending.
+- `main` takes changes only through the merge queue, squash-merged with Conventional titles. Ruff, Pytest, HACS
+  Validation and Hassfest Validation are required, and a contributor's pull request needs the code owner's approval.
+  Enqueue only once checks are green; the repo has no auto-merge fallback.
 - Renovate opens the dependency bumps (`.github/renovate.json`). A `homeassistant` bump waits for approval on
   the dependency dashboard issue; the pins taken from that release (`pytest-homeassistant-custom-component`,
   `protobuf`, `josepy`, `bleak`, `serialx`, the devcontainer's Python) are never bumped by Renovate and move
