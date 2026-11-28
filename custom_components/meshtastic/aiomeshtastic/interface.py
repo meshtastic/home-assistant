@@ -166,6 +166,10 @@ _RESTART_DELAY_S = 7.0
 # a TCP gateway sends nothing when it restarts, so its connection is checked this long after it should have
 _RESTART_PROBE_GRACE_S = 5.0
 _RESTART_PROBE_TIMEOUT_S = 15.0
+# a stream transport can take a while to re-enumerate after the radio reboots; retry its restart with this backoff
+_REBOOT_RESTART_RETRY_S = 2.0
+_REBOOT_RESTART_RETRY_MAX_S = 30.0
+_REBOOT_CONFIG_TIMEOUT_S = 60.0
 
 
 # admin that restarts the radio after its own delay, and the firmware timer each sets: a negative delay cancels it
@@ -216,6 +220,8 @@ class MeshInterface:
         self._connection = connection
         self._is_running = asyncio.Event()
         self._is_stopped = asyncio.Event()
+        self._reboot_restart: asyncio.Task | None = None
+        self._stop_requested = False
 
         self.debug_out = debug_out
         self.no_nodes = no_nodes
@@ -466,14 +472,26 @@ class MeshInterface:
             self._add_background_task(self._init_mqtt_client(), name="init-mqtt-client")
 
     async def stop(self) -> None:
-        await self._stop(close_packet_streams=True)
+        # stays authoritative until the teardown is done: no reboot restart may open the transport meanwhile
+        self._stop_requested = True
+        try:
+            await self._stop(close_packet_streams=True)
+        finally:
+            self._stop_requested = False
 
     async def _stop(self, *, close_packet_streams: bool) -> None:
         # before the guard: a restart that failed leaves the interface stopped with subscribers still open
+        cancelled_restart = False
         if close_packet_streams:
+            # a stop that is asked for ends a restart still retrying after a reboot, which the guard below would miss
+            restart, self._reboot_restart = self._reboot_restart, None
+            if restart is not None and restart is not asyncio.current_task() and not restart.done():
+                await self._cancel_task(restart)
+                cancelled_restart = True
             await self._close_packet_streams()
 
-        if not self._is_running.is_set():
+        # a cancelled restart may have cleared the running flag before it released the transport, so tear down anyway
+        if not self._is_running.is_set() and not cancelled_restart:
             return
 
         self._is_running.clear()
@@ -492,7 +510,12 @@ class MeshInterface:
 
         with contextlib.suppress(Exception):
             await self._connection.send_disconnect()
-        await self._connection.disconnect()
+        if cancelled_restart:
+            # the restart may not have connected at all, so a failing disconnect is expected here
+            with contextlib.suppress(Exception):
+                await self._connection.disconnect()
+        else:
+            await self._connection.disconnect()
 
     async def _close_packet_streams(self) -> None:
         if not self._packet_stream_listeners:
@@ -832,16 +855,8 @@ class MeshInterface:
     async def _process_connected_node_packets(self, packet: mesh_pb2.FromRadio) -> None:  # noqa: PLR0912
         """Apply radio state updates and signal MQTT refreshes after channel changes."""
         if packet.HasField("rebooted") and packet.rebooted:
-
-            async def reconnect() -> None:
-                # subscribers of the packet streams outlive the restart, they do not resubscribe
-                await self._stop(close_packet_streams=False)
-                try:
-                    await self.start()
-                except Exception:
-                    self._logger.warning("Could not reconnect to the rebooted radio", exc_info=True)
-
-            self._add_background_task(reconnect(), name="reconnect")
+            if not self._stop_requested and (self._reboot_restart is None or self._reboot_restart.done()):
+                self._reboot_restart = self._add_background_task(self._restart_after_reboot(), name="reconnect")
         elif packet.HasField("my_info"):
             self._connected_node_info = packet.my_info
         elif packet.HasField("metadata"):
@@ -1162,6 +1177,30 @@ class MeshInterface:
             except Exception:  # noqa: BLE001
                 self._logger.debug("Reconnecting failed, retrying in %.0f seconds", reconnect_delay)
                 await asyncio.sleep(reconnect_delay)
+
+    async def _restart_after_reboot(self) -> None:
+        """Bring the interface back after the radio reported a reboot, retrying until it answers or stop() is called."""
+        self._set_connection_state(ConnectionState.RECONNECTING)
+        # subscribers of the packet streams outlive the restart, they do not resubscribe
+        await self._stop(close_packet_streams=False)
+        delay = _REBOOT_RESTART_RETRY_S
+        while not self._stop_requested:
+            try:
+                await self.start()
+                # start() clears the node database and requests the config in the background
+                await asyncio.wait_for(self.connected_node_ready(), timeout=_REBOOT_CONFIG_TIMEOUT_S)
+            except Exception:
+                self._logger.warning(
+                    "Could not reconnect to the rebooted radio, retrying in %.0f seconds", delay, exc_info=True
+                )
+                self._set_connection_state(ConnectionState.FAILED)
+                # drop a half-started attempt, the next start() opens the transport again
+                await self._stop(close_packet_streams=False)
+                await asyncio.sleep(delay)
+                delay = min(delay * 2, _REBOOT_RESTART_RETRY_MAX_S)
+            else:
+                self._set_connection_state(ConnectionState.CONNECTED)
+                return
 
     async def _start_config(self) -> None:
         async with self._connected_node_config_lock:
