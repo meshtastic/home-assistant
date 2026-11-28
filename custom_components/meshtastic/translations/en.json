@@ -26,7 +26,7 @@
         }
       },
       "manual_bluetooth": {
-        "description": "Connect Device via Bluetooth.\n**IMPORTANT**: PIN is not supported, please remove it first.\n\nPlease be patient, initial setup takes a while when device has a large node db",
+        "description": "Connect Device via Bluetooth.\n**IMPORTANT**: A PIN cannot be entered here. Set the radio to No PIN, or use a fixed PIN that the host or Bluetooth Proxy is already set up to pair with.\n\nPlease be patient, initial setup takes a while when device has a large node db",
         "data": {
           "bluetooth_address": "Bluetooth Address"
         },
@@ -35,7 +35,7 @@
         }
       },
       "discovery_bluetooth_confirm": {
-        "description": "Connect Device via Bluetooth.\n**IMPORTANT**: PIN is not supported, please remove it first.\n\nPlease be patient, initial setup takes a while when device has a large node db",
+        "description": "Connect Device via Bluetooth.\n**IMPORTANT**: A PIN cannot be entered here. Set the radio to No PIN, or use a fixed PIN that the host or Bluetooth Proxy is already set up to pair with.\n\nPlease be patient, initial setup takes a while when device has a large node db",
         "data": {
           "bluetooth_address": "Bluetooth Address"
         }
@@ -77,7 +77,7 @@
         }
       },
       "reconfigure_bluetooth": {
-        "description": "Connect Device via Bluetooth.\n**IMPORTANT**: PIN is not supported, please remove it first.",
+        "description": "Connect Device via Bluetooth.\n**IMPORTANT**: A PIN cannot be entered here. Set the radio to No PIN, or use a fixed PIN that the host or Bluetooth Proxy is already set up to pair with.",
         "data": {
           "bluetooth_address": "Bluetooth Address"
         },
