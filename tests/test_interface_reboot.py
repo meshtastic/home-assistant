@@ -5,8 +5,12 @@
 import asyncio
 from collections.abc import AsyncIterator
 
+import pytest
+
 from custom_components.meshtastic.aiomeshtastic import MeshInterface
+from custom_components.meshtastic.aiomeshtastic import interface as interface_module
 from custom_components.meshtastic.aiomeshtastic.connection import ClientApiConnection
+from custom_components.meshtastic.aiomeshtastic.interface import ConnectionState
 from custom_components.meshtastic.aiomeshtastic.protobuf import mesh_pb2
 
 
@@ -91,18 +95,63 @@ async def test_a_packet_stream_subscriber_keeps_receiving_after_a_reboot() -> No
         await interface.stop()
 
 
-async def test_stop_ends_a_subscriber_left_open_by_a_failed_restart() -> None:
+async def test_a_failed_restart_is_retried_and_the_connection_state_follows(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(interface_module, "_REBOOT_RESTART_RETRY_S", 0.01)
+    radio = FakeRadio()
+    interface = MeshInterface(connection=radio, no_nodes=True, enable_mqtt_proxy=False)
+    states: list[ConnectionState] = []
+    interface.add_connection_state_listener(states.append)
+    await interface.start()
+    refusals = 2
+    connect = radio._connect
+
+    async def flaky() -> None:
+        nonlocal refusals
+        if refusals:
+            refusals -= 1
+            raise OSError
+        await connect()
+
+    try:
+        await asyncio.wait_for(interface.connected_node_ready(), timeout=5)
+        radio._connect = flaky  # type: ignore[method-assign]
+        radio.receive(mesh_pb2.FromRadio(rebooted=True))
+
+        await asyncio.wait_for(radio.reconnected.wait(), timeout=5)
+        await asyncio.wait_for(interface.connected_node_ready(), timeout=5)
+        for _ in range(100):
+            if states and states[-1] == ConnectionState.CONNECTED:
+                break
+            await asyncio.sleep(0.01)
+
+        assert refusals == 0
+        assert interface.is_running
+        assert states[0] == ConnectionState.RECONNECTING
+        assert ConnectionState.FAILED in states
+        assert states[-1] == ConnectionState.CONNECTED
+    finally:
+        await interface.stop()
+
+
+async def test_stop_ends_a_restart_that_keeps_failing_and_its_subscriber(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(interface_module, "_REBOOT_RESTART_RETRY_S", 0.01)
     radio = FakeRadio()
     interface = MeshInterface(connection=radio, no_nodes=True, enable_mqtt_proxy=False)
     await interface.start()
-    restart_failed = asyncio.Event()
+    attempts = 0
+    retried = asyncio.Event()
 
     async def subscribe() -> None:
         async for _ in interface.packet_stream():
             pass
 
     async def refuse() -> None:
-        restart_failed.set()
+        nonlocal attempts
+        attempts += 1
+        if attempts >= 2:
+            retried.set()
         raise OSError
 
     subscriber = asyncio.create_task(subscribe())
@@ -110,12 +159,14 @@ async def test_stop_ends_a_subscriber_left_open_by_a_failed_restart() -> None:
         await asyncio.wait_for(interface.connected_node_ready(), timeout=5)
         radio._connect = refuse  # type: ignore[method-assign]
         radio.receive(mesh_pb2.FromRadio(rebooted=True))
-        await asyncio.wait_for(restart_failed.wait(), timeout=5)
-        await asyncio.sleep(0)
+        await asyncio.wait_for(retried.wait(), timeout=5)
         assert not interface.is_running
 
         await interface.stop()
+        settled = attempts
+        await asyncio.sleep(0.1)
 
+        assert attempts == settled
         await asyncio.wait_for(subscriber, timeout=5)
     finally:
         subscriber.cancel()
