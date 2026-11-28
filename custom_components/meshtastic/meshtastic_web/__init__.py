@@ -332,7 +332,7 @@ async def _serve_web_client_path(hass: HomeAssistant, relative_path: str) -> web
     # the lookup touches the filesystem, so it runs off the event loop
     file = await hass.async_add_executor_job(_resolve_web_client_path, relative_path)
     if file is None:
-        return web.HTTPNotFound()
+        raise web.HTTPNotFound
     return web.FileResponse(file, headers={"Cache-Control": "no-cache", **CROSS_ORIGIN_ISOLATION_HEADERS})
 
 
@@ -379,7 +379,7 @@ class MeshtasticWebConfigEntryView(HomeAssistantView):
             return await _serve_web_client_path(self._hass, entity_id)
 
         # Old gateway links: the panel's Open button is the way in, since it can authenticate.
-        return web.HTTPTemporaryRedirect(location=f"/{DOMAIN}", headers={"Cache-Control": "no-cache"})
+        raise web.HTTPTemporaryRedirect(location=f"/{DOMAIN}", headers={"Cache-Control": "no-cache"})
 
 
 class MeshtasticWebApiV1View(HomeAssistantView):
@@ -413,7 +413,7 @@ class MeshtasticWebApiV1View(HomeAssistantView):
             # 403, not 401: HA's ban middleware counts every 401 as a failed login, and a tab left open
             # across a restart polls with its lost token every few seconds
             raise web.HTTPForbidden(
-                body="Web client session expired, open it again from the Meshtastic sidebar",
+                text="Web client session expired, open it again from the Meshtastic sidebar",
                 headers={"Cache-Control": "no-cache"},
             )
 
@@ -422,12 +422,12 @@ class MeshtasticWebApiV1View(HomeAssistantView):
             raise web.HTTPNotFound(headers={"Cache-Control": "no-cache"})
         if config_entry.state != ConfigEntryState.LOADED:
             raise web.HTTPBadGateway(
-                body=f"Gateway is not ready (config entry state {config_entry.state.value})",
+                text=f"Gateway is not ready (config entry state {config_entry.state.value})",
                 content_type="text/plain",
                 headers={"Cache-Control": "no-cache"},
             )
         if not _web_client_enabled(config_entry):
-            raise web.HTTPForbidden(body="Web client not enabled for gateway", headers={"Cache-Control": "no-cache"})
+            raise web.HTTPForbidden(text="Web client not enabled for gateway", headers={"Cache-Control": "no-cache"})
 
 
 class MeshtasticWebApiV1ToRadioView(MeshtasticWebApiV1View):
@@ -443,14 +443,14 @@ class MeshtasticWebApiV1ToRadioView(MeshtasticWebApiV1View):
 
         if request.content_type != "application/x-protobuf":
             await asyncio.sleep(1)
-            return web.HTTPNotAcceptable()
+            raise web.HTTPNotAcceptable
 
         body = await request.read()
         to_radio = mesh_pb2.ToRadio()
         try:
             to_radio.ParseFromString(body)
         except message.DecodeError:
-            return web.HTTPBadRequest()
+            raise web.HTTPBadRequest from None
 
         response = web.Response()
         if to_radio.HasField("want_config_id"):
