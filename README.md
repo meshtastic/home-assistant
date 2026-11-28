@@ -146,7 +146,7 @@ channel broadcast; the channel index is the gateway's own.
 | `meshtastic_api_mesh_beacon` | a Mesh Beacon is received | `from`, `to`, `gateway`, `beacon`, `hop_start`, `hop_limit`, `rx_snr`, `rx_rssi` |
 | `meshtastic_api_waypoint` | a waypoint is received | `from`, `to`, `gateway`, `waypoint` |
 | `meshtastic_api_position` | a position is received | the decoded `Position`, plus `latitude` and `longitude` in degrees |
-| `meshtastic_api_telemetry` | telemetry is received | the metrics group; the envelope adds `telemetry_type` (`device_metrics`, `local_stats`, `environment_metrics`, `power_metrics` or `host_metrics`) |
+| `meshtastic_api_telemetry` | telemetry is received | the metrics group; the envelope adds `telemetry_type` (`device_metrics`, `local_stats`, `environment_metrics`, `air_quality_metrics`, `power_metrics` or `host_metrics`) |
 | `meshtastic_api_node_updated` | a node announces itself (NodeInfo) | `num` and `user` (`id`, `longName`, `shortName`, `hwModel`, `publicKey` and so on) |
 | `meshtastic_api_packet` | any packet reaches the gateway | the whole decoded `MeshPacket`; admin packets without their payload |
 
