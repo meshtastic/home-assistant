@@ -475,14 +475,17 @@ class MeshInterface:
 
     async def _stop(self, *, close_packet_streams: bool) -> None:
         # before the guard: a restart that failed leaves the interface stopped with subscribers still open
+        cancelled_restart = False
         if close_packet_streams:
             # a stop that is asked for ends a restart still retrying after a reboot, which the guard below would miss
             restart, self._reboot_restart = self._reboot_restart, None
-            if restart is not None and restart is not asyncio.current_task():
+            if restart is not None and restart is not asyncio.current_task() and not restart.done():
                 await self._cancel_task(restart)
+                cancelled_restart = True
             await self._close_packet_streams()
 
-        if not self._is_running.is_set():
+        # a cancelled restart may have cleared the running flag before it released the transport, so tear down anyway
+        if not self._is_running.is_set() and not cancelled_restart:
             return
 
         self._is_running.clear()
@@ -501,7 +504,12 @@ class MeshInterface:
 
         with contextlib.suppress(Exception):
             await self._connection.send_disconnect()
-        await self._connection.disconnect()
+        if cancelled_restart:
+            # the restart may not have connected at all, so a failing disconnect is expected here
+            with contextlib.suppress(Exception):
+                await self._connection.disconnect()
+        else:
+            await self._connection.disconnect()
 
     async def _close_packet_streams(self) -> None:
         if not self._packet_stream_listeners:
@@ -1173,23 +1181,21 @@ class MeshInterface:
         while True:
             try:
                 await self.start()
+                # start() clears the node database and requests the config in the background
+                await asyncio.wait_for(self.connected_node_ready(), timeout=_REBOOT_CONFIG_TIMEOUT_S)
             except Exception:
                 self._logger.warning(
                     "Could not reconnect to the rebooted radio, retrying in %.0f seconds", delay, exc_info=True
                 )
                 self._set_connection_state(ConnectionState.FAILED)
+                # drop a half-started attempt, the next start() opens the transport again
+                await self._stop(close_packet_streams=False)
                 await asyncio.sleep(delay)
                 delay = min(delay * 2, _REBOOT_RESTART_RETRY_MAX_S)
             else:
                 break
 
-        # start() clears the node database and requests the config in the background; announce the link once it is back
-        try:
-            await asyncio.wait_for(self.connected_node_ready(), timeout=_REBOOT_CONFIG_TIMEOUT_S)
-        except TimeoutError:
-            self._logger.warning("The rebooted radio did not finish its config, the connection check will retry")
-        else:
-            self._set_connection_state(ConnectionState.CONNECTED)
+        self._set_connection_state(ConnectionState.CONNECTED)
 
     async def _start_config(self) -> None:
         async with self._connected_node_config_lock:

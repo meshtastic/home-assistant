@@ -20,6 +20,9 @@ class FakeRadio(ClientApiConnection):
     def __init__(self) -> None:
         super().__init__()
         self.connects = 0
+        self.ignore_config_requests = 0
+        self.stall_next_disconnect = False
+        self.disconnect_started = asyncio.Event()
         self.reconnected = asyncio.Event()
         self._connected = False
         self._from_radio: asyncio.Queue[mesh_pb2.FromRadio] = asyncio.Queue()
@@ -31,6 +34,10 @@ class FakeRadio(ClientApiConnection):
             self.reconnected.set()
 
     async def _disconnect(self) -> None:
+        if self.stall_next_disconnect:
+            self.stall_next_disconnect = False
+            self.disconnect_started.set()
+            await asyncio.Event().wait()
         self._connected = False
 
     @property
@@ -43,7 +50,9 @@ class FakeRadio(ClientApiConnection):
 
     async def _send_packet(self, packet: bytes) -> bool:
         to_radio = mesh_pb2.ToRadio.FromString(packet)
-        if to_radio.HasField("want_config_id"):
+        if to_radio.HasField("want_config_id") and self.ignore_config_requests:
+            self.ignore_config_requests -= 1
+        elif to_radio.HasField("want_config_id"):
             self._from_radio.put_nowait(mesh_pb2.FromRadio(config_complete_id=to_radio.want_config_id))
         return True
 
@@ -170,3 +179,49 @@ async def test_stop_ends_a_restart_that_keeps_failing_and_its_subscriber(monkeyp
         await asyncio.wait_for(subscriber, timeout=5)
     finally:
         subscriber.cancel()
+
+
+async def test_a_restart_whose_config_never_completes_is_tried_again(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(interface_module, "_REBOOT_RESTART_RETRY_S", 0.01)
+    monkeypatch.setattr(interface_module, "_REBOOT_CONFIG_TIMEOUT_S", 0.05)
+    radio = FakeRadio()
+    interface = MeshInterface(connection=radio, no_nodes=True, enable_mqtt_proxy=False)
+    states: list[ConnectionState] = []
+    interface.add_connection_state_listener(states.append)
+    await interface.start()
+    try:
+        await asyncio.wait_for(interface.connected_node_ready(), timeout=5)
+        radio.ignore_config_requests = 1
+        radio.receive(mesh_pb2.FromRadio(rebooted=True))
+
+        for _ in range(300):
+            if radio.connects >= 3 and states and states[-1] == ConnectionState.CONNECTED:
+                break
+            await asyncio.sleep(0.01)
+
+        assert radio.connects == 3
+        assert interface.is_running
+        assert await interface.connected_node_ready()
+        assert states.count(ConnectionState.CONNECTED) == 1
+        assert states[-1] == ConnectionState.CONNECTED
+    finally:
+        await interface.stop()
+
+
+async def test_stop_releases_the_transport_when_it_cancels_a_restart_mid_teardown() -> None:
+    radio = FakeRadio()
+    interface = MeshInterface(connection=radio, no_nodes=True, enable_mqtt_proxy=False)
+    await interface.start()
+    try:
+        await asyncio.wait_for(interface.connected_node_ready(), timeout=5)
+        radio.stall_next_disconnect = True
+        radio.receive(mesh_pb2.FromRadio(rebooted=True))
+        await asyncio.wait_for(radio.disconnect_started.wait(), timeout=5)
+        assert not interface.is_running
+
+        await interface.stop()
+
+        assert not radio.is_connected
+        assert not interface.is_running
+    finally:
+        await interface.stop()
