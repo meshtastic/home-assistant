@@ -1,0 +1,36 @@
+/*
+ * SPDX-FileCopyrightText: 2026 Meshtastic Home Assistant contributors
+ *
+ * SPDX-License-Identifier: MIT
+ */
+
+/* Styles of the node markers on the Mesh Chat map (<meshtastic-chat-marker>, chat-panel.js). */
+
+:host {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  box-sizing: border-box;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  background: hsl(var(--marker-hue, 200), 45%, 45%);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+  color: #fff;
+  font: 600 11px/1 Roboto, sans-serif;
+  cursor: pointer;
+}
+:host(.focused) { outline: 3px solid var(--primary-color); z-index: 1000; }
+:host(.hue-0) { --marker-hue: 0; }
+:host(.hue-1) { --marker-hue: 30; }
+:host(.hue-2) { --marker-hue: 60; }
+:host(.hue-3) { --marker-hue: 90; }
+:host(.hue-4) { --marker-hue: 120; }
+:host(.hue-5) { --marker-hue: 150; }
+:host(.hue-6) { --marker-hue: 180; }
+:host(.hue-7) { --marker-hue: 210; }
+:host(.hue-8) { --marker-hue: 240; }
+:host(.hue-9) { --marker-hue: 270; }
+:host(.hue-10) { --marker-hue: 300; }
+:host(.hue-11) { --marker-hue: 330; }

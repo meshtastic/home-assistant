@@ -36,3 +36,32 @@ jobs:
         uses: "softprops/action-gh-release@8a0cd651e5b2365bd640854a3fa5dfc70e4875f3" # v3.0.4
         with:
           files: ${{ github.workspace }}/custom_components/meshtastic/homeassistant-meshtastic.zip
+
+  notify:
+    name: "Announce on Discord"
+    needs: "release"
+    if: ${{ !github.event.release.prerelease }}
+    runs-on: "ubuntu-latest"
+    permissions: {}
+    steps:
+      - name: "Post the release to the #home-assistant webhook"
+        shell: "bash"
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_HOME_ASSISTANT }}
+          TAG: ${{ github.event.release.tag_name }}
+          NAME: ${{ github.event.release.name }}
+          BODY: ${{ github.event.release.body }}
+          URL: ${{ github.event.release.html_url }}
+        run: |
+          if [[ -z "$DISCORD_WEBHOOK" ]]; then
+            echo "DISCORD_WEBHOOK_HOME_ASSISTANT is not set, skipping"
+            exit 0
+          fi
+          # jq keeps quotes and newlines in the notes valid JSON; Discord caps an embed title at 256, a description at 4096
+          title="Home Assistant integration ${NAME:-$TAG}"
+          payload=$(jq -n \
+            --arg title "${title:0:256}" \
+            --arg description "${BODY:0:4096}" \
+            --arg url "$URL" \
+            '{content: null, embeds: [{title: $title, description: $description, url: $url, color: 6809855}]}')
+          curl --fail-with-body -sS -H "Content-Type: application/json" -d "$payload" "$DISCORD_WEBHOOK"
