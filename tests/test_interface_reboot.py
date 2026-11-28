@@ -225,3 +225,35 @@ async def test_stop_releases_the_transport_when_it_cancels_a_restart_mid_teardow
         assert not interface.is_running
     finally:
         await interface.stop()
+
+
+async def test_a_reboot_during_stop_does_not_start_a_replacement_restart() -> None:
+    radio = FakeRadio()
+    interface = MeshInterface(connection=radio, no_nodes=True, enable_mqtt_proxy=False)
+    await interface.start()
+    try:
+        await asyncio.wait_for(interface.connected_node_ready(), timeout=5)
+        radio.stall_next_disconnect = True
+        radio.receive(mesh_pb2.FromRadio(rebooted=True))
+        await asyncio.wait_for(radio.disconnect_started.wait(), timeout=5)
+        restart = interface._reboot_restart
+        cancel = interface._cancel_task
+
+        async def cancel_with_a_reboot_arriving(task: asyncio.Task) -> None:
+            await cancel(task)
+            if task is restart:
+                # a rebooted packet processed while stop() waits for the old restart to end
+                await interface._process_connected_node_packets(mesh_pb2.FromRadio(rebooted=True))
+                await asyncio.sleep(0.05)
+
+        interface._cancel_task = cancel_with_a_reboot_arriving  # type: ignore[method-assign]
+
+        await interface.stop()
+        await asyncio.sleep(0.1)
+
+        assert not interface.is_running
+        assert not radio.is_connected
+        assert radio.connects == 1
+    finally:
+        interface._cancel_task = type(interface)._cancel_task.__get__(interface)  # type: ignore[method-assign]
+        await interface.stop()

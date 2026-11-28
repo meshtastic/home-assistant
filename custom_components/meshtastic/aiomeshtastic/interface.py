@@ -221,6 +221,7 @@ class MeshInterface:
         self._is_running = asyncio.Event()
         self._is_stopped = asyncio.Event()
         self._reboot_restart: asyncio.Task | None = None
+        self._stop_requested = False
 
         self.debug_out = debug_out
         self.no_nodes = no_nodes
@@ -471,7 +472,12 @@ class MeshInterface:
             self._add_background_task(self._init_mqtt_client(), name="init-mqtt-client")
 
     async def stop(self) -> None:
-        await self._stop(close_packet_streams=True)
+        # stays authoritative until the teardown is done: no reboot restart may open the transport meanwhile
+        self._stop_requested = True
+        try:
+            await self._stop(close_packet_streams=True)
+        finally:
+            self._stop_requested = False
 
     async def _stop(self, *, close_packet_streams: bool) -> None:
         # before the guard: a restart that failed leaves the interface stopped with subscribers still open
@@ -849,7 +855,7 @@ class MeshInterface:
     async def _process_connected_node_packets(self, packet: mesh_pb2.FromRadio) -> None:  # noqa: PLR0912
         """Apply radio state updates and signal MQTT refreshes after channel changes."""
         if packet.HasField("rebooted") and packet.rebooted:
-            if self._reboot_restart is None or self._reboot_restart.done():
+            if not self._stop_requested and (self._reboot_restart is None or self._reboot_restart.done()):
                 self._reboot_restart = self._add_background_task(self._restart_after_reboot(), name="reconnect")
         elif packet.HasField("my_info"):
             self._connected_node_info = packet.my_info
@@ -1178,7 +1184,7 @@ class MeshInterface:
         # subscribers of the packet streams outlive the restart, they do not resubscribe
         await self._stop(close_packet_streams=False)
         delay = _REBOOT_RESTART_RETRY_S
-        while True:
+        while not self._stop_requested:
             try:
                 await self.start()
                 # start() clears the node database and requests the config in the background
@@ -1193,9 +1199,8 @@ class MeshInterface:
                 await asyncio.sleep(delay)
                 delay = min(delay * 2, _REBOOT_RESTART_RETRY_MAX_S)
             else:
-                break
-
-        self._set_connection_state(ConnectionState.CONNECTED)
+                self._set_connection_state(ConnectionState.CONNECTED)
+                return
 
     async def _start_config(self) -> None:
         async with self._connected_node_config_lock:
