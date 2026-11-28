@@ -810,20 +810,20 @@ def _build_air_quality_metrics_sensors(
         for node_id, node_info in nodes_with_environment_metrics.items():
             add_sensor = partial(add_sensor_base, node_id, node_info)
 
-            add_sensor("pm10Standard", SensorDeviceClass.PM10, UnitOfDensity.MICROGRAMS_PER_CUBIC_METER)
+            add_sensor("pm10Standard", SensorDeviceClass.PM1, UnitOfDensity.MICROGRAMS_PER_CUBIC_METER)
             add_sensor("pm25Standard", SensorDeviceClass.PM25, UnitOfDensity.MICROGRAMS_PER_CUBIC_METER)
-            add_sensor("pm100Standard", None, UnitOfDensity.MICROGRAMS_PER_CUBIC_METER)
+            add_sensor("pm100Standard", SensorDeviceClass.PM10, UnitOfDensity.MICROGRAMS_PER_CUBIC_METER)
 
-            add_sensor("pm10Environmental", SensorDeviceClass.PM10, UnitOfDensity.MICROGRAMS_PER_CUBIC_METER)
+            add_sensor("pm10Environmental", SensorDeviceClass.PM1, UnitOfDensity.MICROGRAMS_PER_CUBIC_METER)
             add_sensor("pm25Environmental", SensorDeviceClass.PM25, UnitOfDensity.MICROGRAMS_PER_CUBIC_METER)
-            add_sensor("pm100Environmental", None, UnitOfDensity.MICROGRAMS_PER_CUBIC_METER)
+            add_sensor("pm100Environmental", SensorDeviceClass.PM10, UnitOfDensity.MICROGRAMS_PER_CUBIC_METER)
 
-            add_sensor("particles03um", None, UnitOfDensity.MICROGRAMS_PER_CUBIC_METER)
-            add_sensor("particles05um", None, UnitOfDensity.MICROGRAMS_PER_CUBIC_METER)
-            add_sensor("particles10um", SensorDeviceClass.PM10, UnitOfDensity.MICROGRAMS_PER_CUBIC_METER)
-            add_sensor("particles25um", SensorDeviceClass.PM25, UnitOfDensity.MICROGRAMS_PER_CUBIC_METER)
-            add_sensor("particles50um", None, UnitOfDensity.MICROGRAMS_PER_CUBIC_METER)
-            add_sensor("particles100um", None, UnitOfDensity.MICROGRAMS_PER_CUBIC_METER)
+            add_sensor("particles03um", None, "particles/dL")
+            add_sensor("particles05um", None, "particles/dL")
+            add_sensor("particles10um", None, "particles/dL")
+            add_sensor("particles25um", None, "particles/dL")
+            add_sensor("particles50um", None, "particles/dL")
+            add_sensor("particles100um", None, "particles/dL")
     except Exception:  # noqa: BLE001
         LOGGER.warning("Failed to create air quality metric entities", exc_info=True)
 
