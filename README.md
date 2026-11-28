@@ -99,6 +99,10 @@ Using notification platform and the generated `notify.mesh_*` entities is the re
 
 Depending on your needs, all nodes from the gateway's node database as well as the channels can be made available as notification targets.
 
+Each channel is its own `notify.mesh_channel_*` entity, identified by its key and name together as Meshtastic does, so channels that share a key stay separate.
+The same channel on several gateways is one entity, which tries each of those gateways when sending.
+Renaming a channel creates a new entity: the old one becomes unavailable and can be deleted, and automations using it need to point at the new one.
+
 
 Note: Support is based on new [entity notification platform](https://developers.home-assistant.io/blog/2024/04/10/new-notify-entity-platform/), 
 for an example on how to use it, see [official documentation](https://www.home-assistant.io/integrations/notify/#example-with-the-entity-platform-notify-action).

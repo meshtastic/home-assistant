@@ -148,10 +148,68 @@ async def _add_node_entities(
         async_add_entities(new_entities)
 
 
-def _channel_global_id(channel: Mapping[str, Any]) -> str:
+CHANNEL_UNIQUE_ID_PREFIX = "meshtastic_channel_"
+
+
+def _legacy_channel_global_id(channel: Mapping[str, Any]) -> str:
+    """Identify a channel by its key alone: the id used before channels were told apart by name."""
     h = hashlib.blake2b(key=b"global_channel_id", digest_size=16)
     h.update(base64.b64decode(channel["settings"]["psk"]))
     return base64.b32encode(h.digest()).decode().rstrip("=")
+
+
+def _channel_name(channel: Mapping[str, Any]) -> str:
+    """Name a channel for the entity and its id: its own name, else the one its key and role stand for."""
+    settings = channel["settings"]
+    if settings["name"]:
+        return settings["name"]
+    if settings["psk"] == "AQ==":
+        return "Primary Default"
+    return "Primary" if channel["role"] == "PRIMARY" else "Secondary"
+
+
+def _channel_global_id(channel: Mapping[str, Any]) -> str:
+    """
+    Identify a channel by key and name, as Meshtastic does, so channels sharing a key stay distinct.
+
+    The id does not depend on the gateway, so the same channel on several gateways still merges into one entity.
+    """
+    h = hashlib.blake2b(key=b"global_channel_id_v2", digest_size=16)
+    h.update(base64.b64decode(channel["settings"]["psk"]))
+    h.update(b"\0")
+    h.update(_channel_name(channel).encode())
+    return base64.b32encode(h.digest()).decode().rstrip("=")
+
+
+@callback
+def _migrate_legacy_channel_unique_ids(
+    entity_registry: EntityRegistry,
+    channels: list[Mapping[str, Any]],
+    entities: list[MeshtasticChannelNotify],
+) -> None:
+    """
+    Move registry entries that carry a key-only unique id onto the key and name id, in place.
+
+    Channels sharing a key used to share one entry, so which channel an entry stands for is read from its
+    stored name, never from the channel order. An entry whose name matches no channel is left alone, as
+    for any renamed channel, and the channels get new entities.
+    """
+    by_legacy_id: dict[str, list[MeshtasticChannelNotify]] = {}
+    for channel, entity in zip(channels, entities, strict=True):
+        by_legacy_id.setdefault(_legacy_channel_global_id(channel), []).append(entity)
+
+    for legacy_id, group in by_legacy_id.items():
+        legacy_entity_id = entity_registry.async_get_entity_id(
+            "notify", DOMAIN, f"{CHANNEL_UNIQUE_ID_PREFIX}{legacy_id}"
+        )
+        if legacy_entity_id is None or (legacy_entry := entity_registry.async_get(legacy_entity_id)) is None:
+            continue
+
+        target = next((e for e in group if e.name == legacy_entry.original_name), None)
+        if target is None or entity_registry.async_get_entity_id("notify", DOMAIN, cast("str", target.unique_id)):
+            continue
+
+        entity_registry.async_update_entity(legacy_entity_id, new_unique_id=cast("str", target.unique_id))
 
 
 async def _add_channel_entities(
@@ -169,14 +227,15 @@ async def _add_channel_entities(
         return
 
     gateway = await config_entry.runtime_data.client.async_get_own_node()
-    channels = await config_entry.runtime_data.client.async_get_channels()
-    entities = [
-        MeshtasticChannelNotify(channel, gateway_node_id=gateway["num"])
-        for channel in channels
+    channels = [
+        channel
+        for channel in await config_entry.runtime_data.client.async_get_channels()
         if channel["role"] != "DISABLED"
     ]
+    entities = [MeshtasticChannelNotify(channel, gateway_node_id=gateway["num"]) for channel in channels]
     platform = entity_platform.async_get_current_platform()
     entity_registry = er.async_get(hass)
+    _migrate_legacy_channel_unique_ids(entity_registry, channels, entities)
     new_entities = []
     for e in entities:
         registered_entity_id = entity_registry.async_get_entity_id(
@@ -232,6 +291,7 @@ class MeshtasticNodeNotify(NotifyEntity):
 
 
 class MeshtasticChannelNotify(NotifyEntity):
+    _attr_has_entity_name = True
     _attr_should_poll = False
     _attr_translation_key = "mesh_channel"
 
@@ -244,26 +304,11 @@ class MeshtasticChannelNotify(NotifyEntity):
     ) -> None:
         global_channel_id = _channel_global_id(channel)
         self._global_channel_id = global_channel_id
-        self._attr_unique_id = f"meshtastic_channel_{global_channel_id}"
+        self._attr_unique_id = f"{CHANNEL_UNIQUE_ID_PREFIX}{global_channel_id}"
         self._attr_supported_features = supported_features if supported_features is not None else NotifyEntityFeature(0)
         self._attr_device_info = device_info
 
-        if channel["settings"]["name"]:
-            self._attr_has_entity_name = True
-            self._attr_name = channel["settings"]["name"]
-        elif channel["settings"]["psk"] == "AQ==":
-            self._attr_has_entity_name = True
-            self._attr_name = "Primary Default"
-        elif channel["role"] == "PRIMARY":
-            self._attr_has_entity_name = True
-            self._attr_name = "Primary"
-        elif channel["role"] == "SECONDARY":
-            self._attr_has_entity_name = True
-            self._attr_name = "Secondary"
-
-        if self._attr_name:
-            self._attr_name = f"Channel {self._attr_name}"
-
+        self._attr_name = f"Channel {_channel_name(channel)}"
         self._attr_extra_state_attributes = {}
         self.add_gateway(gateway_node_id, channel["index"])
 
