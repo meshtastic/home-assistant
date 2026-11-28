@@ -12,6 +12,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 from unittest.mock import patch
 
+import pytest
 from aiohttp import web
 
 from custom_components.meshtastic.meshtastic_web import (
@@ -35,7 +36,8 @@ async def test_a_bundled_file_is_served_cross_origin_isolated(hass: HomeAssistan
 
 
 async def test_a_missing_asset_is_answered_with_not_found(hass: HomeAssistant) -> None:
-    assert isinstance(await _serve_web_client_path(hass, "assets/missing.js"), web.HTTPNotFound)
+    with pytest.raises(web.HTTPNotFound):
+        await _serve_web_client_path(hass, "assets/missing.js")
 
 
 async def test_the_file_lookup_runs_off_the_event_loop(hass: HomeAssistant) -> None:
