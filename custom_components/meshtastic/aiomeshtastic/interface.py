@@ -619,7 +619,7 @@ class MeshInterface:
             except asyncio.CancelledError:
                 break
 
-    def _mqtt_channel_id(self, channel: channel_pb2.Channel) -> str:
+    def channel_id(self, channel: channel_pb2.Channel) -> str:
         """
         Return the channel id firmware uses in MQTT topics (``Channels::getGlobalId``).
 
@@ -646,7 +646,7 @@ class MeshInterface:
         """
         root = self._connected_node_module_config.mqtt.root or "msh"
         channel_ids = dict.fromkeys(
-            self._mqtt_channel_id(channel)
+            self.channel_id(channel)
             for channel in self._connected_node_channels or []
             if channel.role != channel_pb2.Channel.Role.DISABLED and channel.settings.downlink_enabled
         )

@@ -87,6 +87,9 @@ class FakeClient:
     async def async_get_all_nodes(self) -> dict[int, dict[str, Any]]:
         return dict(self.nodes)
 
+    async def async_get_channel_ids(self) -> dict[int, str]:
+        return {c["index"]: c["settings"]["name"] for c in await self.async_get_channels()}
+
     async def async_get_node_local_config(self) -> dict[str, Any]:
         return {
             "security": {"privateKey": "secret", "adminKey": ["a"]},

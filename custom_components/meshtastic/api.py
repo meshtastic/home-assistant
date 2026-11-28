@@ -238,6 +238,13 @@ class MeshtasticApiClient:
         assert channels is not None  # noqa: S101  (iterated immediately; None raised TypeError already)
         return [self._message_to_dict(c) for c in channels]
 
+    async def async_get_channel_ids(self) -> dict[int, str]:
+        """Return the id firmware gives each channel by index: its name, else the modem preset's."""
+        await self._async_wait_node_ready()
+        channels = self._interface.connected_node_channels()
+        assert channels is not None  # noqa: S101  (iterated immediately; None raised TypeError already)
+        return {channel.index: self._interface.channel_id(channel) for channel in channels}
+
     async def async_get_node_local_config(self) -> dict:
         await self._async_wait_node_ready()
         local_config = self._interface.connected_node_local_config()

@@ -7,10 +7,11 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
-from unittest.mock import AsyncMock
+from unittest.mock import AsyncMock, patch
 
 import pytest
 from homeassistant.helpers import entity_registry as er
+from homeassistant.helpers.entity_component import DATA_INSTANCES
 
 from custom_components.meshtastic.const import (
     CONF_OPTION_FILTER_NODES,
@@ -25,7 +26,7 @@ from custom_components.meshtastic.notify import (
     _legacy_channel_global_id,
 )
 
-from .conftest import GATEWAY_NUM, FakeClient, make_entry
+from .conftest import GATEWAY_NUM, FakeClient, make_entry, make_node, make_nodes
 
 if TYPE_CHECKING:
     from homeassistant.core import HomeAssistant
@@ -42,6 +43,8 @@ def channel(index: int, name: str, psk: str, role: str | None = None) -> dict[st
         "settings": {"name": name, "psk": psk, "uplinkEnabled": False, "downlinkEnabled": False},
     }
 
+
+B_NUM = 0x33333333
 
 MESH = [
     channel(0, "Alpha", DEFAULT_KEY),
@@ -64,16 +67,26 @@ def channels_entry() -> MockConfigEntry:
     )
 
 
+def firmware_id(ch: dict[str, Any]) -> str:
+    """Return what the client reports for a channel: its name, else the modem preset (LongFast here)."""
+    return ch["settings"]["name"] or "LongFast"
+
+
 def channel_unique_id(ch: dict[str, Any]) -> str:
-    return f"{CHANNEL_UNIQUE_ID_PREFIX}{_channel_global_id(ch)}"
+    return f"{CHANNEL_UNIQUE_ID_PREFIX}{_channel_global_id(ch, firmware_id(ch))}"
 
 
 def legacy_unique_id(ch: dict[str, Any]) -> str:
     return f"{CHANNEL_UNIQUE_ID_PREFIX}{_legacy_channel_global_id(ch)}"
 
 
+def serve_channels(client: FakeClient, chs: list) -> None:
+    client.async_get_channels = AsyncMock(return_value=chs)
+    client.async_get_channel_ids = AsyncMock(return_value={c["index"]: firmware_id(c) for c in chs})
+
+
 async def setup_channels(hass: HomeAssistant, entry: MockConfigEntry, fake_client: FakeClient, chs: list) -> None:
-    fake_client.async_get_channels = AsyncMock(return_value=chs)
+    serve_channels(fake_client, chs)
     if entry.entry_id not in {e.entry_id for e in hass.config_entries.async_entries(DOMAIN)}:
         entry.add_to_hass(hass)
     assert await hass.config_entries.async_setup(entry.entry_id)
@@ -103,26 +116,26 @@ def legacy_entry(
 
 
 def test_channels_sharing_a_key_get_distinct_ids_and_the_same_channel_the_same_id() -> None:
-    ids = {_channel_global_id(c) for c in MESH}
+    ids = {_channel_global_id(c, firmware_id(c)) for c in MESH}
     assert len(ids) == len(MESH)
-    assert _channel_global_id(channel(0, "Alpha", DEFAULT_KEY)) == _channel_global_id(channel(7, "Alpha", DEFAULT_KEY))
-    assert _channel_global_id(channel(0, "Bravo", DEFAULT_KEY)) != _channel_global_id(channel(0, "Bravo", OTHER_KEY))
+    alpha = channel(0, "Alpha", DEFAULT_KEY)
+    assert _channel_global_id(alpha, "Alpha") == _channel_global_id(channel(7, "Alpha", DEFAULT_KEY), "Alpha")
+    assert _channel_global_id(alpha, "Alpha") != _channel_global_id(channel(0, "Alpha", OTHER_KEY), "Alpha")
 
 
 def test_the_new_id_never_equals_the_key_only_id() -> None:
-    assert {_channel_global_id(c) for c in MESH}.isdisjoint({_legacy_channel_global_id(c) for c in MESH})
+    assert {_channel_global_id(c, firmware_id(c)) for c in MESH}.isdisjoint(
+        {_legacy_channel_global_id(c) for c in MESH}
+    )
     assert _legacy_channel_global_id(MESH[0]) == _legacy_channel_global_id(MESH[1])
 
 
-def test_unnamed_channels_are_told_apart_by_the_name_their_key_and_role_stand_for() -> None:
-    default_primary = channel(0, "", DEFAULT_KEY, "PRIMARY")
-    default_secondary = channel(1, "", DEFAULT_KEY, "SECONDARY")
+def test_unnamed_channels_are_identified_by_key_and_modem_preset_whatever_their_role() -> None:
     primary = channel(0, "", OTHER_KEY, "PRIMARY")
     secondary = channel(1, "", OTHER_KEY, "SECONDARY")
-    assert len({_channel_global_id(c) for c in (default_primary, primary, secondary)}) == 3
-    # an unnamed channel on the default key is the default channel, whichever role it has
-    assert _channel_global_id(default_primary) == _channel_global_id(default_secondary)
-    assert _channel_global_id(secondary) == _channel_global_id(channel(2, "", OTHER_KEY, "SECONDARY"))
+    assert _channel_global_id(primary, "LongFast") == _channel_global_id(secondary, "LongFast")
+    assert _channel_global_id(primary, "LongFast") != _channel_global_id(primary, "MediumFast")
+    assert _channel_global_id(primary, "LongFast") != _channel_global_id(channel(0, "", DEFAULT_KEY), "LongFast")
 
 
 async def test_unnamed_channels_are_named_after_their_key_and_role(
@@ -221,3 +234,49 @@ async def test_loading_again_keeps_the_same_entities(hass: HomeAssistant, fake_c
     await hass.async_block_till_done()
 
     assert {uid: e.entity_id for uid, e in channel_entities(hass).items()} == before
+
+
+def routes_of(hass: HomeAssistant, unique_id: str) -> dict[int, int]:
+    entity_id = er.async_get(hass).async_get_entity_id("notify", DOMAIN, unique_id)
+    return dict(hass.data[DATA_INSTANCES]["notify"].get_entity(entity_id).gateways)
+
+
+async def test_a_gateway_that_renames_a_channel_it_shares_leaves_no_stale_route(hass: HomeAssistant) -> None:
+    on_a = channel(1, "Alpha", DEFAULT_KEY)
+    on_b = channel(0, "Alpha", DEFAULT_KEY)
+    client_a = FakeClient(make_nodes(), GATEWAY_NUM)
+    client_b = FakeClient({B_NUM: make_node(B_NUM, "Gateway B")}, B_NUM)
+    serve_channels(client_a, [on_a])
+    serve_channels(client_b, [on_b])
+    entry_a = channels_entry()
+    entry_b = make_entry(
+        {
+            CONF_OPTION_FILTER_NODES: [{"id": B_NUM, "name": "Gateway B"}],
+            CONF_OPTION_NOTIFY_PLATFORM: {
+                CONF_OPTION_NOTIFY_PLATFORM_CHANNELS: True,
+                CONF_OPTION_NOTIFY_PLATFORM_NODES: "none",
+            },
+        }
+    )
+    clients = {entry_a.entry_id: client_a, entry_b.entry_id: client_b}
+    entry_a.add_to_hass(hass)
+    entry_b.add_to_hass(hass)
+
+    with (
+        patch(
+            "custom_components.meshtastic.MeshtasticApiClient",
+            side_effect=lambda *_, config_entry_id, **__: clients[config_entry_id],
+        ),
+        patch("custom_components.meshtastic.fetch_meshtastic_hardware_names", AsyncMock(return_value={})),
+    ):
+        assert await hass.config_entries.async_setup(entry_a.entry_id)
+        await hass.async_block_till_done()
+        assert routes_of(hass, channel_unique_id(on_a)) == {GATEWAY_NUM: 1, B_NUM: 0}
+
+        renamed = channel(0, "Beta", DEFAULT_KEY)
+        serve_channels(client_b, [renamed])
+        assert await hass.config_entries.async_reload(entry_b.entry_id)
+        await hass.async_block_till_done()
+
+    assert routes_of(hass, channel_unique_id(on_a)) == {GATEWAY_NUM: 1}
+    assert routes_of(hass, channel_unique_id(renamed)) == {B_NUM: 0}

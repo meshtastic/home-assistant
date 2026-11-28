@@ -106,7 +106,7 @@ def test_no_downlink_channel_means_no_subscription() -> None:
 def test_unnamed_channel_uses_firmware_channel_id(preset: int, use_preset: bool, expected: str) -> None:  # noqa: FBT001
     interface, _ = make_interface([channel(0)], preset=preset, use_preset=use_preset)
 
-    assert interface._mqtt_channel_id(interface._connected_node_channels[0]) == expected
+    assert interface.channel_id(interface._connected_node_channels[0]) == expected
 
 
 def test_empty_root_falls_back_to_msh() -> None:

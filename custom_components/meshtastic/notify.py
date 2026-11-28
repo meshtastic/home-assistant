@@ -159,7 +159,7 @@ def _legacy_channel_global_id(channel: Mapping[str, Any]) -> str:
 
 
 def _channel_name(channel: Mapping[str, Any]) -> str:
-    """Name a channel for the entity and its id: its own name, else the one its key and role stand for."""
+    """Name a channel for the entity: its own name, else the one its key and role stand for."""
     settings = channel["settings"]
     if settings["name"]:
         return settings["name"]
@@ -168,16 +168,16 @@ def _channel_name(channel: Mapping[str, Any]) -> str:
     return "Primary" if channel["role"] == "PRIMARY" else "Secondary"
 
 
-def _channel_global_id(channel: Mapping[str, Any]) -> str:
+def _channel_global_id(channel: Mapping[str, Any], channel_id: str) -> str:
     """
-    Identify a channel by key and name, as Meshtastic does, so channels sharing a key stay distinct.
+    Identify a channel by its key and its firmware channel id: its name, or the modem preset's when it has none.
 
-    The id does not depend on the gateway, so the same channel on several gateways still merges into one entity.
+    The gateway is not part of the id, so one channel on several gateways is one entity.
     """
     h = hashlib.blake2b(key=b"global_channel_id_v2", digest_size=16)
     h.update(base64.b64decode(channel["settings"]["psk"]))
     h.update(b"\0")
-    h.update(_channel_name(channel).encode())
+    h.update(channel_id.encode())
     return base64.b32encode(h.digest()).decode().rstrip("=")
 
 
@@ -232,9 +232,18 @@ async def _add_channel_entities(
         for channel in await config_entry.runtime_data.client.async_get_channels()
         if channel["role"] != "DISABLED"
     ]
-    entities = [MeshtasticChannelNotify(channel, gateway_node_id=gateway["num"]) for channel in channels]
+    channel_ids = await config_entry.runtime_data.client.async_get_channel_ids()
+    entities = [
+        MeshtasticChannelNotify(channel, channel_ids[channel["index"]], gateway_node_id=gateway["num"])
+        for channel in channels
+    ]
     platform = entity_platform.async_get_current_platform()
     entity_registry = er.async_get(hass)
+    # Routes this gateway left on entities of other gateways may point at channels that changed, so drop them
+    # and let the channels it has now add theirs back.
+    for existing in platform.domain_entities.values():
+        if isinstance(existing, MeshtasticChannelNotify):
+            existing.remove_gateway(gateway["num"])
     _migrate_legacy_channel_unique_ids(entity_registry, channels, entities)
     new_entities = []
     for e in entities:
@@ -298,11 +307,12 @@ class MeshtasticChannelNotify(NotifyEntity):
     def __init__(
         self,
         channel: Mapping[str, Any],
+        channel_id: str,
         gateway_node_id: int,
         device_info: DeviceInfo | None = None,
         supported_features: NotifyEntityFeature | None = None,
     ) -> None:
-        global_channel_id = _channel_global_id(channel)
+        global_channel_id = _channel_global_id(channel, channel_id)
         self._global_channel_id = global_channel_id
         self._attr_unique_id = f"{CHANNEL_UNIQUE_ID_PREFIX}{global_channel_id}"
         self._attr_supported_features = supported_features if supported_features is not None else NotifyEntityFeature(0)
@@ -341,6 +351,9 @@ class MeshtasticChannelNotify(NotifyEntity):
             self._attr_extra_state_attributes["gateways"] = {}
 
         self._attr_extra_state_attributes["gateways"][gateway_node_id] = channel_index
+
+    def remove_gateway(self, gateway_node_id: int) -> None:
+        self._attr_extra_state_attributes.get("gateways", {}).pop(gateway_node_id, None)
 
     @property
     def gateways(self) -> Mapping[int, int]:

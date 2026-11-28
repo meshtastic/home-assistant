@@ -101,7 +101,7 @@ Depending on your needs, all nodes from the gateway's node database as well as t
 
 Each channel is its own `notify.mesh_channel_*` entity, identified by its key and name together as Meshtastic does, so channels that share a key stay separate.
 The same channel on several gateways is one entity, which tries each of those gateways when sending.
-Renaming a channel creates a new entity: the old one becomes unavailable and can be deleted, and automations using it need to point at the new one.
+After a reload or restart, a renamed channel gets a new entity. The old one becomes unavailable once no loaded gateway still has that channel, and can then be deleted; automations using it need to point at the new one.
 
 
 Note: Support is based on new [entity notification platform](https://developers.home-assistant.io/blog/2024/04/10/new-notify-entity-platform/), 
