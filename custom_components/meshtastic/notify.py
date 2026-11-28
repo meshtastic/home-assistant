@@ -326,7 +326,9 @@ class MeshtasticChannelNotify(NotifyEntity):
         if not self.gateways:
             raise ServiceValidationError(translation_domain=DOMAIN, translation_key="no_gateway_available")
 
-        for gateway_node_id, gateway_node_channel_index in self.gateways.items():
+        for gateway_node_id in list(self.gateways):
+            if (gateway_node_channel_index := self.gateways.get(gateway_node_id)) is None:
+                continue
             service_data = {
                 ATTR_SERVICE_SEND_TEXT_DATA_TEXT: message,
                 ATTR_SERVICE_DATA_FROM: gateway_node_id,

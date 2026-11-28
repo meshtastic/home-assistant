@@ -10,6 +10,7 @@ from typing import TYPE_CHECKING, Any
 from unittest.mock import AsyncMock, patch
 
 import pytest
+from homeassistant.exceptions import HomeAssistantError, ServiceValidationError
 from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.entity_component import DATA_INSTANCES
 
@@ -22,6 +23,7 @@ from custom_components.meshtastic.const import (
 )
 from custom_components.meshtastic.notify import (
     CHANNEL_UNIQUE_ID_PREFIX,
+    MeshtasticChannelNotify,
     _channel_global_id,
     _legacy_channel_global_id,
 )
@@ -29,7 +31,7 @@ from custom_components.meshtastic.notify import (
 from .conftest import GATEWAY_NUM, FakeClient, make_entry, make_node, make_nodes
 
 if TYPE_CHECKING:
-    from homeassistant.core import HomeAssistant
+    from homeassistant.core import HomeAssistant, ServiceCall
     from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 DEFAULT_KEY = "AQ=="
@@ -280,3 +282,23 @@ async def test_a_gateway_that_renames_a_channel_it_shares_leaves_no_stale_route(
 
     assert routes_of(hass, channel_unique_id(on_a)) == {GATEWAY_NUM: 1}
     assert routes_of(hass, channel_unique_id(renamed)) == {B_NUM: 0}
+
+
+async def test_a_send_still_fails_over_when_a_gateway_loses_its_route_meanwhile(hass: HomeAssistant) -> None:
+    entity = MeshtasticChannelNotify(channel(0, "Alpha", DEFAULT_KEY), "Alpha", gateway_node_id=1)
+    entity.add_gateway(2, 0)
+    entity.add_gateway(3, 0)
+    entity.hass = hass
+    tried: list[int] = []
+
+    async def fail_and_drop_gateway_2(call: ServiceCall) -> None:
+        tried.append(call.data["from"])
+        entity.remove_gateway(2)
+        raise HomeAssistantError
+
+    hass.services.async_register(DOMAIN, "send_text", fail_and_drop_gateway_2)
+
+    with pytest.raises(ServiceValidationError):
+        await entity.async_send_message("hi")
+
+    assert tried == [1, 3]
