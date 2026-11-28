@@ -193,6 +193,8 @@ class MeshtasticDataUpdateCoordinator(DataUpdateCoordinator[NodeData]):
             metric_type = "powerMetrics"
         elif telemetry_type == EventMeshtasticApiTelemetryType.ENVIRONMENT_METRICS:
             metric_type = "environmentMetrics"
+        elif telemetry_type == EventMeshtasticApiTelemetryType.AIR_QUALITY_METRICS:
+            metric_type = "airQualityMetrics"
         elif telemetry_type == EventMeshtasticApiTelemetryType.HOST_METRICS:
             metric_type = "hostMetrics"
         else:

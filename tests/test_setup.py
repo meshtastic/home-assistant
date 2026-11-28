@@ -15,7 +15,11 @@ from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers import entity_registry as er
 
 from custom_components.meshtastic import services
-from custom_components.meshtastic.api import MeshtasticApiClientError
+from custom_components.meshtastic.api import (
+    EVENT_MESHTASTIC_API_TELEMETRY,
+    EventMeshtasticApiTelemetryType,
+    MeshtasticApiClientError,
+)
 from custom_components.meshtastic.const import DOMAIN
 from custom_components.meshtastic.services import SUPPORTED_SERVICES
 
@@ -195,3 +199,52 @@ async def test_wind_direction_is_an_angle(hass: HomeAssistant, entry: MockConfig
     assert state.attributes["device_class"] == "wind_direction"
     assert state.attributes["state_class"] == "measurement_angle"
     assert state.state == "270"
+
+
+async def test_air_quality_sensors_use_the_meshtastic_pm_classes_and_particle_counts(
+    hass: HomeAssistant, entry: MockConfigEntry, fake_client: FakeClient
+) -> None:
+    fake_client.nodes[PEER_NUM]["airQualityMetrics"] = {
+        "pm10Standard": 9,
+        "pm100Standard": 20,
+        "pm10Environmental": 8,
+        "pm100Environmental": 19,
+        "particles03um": 605,
+    }
+
+    assert await hass.config_entries.async_setup(entry.entry_id)
+    await hass.async_block_till_done()
+    entry.runtime_data.coordinator.async_set_updated_data(dict(fake_client.nodes))
+    await hass.async_block_till_done()
+
+    def attributes(key: str) -> dict:
+        entity_id = er.async_get(hass).async_get_entity_id(
+            "sensor", DOMAIN, f"{entry.entry_id}_sensor_{PEER_NUM}_airquality_{key}"
+        )
+        return hass.states.get(entity_id).attributes
+
+    assert attributes("pm10_standard")["device_class"] == "pm1"
+    assert attributes("pm100_standard")["device_class"] == "pm10"
+    assert attributes("pm10_environmental")["device_class"] == "pm1"
+    assert attributes("pm100_environmental")["device_class"] == "pm10"
+    assert attributes("particles03um")["unit_of_measurement"] == "particles/dL"
+    assert "device_class" not in attributes("particles03um")
+
+
+@pytest.mark.usefixtures("fake_client")
+async def test_air_quality_telemetry_events_update_the_coordinator(hass: HomeAssistant, entry: MockConfigEntry) -> None:
+    assert await hass.config_entries.async_setup(entry.entry_id)
+    await hass.async_block_till_done()
+
+    hass.bus.async_fire(
+        EVENT_MESHTASTIC_API_TELEMETRY,
+        {
+            "config_entry_id": entry.entry_id,
+            "node": PEER_NUM,
+            "data": {"pm25Standard": 15},
+            "telemetry_type": EventMeshtasticApiTelemetryType.AIR_QUALITY_METRICS,
+        },
+    )
+    await hass.async_block_till_done()
+
+    assert entry.runtime_data.coordinator.data[PEER_NUM]["airQualityMetrics"] == {"pm25Standard": 15}
